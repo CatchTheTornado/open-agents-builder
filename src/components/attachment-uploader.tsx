@@ -36,9 +36,10 @@ type FileUploaderProps = {
   dbContext?: DatabaseContextType | null;
   saasContext?: SaaSContextType | null;
   onUploaded?: (uploadedAttachment: AttachmentDTO) => void;
+  accept?: string | undefined;
 };
 
-export function AttachmentUploader({ dbContext, saasContext, onUploaded }: FileUploaderProps) {
+export function AttachmentUploader({ dbContext, saasContext, accept, onUploaded }: FileUploaderProps) {
   const { t } = useTranslation();
 
 
@@ -128,10 +129,9 @@ const onUpload = useCallback(
 
   return (
     <div className="">
-      <label className="block font-medium mb-3 flex"><UploadIcon className="mr-2"/> {t("Upload files")}</label>
       <Input
         type="file"
-        accept="image/*; text/*; application/json; application/zip; application/vnd.openxmlformats/*; application/pdf"
+        accept={accept? accept : "image/*; text/*; application/json; application/zip; application/vnd.openxmlformats/*; application/pdf"}
         multiple
         onChange={handleFileSelect}
       />
@@ -159,9 +159,6 @@ const onUpload = useCallback(
             </Button>
           </div>
         ))}
-        <div className="text-xs p-2">
-          {t('Supported file types: images, text files, ZIP archives, PDFs, Word documents, Excel spreadsheets, PowerPoint presentations. When uploading documents including text (PDF, Office, text, CSV, ZIP archives...) - files will converted to Markdown and available in the Flows and for other AI tools. ')}
-        </div>
       </div>
     </div>
   );

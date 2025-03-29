@@ -8,7 +8,7 @@ import { CookieConsentBannerComponent } from "@/components/cookie-consent-banner
 import DataLoader from "@/components/data-loader";
 import FeedbackWidget from "@/components/feedback-widget";
 import { DatabaseContextProvider } from "@/contexts/db-context";
-import { ExecContextType, useExecContext } from "@/contexts/exec-context";
+import { useExecContext } from "@/contexts/exec-context";
 import { SaaSContextProvider } from "@/contexts/saas-context";
 import { getErrorMessage } from "@/lib/utils";
 import { useChat } from "ai/react";

@@ -57,6 +57,7 @@
     "@svgr/webpack": "^8.1.0",
     "@types/react-big-calendar": "^1.16.1",
     "@uiw/react-json-view": "^1.12.2",
+    "@vercel/og": "^0.6.5",
     "ai": "^4.1.54",
     "argon2-browser": "^1.18.0",
     "async-mutex": "^0.5.0",
