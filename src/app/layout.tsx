@@ -3,15 +3,13 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
-import i18nConfig from '@/app/i18nConfig';
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: "Open Agents Builder",
-  description: "Build an interactive AI agent from a single prompt; send it as a link; process results; ideal for interactive bookings, pre-visit chats, polls, and many more"
+export const defaultMetadata: Metadata = {
+   title: "Open Agents Builder",
+   description: "Build an interactive AI agent from a single prompt; send it as a link; process results; ideal for interactive bookings, pre-visit chats, polls, and many more"
 };
-
 
 
 export default function RootLayout({

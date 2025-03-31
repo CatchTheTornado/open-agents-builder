@@ -221,6 +221,8 @@ export class Term {
 }
 
 export type AgentOptions = {
+    ogDescription: string,
+    ogTitle: string,
     welcomeMessage: string;
     termsAndConditions: string;
     mustConfirmTerms: boolean;
@@ -328,6 +330,8 @@ export class Agent {
             expectedResult: this?.expectedResult || '',
             safetyRules: this?.safetyRules || '',
             published: this?.published || false,
+            ogTitle: this?.options?.ogTitle || '',
+            ogDescription: this?.options?.ogDescription || '',
             welcomeInfo: this?.options?.welcomeMessage || '',
             termsConditions: this?.options?.termsAndConditions || '',
             confirmTerms: this?.options?.mustConfirmTerms || false,
@@ -340,7 +344,8 @@ export class Agent {
             tools: this?.tools || {},
             agents: this?.agents || [],
             flows: this?.flows || [],
-            defaultFlow: this?.defaultFlow || ''
+            defaultFlow: this?.defaultFlow || '',
+            icon: this?.icon || '',
         };
         if (setValue !== null) {
             Object.keys(map).forEach((key) => {
@@ -370,8 +375,11 @@ export class Agent {
             flows: data.flows ?? agent?.flows,
             defaultFlow: data.defaultFlow ?? agent?.defaultFlow,
             tools: data.tools ?? agent?.tools,
+            icon: data.icon ?? agent?.icon,
             options: {
                 ...agent?.options,
+                ogDescription: data.ogDescription ?? agent?.options?.ogDescription,
+                ogTitle: data.ogTitle ?? agent?.options?.ogTitle,
                 welcomeMessage: data.welcomeInfo ?? agent?.options?.welcomeMessage,
                 termsAndConditions: data.termsConditions ?? agent?.options?.termsAndConditions,
                 mustConfirmTerms: data.confirmTerms ?? agent?.options?.mustConfirmTerms,

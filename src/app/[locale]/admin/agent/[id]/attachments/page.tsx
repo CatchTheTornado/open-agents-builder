@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NoRecordsAlert } from "@/components/shared/no-records-alert";
 import InfiniteScroll from "@/components/infinite-scroll";
-import { CopyIcon, FileWarningIcon, HourglassIcon, ImportIcon, Loader2, ShareIcon, TrashIcon } from "lucide-react";
+import { CopyIcon, FileWarningIcon, HourglassIcon, ImportIcon, Loader2, ShareIcon, TrashIcon, UploadIcon } from "lucide-react";
 
 import { AttachmentDTO, PaginatedQuery, PaginatedResult } from "@/data/dto";
 import { getErrorMessage, safeJsonParse } from "@/lib/utils";
@@ -148,17 +148,26 @@ export default function FilesPage() {
 
     return (
         <div className="space-y-6">
-            <AttachmentUploader
-                dbContext={dbContext}
-                saasContext={saasContext}
-                onUploaded={(uploaded) => {
-                    setAttachmentsData((prev) => ({
-                        ...prev,
-                        rows: [uploaded, ...prev.rows].map((r) => Attachment.fromDTO(r)),
-                        total: prev.total + 1,
-                    }));
-                }}
-            />
+            <div>
+                <label className="block font-medium mb-3 flex"><UploadIcon className="mr-2"/> {t("Upload files")}</label>
+
+                    <AttachmentUploader
+                        dbContext={dbContext}
+                        saasContext={saasContext}
+                        onUploaded={(uploaded) => {
+                            setAttachmentsData((prev) => ({
+                                ...prev,
+                                rows: [uploaded, ...prev.rows].map((r) => Attachment.fromDTO(r)),
+                                total: prev.total + 1,
+                            }));
+                        }}
+                    />
+
+                <div className="text-xs p-2">
+                {t('Supported file types: images, text files, ZIP archives, PDFs, Word documents, Excel spreadsheets, PowerPoint presentations. When uploading documents including text (PDF, Office, text, CSV, ZIP archives...) - files will be converted to Markdown and available in the Flows and for other AI tools. ')}
+                </div>
+            </div>
+
 
         {attachmentsData.rows.length > 0 && (
         <Button className="mr-2" size="sm" variant="outline" onClick={() => {

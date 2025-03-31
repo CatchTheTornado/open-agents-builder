@@ -27,6 +27,7 @@ export async function middleware(request: NextRequest) {
 
         }
     } else {
+        request.headers.set('X-Path', request.nextUrl.pathname);
         return i18nRouter(request, i18nConfig);
     }
 
@@ -34,6 +35,6 @@ export async function middleware(request: NextRequest) {
 }
  
 export const config = {
-  matcher: '/((?!api/db|api/agent/.*/exec|api/chat|api/exec|storage|api/saas|api/agent/results-chat|content|img|_next/image|_next/static|static|.*\\..*|_next).*)',
+  matcher: '/((?!api/db|api/agent/.*/exec|api/chat|api/exec|api/og|storage|api/saas|api/agent/results-chat|content|img|_next/image|_next/static|static|.*\\..*|_next).*)',
   //matcher: ['/((?!api/db|storage|agent|dashboard|chat|api/saas|_next/static|content|_next/image|img|onboarding|manifest|favicon.ico|$).*)'],
 }
