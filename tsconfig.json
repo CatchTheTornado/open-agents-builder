@@ -18,9 +18,10 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "oab-vector-store": ["./src/packages/oab-vector-store/src"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/lib/pdf2js.js", "next-i18next.config.mjs", "next.config.mjs"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/lib/pdf2js.js", "next-i18next.config.mjs", "next.config.mjs", "src/packages/**/*"],
   "exclude": ["node_modules"]
 }

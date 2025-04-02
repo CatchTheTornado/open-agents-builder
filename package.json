@@ -2,9 +2,12 @@
   "name": "open-agents-builder",
   "version": "0.3.0",
   "private": true,
+  "workspaces": [
+   "src/packages/*"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "yarn workspace oab-vector-store build && next dev",
+    "build": "yarn workspace oab-vector-store build && next build",
     "start": "next start",
     "lint": "next lint",
     "generate": "drizzle-kit generate",

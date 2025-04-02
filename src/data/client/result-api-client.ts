@@ -49,6 +49,6 @@ export class ResultApiClient extends AdminApiClient {
     }
 
     async delete(record: ResultDTO): Promise<DeleteResultResponse> {
-      return this.request<DeleteResultResponse>('/api/result/' + record.sessionId, 'DELETE', { ecnryptedFields: [] }) as Promise<DeleteResultResponse>;
+      return this.request<DeleteResultResponse>('/api/result/' + record.sessionId, 'DELETE', { encryptedFields: [] }) as Promise<DeleteResultResponse>;
     }    
 }

@@ -15,10 +15,12 @@ import { Agent } from '@/data/client/models';
 import { TraceToolConfigurator } from './traceTool-configurator';
 import { RenderComponentToolConfigurator } from './renderComponentTool-configurator';
 import { getAvailableUIComponents } from './availableUIComponentsTool';
+import { MemoryStoreConfigurator } from './memoryStore-configurator';
 
 type ToolConfiguratorDescriptor = {
   displayName: string;
-  configurator: React.ComponentType<any>;
+  configurator: React.ComponentType<{ options: any; onChange: (options: any) => void }>;
+  defaultOptions?: Record<string, unknown>;
 }
 
 export const toolConfiguratorsRepository = {
@@ -69,6 +71,20 @@ export const toolConfiguratorsRepository = {
         displayName: 'Update Result',
         configurator: UpdateResultToolConfigurator
       },
+      memorySaveTool: {
+        displayName: "Memory/vector save",
+        configurator: MemoryStoreConfigurator,
+        defaultOptions: {
+          storeName: "default"
+        }
+      },
+      memorySearchTool: {
+        displayName: "Memory/vector search",
+        configurator: MemoryStoreConfigurator,
+        defaultOptions: {
+          storeName: "default"
+        }
+      }
     }
 
     if (agent && agent.agentType === 'flow') {

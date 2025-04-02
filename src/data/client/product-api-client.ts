@@ -49,14 +49,14 @@ export class ProductApiClient extends AdminApiClient {
       return this.request<GetProductsPaginatedResponse>(
         `/api/product?id=${encodeURIComponent(productId)}`,
         "GET",
-        { ecnryptedFields: [] } // lub pola do szyfrowania
+        { encryptedFields: [] } // lub pola do szyfrowania
       ) as Promise<GetProductsPaginatedResponse>;
     } else {
       // /api/product
       return this.request<GetProductsPaginatedResponse>(
         "/api/product",
         "GET",
-        { ecnryptedFields: [] }
+        { encryptedFields: [] }
       ) as Promise<GetProductsPaginatedResponse>;
     }
   }
@@ -65,7 +65,7 @@ export class ProductApiClient extends AdminApiClient {
     return this.request<GetProductsResponse>(
       `/api/product/descriptor/${attId}`,
       "POST",
-      { ecnryptedFields: [] }, product.toDTO(),
+      { encryptedFields: [] }, product.toDTO(),
         undefined,undefined, {
         'Database-Id-Hash': this.dbContext?.databaseIdHash ?? '',
         'Agent-Locale': locale
@@ -79,7 +79,7 @@ export class ProductApiClient extends AdminApiClient {
     return this.request<GetProductsPaginatedResponse>(
       `/api/product?${queryParams}`,
       "GET",
-      { ecnryptedFields: [] }
+      { encryptedFields: [] }
     ) as Promise<GetProductsPaginatedResponse>;
   }
 
@@ -87,7 +87,7 @@ export class ProductApiClient extends AdminApiClient {
     return this.request<PutProductResponse>(
       "/api/product",
       "PUT",
-      { ecnryptedFields: [] }, // w razie potrzeby
+      { encryptedFields: [] }, // w razie potrzeby
       record
     ) as Promise<PutProductResponse>;
   }
@@ -96,7 +96,7 @@ export class ProductApiClient extends AdminApiClient {
     return this.request<DeleteProductResponse>(
       `/api/product/${record.id}`,
       "DELETE",
-      { ecnryptedFields: [] }
+      { encryptedFields: [] }
     ) as Promise<DeleteProductResponse>;
   }
 

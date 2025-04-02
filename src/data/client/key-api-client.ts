@@ -26,14 +26,14 @@ export class KeyApiClient extends AdminApiClient {
     }
   
     async get(): Promise<KeyDTO[]> {
-      return this.request<KeyDTO[]>('/api/keys', 'GET', { ecnryptedFields: [] }) as Promise<KeyDTO[]>;
+      return this.request<KeyDTO[]>('/api/keys', 'GET', { encryptedFields: [] }) as Promise<KeyDTO[]>;
     }
   
     async put(key: PutKeyRequest): Promise<PutKeyResponse> {
-      return this.request<PutKeyResponse>('/api/keys', 'PUT', { ecnryptedFields: [] }, key) as Promise<PutKeyResponse>;
+      return this.request<PutKeyResponse>('/api/keys', 'PUT', { encryptedFields: [] }, key) as Promise<PutKeyResponse>;
     }
     
     async delete(keyLocatorHash: string): Promise<PutKeyResponse> {
-      return this.request<PutKeyResponse>('/api/keys/' + keyLocatorHash, 'DELETE', { ecnryptedFields: [] }) as Promise<PutKeyResponse>;
+      return this.request<PutKeyResponse>('/api/keys/' + keyLocatorHash, 'DELETE', { encryptedFields: [] }) as Promise<PutKeyResponse>;
     }    
   }

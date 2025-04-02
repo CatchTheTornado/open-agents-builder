@@ -28,10 +28,10 @@ export class SaasApiClient extends AdminApiClient {
     }
 
     async activate(saasToken: string): Promise<SaaSActivationResponse> {
-      return this.request<GetSaasResponse>('/api/saas/activate?saasToken=' + encodeURIComponent(saasToken), 'POST', { ecnryptedFields: [] }) as Promise<SaaSActivationResponse>;
+      return this.request<GetSaasResponse>('/api/saas/activate?saasToken=' + encodeURIComponent(saasToken), 'POST', { encryptedFields: [] }) as Promise<SaaSActivationResponse>;
     }
   
     async get(saasToken: string, useCache:boolean = true): Promise<GetSaasResponse> { // under the hood the request passes databaseIdHash from dbContext as soon as it gets it
-      return this.request<GetSaasResponse>('/api/saas?saasToken=' + encodeURIComponent(saasToken) + '&useCache=' + (useCache ? 'true' : 'false'), 'GET', { ecnryptedFields: [] }) as Promise<GetSaasResponse>;
+      return this.request<GetSaasResponse>('/api/saas?saasToken=' + encodeURIComponent(saasToken) + '&useCache=' + (useCache ? 'true' : 'false'), 'GET', { encryptedFields: [] }) as Promise<GetSaasResponse>;
     }
   }
