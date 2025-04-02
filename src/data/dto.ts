@@ -3,7 +3,7 @@ import { getCurrentTS } from "@/lib/utils";
 import { use } from 'react';
 
 export type DTOEncryptionSettings = {
-  ecnryptedFields: string[]
+  encryptedFields: string[]
 }
 
 export const configDTOSchema = z.object({
@@ -12,7 +12,7 @@ export const configDTOSchema = z.object({
   updatedAt: z.string().default(() => getCurrentTS()),
 });
 
-export const ConfigDTOEncSettings: DTOEncryptionSettings =  { ecnryptedFields: ['value'] }
+export const ConfigDTOEncSettings: DTOEncryptionSettings =  { encryptedFields: ['value'] }
 export type ConfigDTO = z.infer<typeof configDTOSchema>;
 
 export const keyDTOSchema = z.object({
@@ -28,7 +28,7 @@ export const keyDTOSchema = z.object({
   updatedAt: z.string().default(() => getCurrentTS()),
 });
 
-export const KeyDTOEncSettings: DTOEncryptionSettings =  { ecnryptedFields: [] }
+export const KeyDTOEncSettings: DTOEncryptionSettings =  { encryptedFields: [] }
 export type KeyDTO = z.infer<typeof keyDTOSchema>;
 
 
@@ -60,7 +60,7 @@ export const attachmentDTOSchema = z.object({
   // bc. we're using end 2 end encryption on the database level even JSON fields must be represented as string
   assignedTo: z.string().optional().nullable()
 });
-export const AttachmentDTOEncSettings = { ecnryptedFields: ['displayName', 'description', 'mimeType', 'type', 'json', 'extra'] };
+export const AttachmentDTOEncSettings = { encryptedFields: ['displayName', 'description', 'mimeType', 'type', 'json', 'extra'] };
 export type AttachmentDTO = z.infer<typeof attachmentDTOSchema>;
 
 export const databaseCreateRequestSchema = z.object({
@@ -236,7 +236,7 @@ export const agentDTOSchema = z.object({
   extra: z.string().optional().nullable()
 });
 export type AgentDTO = z.infer<typeof agentDTOSchema>;
-export const AgentDTOEncSettings: DTOEncryptionSettings = { ecnryptedFields: [] };
+export const AgentDTOEncSettings: DTOEncryptionSettings = { encryptedFields: [] };
 
 export const sessionDTOSchema = z.object({
   id: z.string().min(1),
@@ -252,7 +252,7 @@ export const sessionDTOSchema = z.object({
   finalizedAt: z.string().optional().nullable(),
 });
 export type SessionDTO = z.infer<typeof sessionDTOSchema>;
-export const SessionDTOEncSettings: DTOEncryptionSettings = { ecnryptedFields: [] };
+export const SessionDTOEncSettings: DTOEncryptionSettings = { encryptedFields: [] };
 
 
 export const resultDTOSchema = z.object({
@@ -267,7 +267,7 @@ export const resultDTOSchema = z.object({
   finalizedAt: z.string().optional().nullable(),
 });
 export type ResultDTO = z.infer<typeof resultDTOSchema>;
-export const ResultDTOEncSettings: DTOEncryptionSettings = { ecnryptedFields: [] };
+export const ResultDTOEncSettings: DTOEncryptionSettings = { encryptedFields: [] };
 
 export const calendarEventDTOSchema = z.object({
   id: z.string().min(1),
@@ -285,7 +285,7 @@ export const calendarEventDTOSchema = z.object({
   updatedAt: z.string().default(() => getCurrentTS()),
 });
 export type CalendarEventDTO = z.infer<typeof calendarEventDTOSchema>;
-export const CalendarEventDTOEncSettings: DTOEncryptionSettings = { ecnryptedFields: [] };
+export const CalendarEventDTOEncSettings: DTOEncryptionSettings = { encryptedFields: [] };
 
 const productAttributeSchema = z.object({
   name: z.string(),
@@ -336,6 +336,7 @@ const productImageSchema = z.object({
 
 export enum StorageSchemas  {
   Commerce = "commerce",
+  VectorStore = "vector-store",
   Default = ""
 }
 
@@ -387,7 +388,7 @@ export const productDTOSchema = z.object({
 
 export type ProductDTO = z.infer<typeof productDTOSchema>;
 export const ProductDTOEncSettings = {
-  ecnryptedFields: [
+  encryptedFields: [
   ],
 };
 
@@ -508,7 +509,7 @@ export const orderDTOSchema = z.object({
 
 export type OrderDTO = z.infer<typeof orderDTOSchema>;
 export const OrderDTOEncSettings = {
-  ecnryptedFields: [
+  encryptedFields: [
   ],
 };
 

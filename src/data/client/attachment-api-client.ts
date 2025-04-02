@@ -38,11 +38,11 @@ export class AttachmentApiClient extends AdminApiClient {
   
     async put(inputObject:PutAttachmentRequest): Promise<PutAttachmentResponse> {
       if (inputObject instanceof FormData) {
-        return this.request<PutAttachmentResponse>('/api/attachment', 'PUT', { ecnryptedFields: [] }, null, inputObject as FormData, undefined, {
+        return this.request<PutAttachmentResponse>('/api/attachment', 'PUT', { encryptedFields: [] }, null, inputObject as FormData, undefined, {
           'Storage-Schema': this.storageSchema
         }) as Promise<PutAttachmentResponse>;
       } else {
-        return this.request<PutAttachmentResponse>('/api/attachment', 'PUT', { ecnryptedFields: ['displayName'] }, inputObject as AttachmentDTO, undefined, undefined, {
+        return this.request<PutAttachmentResponse>('/api/attachment', 'PUT', { encryptedFields: ['displayName'] }, inputObject as AttachmentDTO, undefined, undefined, {
           'Storage-Schema': this.storageSchema
         }) as Promise<PutAttachmentResponse>;
       }
@@ -55,7 +55,7 @@ export class AttachmentApiClient extends AdminApiClient {
     }
 
     async delete(attachment: AttachmentDTO): Promise<DeleteAttachmentResponse> {
-      return this.request<DeleteAttachmentResponse>('/api/attachment/' + attachment.storageKey, 'DELETE', { ecnryptedFields: [] }, undefined, undefined, undefined,
+      return this.request<DeleteAttachmentResponse>('/api/attachment/' + attachment.storageKey, 'DELETE', { encryptedFields: [] }, undefined, undefined, undefined,
         {
           'Storage-Schema': this.storageSchema
         }
@@ -68,7 +68,7 @@ export class AttachmentApiClient extends AdminApiClient {
       return this.request<GetAttachmentPaginatedResponse>(
         `/api/attachment/query?${queryParams}`,
         "GET",
-        { ecnryptedFields: [] },
+        { encryptedFields: [] },
         undefined,
         undefined,
         undefined,

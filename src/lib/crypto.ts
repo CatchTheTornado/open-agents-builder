@@ -194,7 +194,7 @@ export class DTOEncryptionFilter<T> {
     private async process(dto: T, encryptionSettings?: DTOEncryptionSettings, processFn: (value: string) => Promise<string>): T {
       const result = {} as T;
       for (const key in dto) {
-        if ((encryptionSettings && encryptionSettings.ecnryptedFields.indexOf(key) >=0) || (!encryptionSettings && (typeof dto[key] === 'string' || typeof dto[key] === 'object'))) {
+        if ((encryptionSettings && encryptionSettings.encryptedFields.indexOf(key) >=0) || (!encryptionSettings && (typeof dto[key] === 'string' || typeof dto[key] === 'object'))) {
           result[key] = await processFn(dto[key] as string);
         } else {
           result[key] = dto[key];

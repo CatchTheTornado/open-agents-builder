@@ -293,6 +293,9 @@ OPENAI_API_KEY=
 # Resend.com API key
 RESEND_API_KEY=
 
+# Vector store engine (sqlite or disk, defaults to sqlite)
+VECTOR_STORE_ENGINE=sqlite
+
 # absoulte app url starting with http://
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 APP_URL=http://localhost:3000

@@ -806,5 +806,6 @@
   "For more details, please go to ": "Po więcej informacji otwórz ",
   "API Documentation page": "dokumentację API",
   "Your unique Database ID Hash is: ": "Twój Database ID Hash to: ",
-  "Database ID Hash has been copied to clipboard": "Database ID Hash został skopiowany do schowka!"
+  "Database ID Hash has been copied to clipboard": "Database ID Hash został skopiowany do schowka!",
+  "Short term memory": "Pamięć krótkotrwała"
 }

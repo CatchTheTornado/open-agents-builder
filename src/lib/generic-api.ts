@@ -135,7 +135,7 @@ export async function authorizeStorageSchema(request: Request, response?: NextRe
     if (storageSchema === StorageSchemas.Default) // default is empty string
         return storageSchema;
     
-    if (storageSchema && [StorageSchemas.Commerce, StorageSchemas.Default].includes(storageSchema as StorageSchemas)) {
+    if (storageSchema && [StorageSchemas.Commerce, StorageSchemas.Default, StorageSchemas.VectorStore].includes(storageSchema as StorageSchemas)) {
         return storageSchema;
     } else {
         throw new Error('Unauthorized. Wrong Storage Partition');

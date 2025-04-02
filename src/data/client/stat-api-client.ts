@@ -40,11 +40,11 @@ export class StatApiClient extends AdminApiClient {
     }
   
     async aggregated(): Promise<AggregatedStatsResponse> {
-      return this.request<AggregatedStatsResponse>('/api/stats/aggregated', 'GET', { ecnryptedFields: [] }) as Promise<AggregatedStatsResponse>;
+      return this.request<AggregatedStatsResponse>('/api/stats/aggregated', 'GET', { encryptedFields: [] }) as Promise<AggregatedStatsResponse>;
     }
   
     async aggregate(newItem: StatDTO): Promise<AggregateStatResponse> {
-      return this.request<AggregateStatResponse>('/api/stats', 'PUT', { ecnryptedFields: [] }, newItem) as Promise<AggregateStatResponse>;
+      return this.request<AggregateStatResponse>('/api/stats', 'PUT', { encryptedFields: [] }, newItem) as Promise<AggregateStatResponse>;
     }
    
   }

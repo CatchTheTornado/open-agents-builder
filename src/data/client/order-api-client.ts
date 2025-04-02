@@ -39,7 +39,7 @@ export class OrderApiClient extends AdminApiClient {
     return this.request<GetOrdersPaginatedResponse>(
       `/api/order?${queryParams}&agentId=${encodeURIComponent(params.agentId)}`,
       "GET",
-      { ecnryptedFields: [] }
+      { encryptedFields: [] }
     ) as Promise<GetOrdersPaginatedResponse>;
   }
 
@@ -50,14 +50,14 @@ export class OrderApiClient extends AdminApiClient {
       return this.request<GetOrdersPaginatedResponse>(
         `/api/order?id=${encodeURIComponent(orderId)}`,
         "GET",
-        { ecnryptedFields: [] } // w razie potrzeby szyfrowania
+        { encryptedFields: [] } // w razie potrzeby szyfrowania
       ) as Promise<GetOrdersPaginatedResponse>;
     } else {
       // lista wszystkich
       return this.request<GetOrdersPaginatedResponse>(
         `/api/order`,
         "GET",
-        { ecnryptedFields: [] }
+        { encryptedFields: [] }
       ) as Promise<GetOrdersPaginatedResponse>;
     }
   }
@@ -70,7 +70,7 @@ export class OrderApiClient extends AdminApiClient {
     return this.request<PutOrderResponse>(
       "/api/order",
       "PUT",
-      { ecnryptedFields: [] }, // np. szyfrowanie
+      { encryptedFields: [] }, // np. szyfrowanie
       order
     ) as Promise<PutOrderResponse>;
   }
@@ -83,7 +83,7 @@ export class OrderApiClient extends AdminApiClient {
     return this.request<DeleteOrderResponse>(
       `/api/order/${encodeURIComponent(orderId)}`,
       "DELETE",
-      { ecnryptedFields: [] }
+      { encryptedFields: [] }
     ) as Promise<DeleteOrderResponse>;
   }
 }

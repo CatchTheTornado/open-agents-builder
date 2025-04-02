@@ -22,6 +22,6 @@ export class TemplateApiClient extends AdminApiClient {
     }
 
     async delete(record: AgentDTO): Promise<DeleteAgentResponse> {
-      return this.request<DeleteAgentResponse>('/api/agent/template/' + record.id, 'DELETE', { ecnryptedFields: [] }) as Promise<DeleteAgentResponse>;
+      return this.request<DeleteAgentResponse>('/api/agent/template/' + record.id, 'DELETE', { encryptedFields: [] }) as Promise<DeleteAgentResponse>;
     }    
 }

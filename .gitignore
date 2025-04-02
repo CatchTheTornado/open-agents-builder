@@ -35,6 +35,25 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Package specific ignores
+src/packages/*/node_modules/
+src/packages/*/dist/
+src/packages/*/.next/
+src/packages/*/coverage/
+src/packages/*/.env
+src/packages/*/.env.*
+src/packages/*/npm-debug.log*
+src/packages/*/yarn-debug.log*
+src/packages/*/yarn-error.log*
+src/packages/*/.DS_Store
+src/packages/*/*.tsbuildinfo
+
 /data/*.sqlite
 data/db.sqlite
 /data/*

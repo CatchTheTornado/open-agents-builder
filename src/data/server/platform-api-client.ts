@@ -49,7 +49,7 @@ export class PlatformApiClient extends AdminApiClient {
         appId: string;
         language: string;
     }):Promise<UniversalApiResult>  {
-        return this.request<UniversalApiResult>('/api/users/create?apiKey=' + this.apiKey, 'POST', { ecnryptedFields: [] }, {
+        return this.request<UniversalApiResult>('/api/users/create?apiKey=' + this.apiKey, 'POST', { encryptedFields: [] }, {
             databaseIdHash,
             email,
             appId,
@@ -64,7 +64,7 @@ export class PlatformApiClient extends AdminApiClient {
         signedAt: string,
         code: string
     }): Promise<UniversalApiResult> {
-        return this.request<UniversalApiResult>('/api/terms' + qr(databaseIdHash, this.apiKey), 'POST', { ecnryptedFields: [] }, term) as Promise<UniversalApiResult>;
+        return this.request<UniversalApiResult>('/api/terms' + qr(databaseIdHash, this.apiKey), 'POST', { encryptedFields: [] }, term) as Promise<UniversalApiResult>;
     }
 
     async saveEvent(databaseIdHash:string, event: {
@@ -73,20 +73,20 @@ export class PlatformApiClient extends AdminApiClient {
         params?: any | null | undefined;
         createdAt?: Date | null | undefined;
     }): Promise<UniversalApiResult> {
-        return this.request<UniversalApiResult>('/api/events' + qr(databaseIdHash, this.apiKey), 'POST', { ecnryptedFields: [] }, event) as Promise<UniversalApiResult>;
+        return this.request<UniversalApiResult>('/api/events' + qr(databaseIdHash, this.apiKey), 'POST', { encryptedFields: [] }, event) as Promise<UniversalApiResult>;
     }
 
     async saveStats(databaseIdHash:string, stat: StatDTO & {
         databaseIdHash: string;
     }): Promise<UniversalApiResult> {
-        return this.request<UniversalApiResult>('/api/stats?databaseIdHash=' + encodeURIComponent(databaseIdHash), 'POST', { ecnryptedFields: [] }, stat) as Promise<UniversalApiResult>;
+        return this.request<UniversalApiResult>('/api/stats?databaseIdHash=' + encodeURIComponent(databaseIdHash), 'POST', { encryptedFields: [] }, stat) as Promise<UniversalApiResult>;
     }
 
     async newDatabase(dbData: {
         databaseIdHash: string;
         createdAt: string;
     }): Promise<UniversalApiResult> {
-        return this.request<UniversalApiResult>('/api/db/new?apiKey=' + encodeURIComponent(this.apiKey), 'POST', { ecnryptedFields: [] }, dbData) as Promise<UniversalApiResult>;
+        return this.request<UniversalApiResult>('/api/db/new?apiKey=' + encodeURIComponent(this.apiKey), 'POST', { encryptedFields: [] }, dbData) as Promise<UniversalApiResult>;
     }
 
 }

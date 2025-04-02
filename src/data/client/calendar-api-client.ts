@@ -47,6 +47,6 @@ export class CalendarEventApiClient extends AdminApiClient {
     }
 
     async delete(record: CalendarEventDTO): Promise<DeleteCalendarEventResponse> {
-      return this.request<DeleteCalendarEventResponse>('/api/calendar/' + record.id, 'DELETE', { ecnryptedFields: [] }) as Promise<DeleteCalendarEventResponse>;
+      return this.request<DeleteCalendarEventResponse>('/api/calendar/' + record.id, 'DELETE', { encryptedFields: [] }) as Promise<DeleteCalendarEventResponse>;
     }    
 }

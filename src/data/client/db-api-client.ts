@@ -48,19 +48,19 @@ export class DbApiClient extends AdminApiClient {
     }
   
     async create(createRequest:DatabaseCreateRequestDTO): Promise<CreateDbResponse> {
-      return this.request<CreateDbResponse>('/api/db/create', 'POST', { ecnryptedFields: [] }, createRequest) as Promise<CreateDbResponse>;
+      return this.request<CreateDbResponse>('/api/db/create', 'POST', { encryptedFields: [] }, createRequest) as Promise<CreateDbResponse>;
     }
   
     async authorizeChallenge(authorizeChallengeRequest: DatabaseAuthorizeChallengeRequestDTO): Promise<AuthorizeDbChallengeResponse> {
-       return this.request<AuthorizeDbChallengeResponse>('/api/db/challenge?databaseIdHash=' + encodeURIComponent(authorizeChallengeRequest.databaseIdHash), 'POST', { ecnryptedFields: [] }, authorizeChallengeRequest) as Promise<AuthorizeDbChallengeResponse>;
+       return this.request<AuthorizeDbChallengeResponse>('/api/db/challenge?databaseIdHash=' + encodeURIComponent(authorizeChallengeRequest.databaseIdHash), 'POST', { encryptedFields: [] }, authorizeChallengeRequest) as Promise<AuthorizeDbChallengeResponse>;
     }
 
     async authorize(authorizeRequest: DatabaseAuthorizeRequestDTO): Promise<AuthorizeDbResponse> {
-      return this.request<AuthorizeDbResponse>('/api/db/authorize?databaseIdHash=' + encodeURIComponent(authorizeRequest.databaseIdHash), 'POST', { ecnryptedFields: [] }, authorizeRequest) as Promise<AuthorizeDbResponse>;
+      return this.request<AuthorizeDbResponse>('/api/db/authorize?databaseIdHash=' + encodeURIComponent(authorizeRequest.databaseIdHash), 'POST', { encryptedFields: [] }, authorizeRequest) as Promise<AuthorizeDbResponse>;
    }
 
    async refresh(refreshRequest: DatabaseRefreshRequestDTO): Promise<RefreshDbResponse> {
-    return this.request<AuthorizeDbResponse>('/api/db/refresh', 'POST', { ecnryptedFields: [] }, refreshRequest) as Promise<AuthorizeDbResponse>;
+    return this.request<AuthorizeDbResponse>('/api/db/refresh', 'POST', { encryptedFields: [] }, refreshRequest) as Promise<AuthorizeDbResponse>;
  }   
 
   }
