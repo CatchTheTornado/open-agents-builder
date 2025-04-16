@@ -156,19 +156,15 @@ export async function POST(req: NextRequest) {
                 pdfExtractText: false,
               });
 
-              message.parts = [{
-                type: "text",
-                text: message.content as string,
-              }]
+              message.experimental_attachments = [];
 
               for (const v in filesToUpload) {
                 if (filesToUpload[v]) {
                   const fileMapper = (key: string, fileBase64: string) => {
                     if (getMimeType(fileBase64)?.startsWith("image")) {
-                      (message.parts as Array<ImagePart>).push({
-                        type: "image",
-                        image: fileBase64,
-                        mimeType: getMimeType(fileBase64) || "application/octet-stream",
+                      message.experimental_attachments.push({
+                        url: fileBase64,
+                        contentType: getMimeType(fileBase64) || "application/octet-stream",
                       });
                     } else {
                       (message.parts as Array<TextPart>).push({
@@ -186,7 +182,6 @@ export async function POST(req: NextRequest) {
                 }                
               }                           
         }
-        Object.assign(message, { experimental_attachments: null }) // move it to prev_sent_attachments to avoid sending it to the LLM again
         console.log(message);
       }
     } catch (err) {
