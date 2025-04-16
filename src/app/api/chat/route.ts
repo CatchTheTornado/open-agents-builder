@@ -162,7 +162,7 @@ export async function POST(req: NextRequest) {
                 if (filesToUpload[v]) {
                   const fileMapper = (key: string, fileBase64: string) => {
                     if (getMimeType(fileBase64)?.startsWith("image")) {
-                      message.experimental_attachments.push({
+                      message.experimental_attachments.push({ // TODO: prevent multiple uploads
                         url: fileBase64,
                         contentType: getMimeType(fileBase64) || "application/octet-stream",
                       });
