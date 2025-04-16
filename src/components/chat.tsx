@@ -58,86 +58,88 @@ export function Chat({ headers, welcomeMessage, displayName, messages, handleInp
       <CardFooter>
         <form
           onSubmit={event => {
-        if (handleSubmit)
-          handleSubmit(event, {
-            headers: headers ?? {},
-            experimental_attachments: files,
-          });
+            if (handleSubmit)
+              handleSubmit(event, {
+                headers: headers ?? {},
+                experimental_attachments: files,
+              });
 
-        setFiles(undefined);
+            if (input) {
+              setFiles(undefined);
 
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
+              if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+              }
+            }
           }}
           className="flex flex-col w-full space-y-2"
         >
           {!isReadonly ? (
-        <>
-          {files && (
-            <div className="flex flex-wrap gap-2">
-          {Array.from(files).map((file, index) => (
-            <div key={index} className="flex items-center space-x-2 bg-muted p-2 rounded">
-              <span className="text-sm">{file.name}</span>
-              <Button
-              variant="ghost"
-            type="button"
-            onClick={() => {
-              const removeFile = (prvFiles: FileList) => {
-                const updatedFiles = Array.from(prvFiles).filter ((_, i) => i !== index)
-                const dt = new DataTransfer();
-                updatedFiles.forEach(file => dt.items.add(file));
-                return dt.files;
-              }
+            <>
+              {files && (
+                <div className="flex flex-wrap gap-2">
+                  {Array.from(files).map((file, index) => (
+                    <div key={index} className="flex items-center space-x-2 bg-muted p-2 rounded">
+                      <span className="text-sm">{file.name}</span>
+                      <Button
+                        variant="ghost"
+                        type="button"
+                        onClick={() => {
+                          const removeFile = (prvFiles: FileList) => {
+                            const updatedFiles = Array.from(prvFiles).filter((_, i) => i !== index)
+                            const dt = new DataTransfer();
+                            updatedFiles.forEach(file => dt.items.add(file));
+                            return dt.files;
+                          }
 
-              setFiles(prvFiles => prvFiles ? removeFile(prvFiles) : undefined);
-            }}
-            className=""
-              >
-            <TrashIcon size={16} />
-              </Button>
-            </div>
-          ))}
-            </div>
-          )}
-          <div className="flex items-center space-x-2">
-            <Input
-          value={input}
-          onChange={handleInputChange}
-          placeholder={t('Type your message...')}
-          className="flex-grow"
-            />
-            <Button
-          type="button"
-          variant="secondary"
-          onClick={() => fileInputRef.current?.click()}
-          className="flex items-center"
-            >
-          <PaperclipIcon />
-            </Button>
-            <Input
-          type="file"
-          className="hidden"
-          onChange={event => {
-            if (event.target.files) {
-              const dt = new DataTransfer();
-              if (files) {
-            Array.from(files).forEach(file => dt.items.add(file));
-              }
-              Array.from(event.target.files).forEach(file => dt.items.add(file));
-              setFiles(dt.files);
-            } else {
-              setFiles(event.target.files);
-            }
-          }}
-          multiple
-          ref={fileInputRef}
-            />
-            <Button type="submit" disabled={isLoading}>
-          {t('Send')}
-            </Button>
-          </div>
-        </>
+                          setFiles(prvFiles => prvFiles ? removeFile(prvFiles) : undefined);
+                        }}
+                        className=""
+                      >
+                        <TrashIcon size={16} />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center space-x-2">
+                <Input
+                  value={input}
+                  onChange={handleInputChange}
+                  placeholder={t('Type your message...')}
+                  className="flex-grow"
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center"
+                >
+                  <PaperclipIcon />
+                </Button>
+                <Input
+                  type="file"
+                  className="hidden"
+                  onChange={event => {
+                    if (event.target.files) {
+                      const dt = new DataTransfer();
+                      if (files) {
+                        Array.from(files).forEach(file => dt.items.add(file));
+                      }
+                      Array.from(event.target.files).forEach(file => dt.items.add(file));
+                      setFiles(dt.files);
+                    } else {
+                      setFiles(event.target.files);
+                    }
+                  }}
+                  multiple
+                  ref={fileInputRef}
+                />
+                <Button type="submit" disabled={isLoading}>
+                  {t('Send')}
+                </Button>
+              </div>
+            </>
           ) : null}
         </form>
       </CardFooter>

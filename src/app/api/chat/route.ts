@@ -5,7 +5,7 @@ import ServerSessionRepository from '@/data/server/server-session-repository';
 import ServerStatRepository from '@/data/server/server-stat-repository';
 import { AuthorizedSaaSContext, authorizeSaasContext } from '@/lib/generic-api';
 import { renderPrompt } from '@/lib/templates';
-import { CoreMessage, Tool, streamText, tool } from 'ai';
+import { CoreMessage, ImagePart, Message, TextPart, Tool, convertToCoreMessages, streamText, tool } from 'ai';
 import { nanoid } from 'nanoid';
 import { NextRequest } from 'next/server';
 import { ZodObject } from 'zod';
@@ -14,6 +14,7 @@ import { llmProviderSetup } from '@/lib/llm-provider';
 import { getErrorMessage } from '@/lib/utils';
 import { createUpdateResultTool } from '@/tools/updateResultTool';
 import { validateTokenQuotas } from '@/lib/quotas';
+import { getMimeType, processFiles } from '@/lib/file-extractor';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -87,7 +88,7 @@ export function prepareAgentTools({
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages }: { messages: CoreMessage[] } = await req.json();
+    const { messages }: { messages: Message[] } = await req.json();
     const databaseIdHash = req.headers.get('Database-Id-Hash');
     const sessionId = req.headers.get('Agent-Session-Id') || nanoid();
     const agentId = req.headers.get('Agent-Id');
@@ -134,13 +135,71 @@ export async function POST(req: NextRequest) {
     const systemPrompt = await renderPrompt(locale, promptName, { session: existingSession, agent, events: agent.events, currentDateTimeIso, currentLocalDateTime, currentTimezone });
 
     messages.unshift( {
+      id: nanoid(),
       role: 'system',
       content: systemPrompt
     })
 
+
+    try {
+      for (const message of messages) {
+        if (message.experimental_attachments) {
+
+              const attachmentsToProcess:Record<string, string> = {};
+              message.experimental_attachments.forEach((attachment) => {
+                attachmentsToProcess[attachment.name ?? 'default'] = attachment.url;
+              });
+
+              // Convert PDF to images or other processing
+              const filesToUpload = processFiles({
+                inputObject: attachmentsToProcess,
+                pdfExtractText: false,
+              });
+
+              message.parts = [{
+                type: "text",
+                text: message.content as string,
+              }]
+
+              for (const v in filesToUpload) {
+                if (filesToUpload[v]) {
+                  const fileMapper = (key: string, fileBase64: string) => {
+                    if (getMimeType(fileBase64)?.startsWith("image")) {
+                      (message.parts as Array<ImagePart>).push({
+                        type: "image",
+                        image: fileBase64,
+                        mimeType: getMimeType(fileBase64) || "application/octet-stream",
+                      });
+                    } else {
+                      (message.parts as Array<TextPart>).push({
+                        type: "text",
+                        text: `${fileBase64}`,
+                      });
+                    }
+                  };
+      
+                  if (Array.isArray(filesToUpload[v])) {
+                    filesToUpload[v].forEach((fc) => fileMapper(v, fc as string));
+                  } else {
+                    fileMapper(v, filesToUpload[v] as string);
+                  }
+                }                
+              }                           
+        }
+        Object.assign(message, { experimental_attachments: null }) // move it to prev_sent_attachments to avoid sending it to the LLM again
+        console.log(message);
+      }
+    } catch (err) {
+      console.error("Error converting files", err);
+    }
+
+
     const result = await streamText({
       model: llmProviderSetup(),
       maxSteps: 10,  
+      onError: (error) => {
+        console.error('Error in streaming:', error);
+      },
       async onFinish({ response, usage }) {
         const chatHistory = [...messages, ...response.messages]
         existingSession = await sessionRepo.upsert({

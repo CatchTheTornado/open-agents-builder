@@ -1,4 +1,4 @@
-import { Message } from "ai";
+import { Attachment, Message } from "ai";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import styles from './chat.module.css';
@@ -7,7 +7,6 @@ import { TimerIcon } from "lucide-react";
 import { ChatMessageToolResponse } from "./chat-message-tool-response";
 import { ChatMessageMarkdown } from "./chat-message-markdown";
 import { ImageAttachments } from './image-attachments';
-import { Attachment } from './chat';
 
 export enum DisplayToolResultsMode {
     None = 'none',
@@ -36,7 +35,10 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                         </div>
                     ) : null}
                     {m.experimental_attachments && (
-                        <ImageAttachments attachments={JSON.parse(m.experimental_attachments as unknown as string) as Attachment[]} />
+                        <ImageAttachments attachments={m.experimental_attachments as Attachment[]} />
+                    )}
+                    {m.prev_sent_attachments && (
+                        <ImageAttachments attachments={m.prev_sent_attachments as Attachment[]} />
                     )}
                     {m.content && typeof m.content === 'string' ? (
                         <ChatMessageMarkdown>{m.content}</ChatMessageMarkdown>

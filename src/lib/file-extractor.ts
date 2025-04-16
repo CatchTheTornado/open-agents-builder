@@ -68,6 +68,7 @@ export function convertPdfToImages(pdfPath: string, outputPrefix: string): strin
     } catch (error) {
       console.error(`Failed to remove temporary file: ${fullPath}`, error);
     }
+    return base64Encoded;
   });
 
   return base64Images;
