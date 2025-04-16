@@ -63,6 +63,7 @@ export function convertPdfToImages(pdfPath: string, outputPrefix: string): strin
     const data = readFileSync(fullPath);
     // Optionally prefix with "data:image/png;base64," for consistency
     const base64Encoded = `data:image/png;base64,${data.toString('base64')}`;
+    unlinkSync(fullPath); // remove temp file
     return base64Encoded;
   });
 
