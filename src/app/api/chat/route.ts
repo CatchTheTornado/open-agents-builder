@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
 
 
     try {
-      for (const message of messages) {
+      for (const message of messages) { // TODO: extract to a function so it can be re-used in the other chat endpoints
         if (message.experimental_attachments) {
 
               const attachmentsToProcess:Record<string, string> = {};
