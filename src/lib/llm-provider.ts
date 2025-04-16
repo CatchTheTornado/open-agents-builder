@@ -1,5 +1,5 @@
 import { openai } from "@ai-sdk/openai";
-import { createOllama } from "ollama-ai-provider";
+import { createOllama, OllamaProvider } from "ollama-ai-provider";
 
 enum LLMProviderType {
   OPENAI = "openai",
@@ -7,18 +7,18 @@ enum LLMProviderType {
 }
 
 type LLMConfiguration = {
-  factory: typeof openai | typeof createOllama;
+  provider: typeof openai | OllamaProvider;
   model: string;
   settings?: Record<string, unknown>;
 };
 
 const llmConfigurations: Record<LLMProviderType, LLMConfiguration> = {
   [LLMProviderType.OPENAI]: {
-    factory: openai,
+    provider: openai,
     model: process.env.LLM_MODEL || "gpt-4o",
   },
   [LLMProviderType.OLLAMA]: {
-    factory: createOllama,
+    provider: createOllama({ baseURL: process.env.OLLAMA_URL }),
     model: process.env.LLM_MODEL || "llama3.1",
     settings: { simulateStreaming: true, structuredOutputs: true },
   },
@@ -35,7 +35,7 @@ export function llmProviderSetup() {
     );
   }
 
-  const { factory, model, settings } = configuration;
+  const { provider, model, settings } = configuration;
 
-  return factory(model, settings);
+  return provider(model, settings);
 }
