@@ -1,7 +1,7 @@
 import type { Metadata, ResolvingMetadata } from "next";
 import { ExecApiClient } from "@/data/client/exec-api-client";
 import { Agent } from "@/data/client/models";
-import { defaultMetadata } from "@/app/layout"; 
+import { metadata } from "@/app/layout"; 
 // zakładam, że defaultMetadata masz wyeksportowane w swoim głównym layout.tsx
 // ewentualnie możesz tu wpisać "na sztywno" lub wstawić import z innego pliku
 
@@ -18,17 +18,15 @@ export async function generateMetadata(
   parent: ResolvingMetadata
 ): Promise<Metadata> {
 
-  // tu zamiast wyciągać X-Path z nagłówków, bazujemy bezpośrednio na params:
   const { databaseIdHash, id } = params;
 
-  // Zbuduj clienta i pobierz agent-info tak jak wcześniej:
   try {
     const client = new ExecApiClient(databaseIdHash, process.env.NEXT_PUBLIC_APP_URL);
     const agt = Agent.fromDTO((await client.agent(id)).data);
 
     return {
       title: agt.options?.ogTitle ?? agt.displayName,
-      description: agt.options?.ogDescription ?? agt.options?.welcomeMessage ?? defaultMetadata.description,
+      description: agt.options?.ogDescription ?? agt.options?.welcomeMessage ?? metadata.description,
       openGraph: {
         images: agt.icon 
           ? [agt.icon]
@@ -40,7 +38,7 @@ export async function generateMetadata(
   }
 
   // Fallback:
-  return defaultMetadata;
+  return metadata;
 }
 
 export default function ChatAgentLayout({
@@ -50,8 +48,6 @@ export default function ChatAgentLayout({
   children: React.ReactNode;
   params: { databaseIdHash: string; id: string; locale: string };
 }) {
-  // Ten layout jest czysto serwerowy, nie używamy tu useState, useEffect, etc.
-  // Renderujemy layout kliencki (nasz dotychczasowy 'use client') – i dopiero w nim używamy hooki.
 
   return (
     <ChatLayoutClient params={params}>
