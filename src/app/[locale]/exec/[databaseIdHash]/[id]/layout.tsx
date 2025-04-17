@@ -24,10 +24,10 @@ export async function generateMetadata(
     const agt = Agent.fromDTO((await client.agent(id)).data);
 
     return {
-      title: agt.options?.ogTitle ?? agt.displayName,
+      title: agt.options?.ogTitle || agt.displayName,
       description:
-        agt.options?.ogDescription ??
-        agt.options?.welcomeMessage ??
+        agt.options?.ogDescription ||
+        agt.options?.welcomeMessage ||
         metadata.description,
       openGraph: {
         images: agt.icon
