@@ -9,13 +9,12 @@ Open Agents Builder is an Enterprise Grade AI Agents development platform:
 - 🕸️ Publish the flows as API. [Read more on Flows API](https://docs.openagentsbuilder.com/api/20-executing-flow/),
 - 📆 All business features like: **Order Managemnt (OMS), Product Information (PIM), CPQ, Customers, Bookings/Calendar, Custom Entitie**s - all included within UI. [Check the features included...](https://docs.openagentsbuilder.com/guides/3-batteries-included/),
 - 👩🏽‍💻 Use Open Agents Builder as an **App Backend** - full API support for any type of entities managable in the backend. [Read more on the architecture and concepts...](https://docs.openagentsbuilder.com/guides/2-concepts/),
-- 🔧 Use Vercel AI tools  to integrate 3rd party systems and give the AI business services (like `createOrderTool`, `createCalendarEventTool`, `listProductsTool`, vector DB support - **all basic tools are included***). [Read on how to build your own custom tools...](https://docs.openagentsbuilder.com/extensibility/20-new-tool-integration/)
+- 🔧 Use Vercel AI tools to integrate 3rd party systems and give the AI business services (like `createOrderTool`, `createCalendarEventTool`, `listProductsTool`, vector DB support - **all basic tools are included\***). [Read on how to build your own custom tools...](https://docs.openagentsbuilder.com/extensibility/20-new-tool-integration/)
 - 🛠️ Enterprise features like **audit logs, permissions, sharing, data encryption** are all included. [Read more on our Battteries included approach...](https://docs.openagentsbuilder.com/guides/3-batteries-included/)
 - 👩‍💼 **Customer facing apps** support - by the interactive Chat interface - included,
 - **API keys management, permissions, statistics** - all the features enterprises like - included.
 
 [Read more about the idea](https://www.linkedin.com/pulse/open-agents-builder-live-help-us-bring-agentic-real-piotr-karwatka-pxanf/?trackingId=bHtUgZu1R6mZaF5M%2F2yUqg%3D%3D)
-
 
 💵 **Production grade Business Agents** within hours. With Open Agents Builder you are able to build the fully fledge POC (Proof of Concept) app for your Business Stakeholders **within hours, not days**.
 
@@ -24,7 +23,6 @@ Open Agents Builder is an Enterprise Grade AI Agents development platform:
 ### Hackers?
 
 Design the flows visually and then integrate it via API with your existing apps or generate the TypeScript code for [flows-ai](https://github.com/callstackincubator/flows-ai)
-
 
 <table>
     <tr>
@@ -42,10 +40,10 @@ Design the flows visually and then integrate it via API with your existing apps 
 </table>
 
 ### Business users?
+
 Cooperate with developers - all your business logic changes (using natural language) are immediately available via API!
 
-Create a customer facing agent, get a unique link, send it to the users or call it via API! 
-
+Create a customer facing agent, get a unique link, send it to the users or call it via API!
 
 <table>
     <tr>
@@ -84,21 +82,19 @@ Create a customer facing agent, get a unique link, send it to the users or call 
     </tr>    
 </table>
 
-
 ## Cloud version / live demo
 
 <a href="https://openagentsbuilder.com">
     <img src=".readme-assets/create-account.png" />
 </a>
 
-You can run OAB on your local machine/server or You can try out Open Agents builder for free in the cloud:  
+You can run OAB on your local machine/server or You can try out Open Agents builder for free in the cloud:
 
 <a href="https://openagentsbuilder.com">Start creating your own Agent within minutes!</a>
 
 ## Agent templates - apps made with Open Agents Builder
 
 Here are some online examples of agents built with OAB. You can start modifying them right now for your use case once <a href="https://openagentsbuilder.com">registered for a free demo</a>.
-
 
 <table>
     <tr>
@@ -124,7 +120,6 @@ Here are some online examples of agents built with OAB. You can start modifying 
     </tr>
 </table>
 
-
 ## Build AI Agents for Business: Bookings, Intake forms, Orders, Support, Integrations ....
 
 Open Agents Builder let you create custom AI agents for Business. You can create the **customer facing** agents or **complex business workflows** that:
@@ -141,6 +136,7 @@ Open Agents Builder let you create custom AI agents for Business. You can create
 - 🛠️ are able to call all set of tools - sending e-mails, accessing calendar, external CRM's, data sources etc.
 
 It can literally replace dozen other SaaS tools like:
+
 - eCommerce,
 - B2B,
 - CPQ,
@@ -177,13 +173,13 @@ Here is a basic example of how to use the API client:
 import { OpenAgentsBuilderClient } from "open-agents-builder-client";
 
 const client = new OpenAgentsBuilderClient({
-    baseUrl: "https://app.openagentsbuilder.com",  // optional, defaults to this if omitted
-    databaseIdHash: process.env.DATABASE_ID_HASH ?? '',  // optional, defaults to this if omitted
-    apiKey: process.env.OPEN_AGENTS_BUILDER_API_KEY ?? ''  // required
+  baseUrl: "https://app.openagentsbuilder.com", // optional, defaults to this if omitted
+  databaseIdHash: process.env.DATABASE_ID_HASH ?? "", // optional, defaults to this if omitted
+  apiKey: process.env.OPEN_AGENTS_BUILDER_API_KEY ?? "", // required
 });
 
 client.agent.listAgents().then((response) => {
-    console.log(response);
+  console.log(response);
 });
 ```
 
@@ -218,9 +214,9 @@ client.agent.listAgents().then((response) => {
 
 Read on how to [extend Open Agents Builder](https://docs.openagentsbuilder.com/extensibility/10-new-entity-admin/)
 
-## Use Cases 
+## Use Cases
 
-Open Agents Builder is a very simple tool you can run on your own or use the [hosted version](https://openagentsbuilder.com). 
+Open Agents Builder is a very simple tool you can run on your own or use the [hosted version](https://openagentsbuilder.com).
 
 ### E-commerce
 
@@ -238,7 +234,7 @@ Use the Calendar module to let the users sign up for your services finding the m
 
 Share the link of the Agent with your patient/customers no matter if you are a medicine doctor either physio-terapist, trainer etc. The results will let you **save tons of time** preparing for the visit.
 
-### Scheduling 
+### Scheduling
 
 Tired of using **Calendly** or **Cal.com**? Send them the agent which will let the users schedule calls with you based on your availability + already scheduled events.
 
@@ -271,13 +267,13 @@ Install required dependencies: `poppler` and `markitdown`:
 pip install markitdown
 pip install poppler-utils
 ```
+
 or - install `pipx` using `brew install pipx` (on Mac) or `apt-get install pipx` (on Debian) for managing your defualt Python 3 env automatically, and run:
 
 ```bash
 pipx install markitdown
 pipx install poppler
 ```
-
 
 Now, edit the `ENV` variables:
 
@@ -316,6 +312,27 @@ yarn dev
 ```
 
 That's it! Now you can get open your browser and navigate to: https://localhost:3000
+
+## Ollama Integration
+
+Open Agents Builder supports Ollama as an alternative LLM provider to OpenAI. Allowing you to run Ollama models on your own infrastructure.
+
+### Configuration
+
+To use Ollama with Open Agents Builder, set the following environment variables in `.env.local`:
+
+```bash
+# Select Ollama as the LLM provider
+LLM_PROVIDER=ollama
+
+# Set the Ollama API endpoint (default for local installation)
+OLLAMA_URL=http://localhost:11434/api
+
+# Specify which model to use (defaults to llama3.1 if not specified)
+LLM_MODEL=llama3.1
+```
+
+Ensure that the `OLLAMA_URL` is set to `<base-url>/api` so that the correct endpoints for Ollama are used.
 
 ## License
 
