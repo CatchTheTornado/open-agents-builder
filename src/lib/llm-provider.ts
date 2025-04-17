@@ -26,7 +26,7 @@ const llmConfigurations: Record<LLMProviderType, LLMConfiguration> = {
 
 export function llmProviderSetup() {
   const providerType = process.env.LLM_PROVIDER as LLMProviderType;
-  const configuration = llmConfigurations[providerType];
+  const configuration = llmConfigurations[providerType || "openai"];
 
   if (!configuration) {
     const supportedProviders = Object.values(LLMProviderType).join(", ");
