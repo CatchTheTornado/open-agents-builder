@@ -10,7 +10,7 @@ import { githubDarkTheme } from '@uiw/react-json-view/githubDark';
 import { useCopyToClipboard } from "react-use";
 import { toast } from "sonner";
 
-export function ChatMessageToolResponse( { args, result }: { args: any, result: any}) {
+export function ChatMessageToolResponse( { args, result }: { args?: any, result: any}) {
     const { t } = useTranslation();
     const { theme, systemTheme } = useTheme();
     const currentTheme = (theme === 'system' ? systemTheme : theme)

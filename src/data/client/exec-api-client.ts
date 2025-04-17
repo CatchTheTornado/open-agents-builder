@@ -1,6 +1,7 @@
 import { BaseApiClient } from "./base-api-client";
-import { AgentDTO } from "../dto";
+import { AgentDTO, StorageSchemas } from "../dto";
 import { ExecInitFormType } from "@/contexts/exec-context";
+import { PutAttachmentRequest, PutAttachmentResponse } from "./attachment-api-client";
 
 export type GetAgentsResponse = {
   message: string;
@@ -41,6 +42,17 @@ export class ExecApiClient extends BaseApiClient {
     }
     async agent(agentId:string): Promise<GetAgentsResponse> {
       return await (this.request<GetAgentsResponse>('/api/exec/agent/' + encodeURIComponent(agentId) , 'GET') as Promise<GetAgentsResponse>);
+    }
+
+
+    async upload(inputObject:PutAttachmentRequest): Promise<PutAttachmentResponse> {
+      if (inputObject instanceof FormData) {
+        return this.sendForm<PutAttachmentResponse>('/api/chat/upload', 'PUT',  {
+          'Storage-Schema': StorageSchemas.Default,
+        }, inputObject as FormData) as Promise<PutAttachmentResponse>;
+      } else {
+        throw new Error('Invalid input type. Expected FormData - which is only form data supported for the public chat.');
+      }
     }
 
     async saveInitForm(sessionId: string, formData: ExecInitFormType): Promise<SaveSessionResponse> {
