@@ -14,7 +14,7 @@ import { llmProviderSetup } from '@/lib/llm-provider';
 import { getErrorMessage } from '@/lib/utils';
 import { createUpdateResultTool } from '@/tools/updateResultTool';
 import { validateTokenQuotas } from '@/lib/quotas';
-import { getMimeType, processFiles } from '@/lib/file-extractor';
+import { getMimeType, processChatAttachments, processFiles } from '@/lib/file-extractor';
 import fetch from 'node-fetch';
 
 // Allow streaming responses up to 30 seconds
@@ -143,76 +143,7 @@ export async function POST(req: NextRequest) {
 
 
     try {
-      const processAttachments = async (messages: Message[]) => {
-        for (const message of messages) { // TODO: extract to a function so it can be re-used in the other chat endpoints
-          if (message.experimental_attachments) {
-
-            const processedAttachments = []
-            const attachmentsToProcess: Record<string, string> = {};
-            for (const attachment of message.experimental_attachments) {
-              if (!attachment.contentType?.startsWith("image")) { // we do not need to process images
-                if (attachment.url.startsWith("http://") || attachment.url.startsWith("https://")) {
-                  try {
-                    const response = await fetch(attachment.url); // get the file from the URL to process it
-                    if (response.ok) {
-                      const buffer = await response.arrayBuffer();
-                      const base64String = Buffer.from(buffer).toString('base64');
-                      attachmentsToProcess[attachment.name ?? 'default'] = `data:${attachment.contentType};base64,${base64String}`;
-                    } else {
-                      console.error(`Failed to fetch file from URL: ${attachment.url}, Status: ${response.status}`);
-                    }
-                  } catch (error) {
-                    console.error(`Error fetching file from URL: ${attachment.url}`, error);
-                  }
-                } else {
-                  attachmentsToProcess[attachment.name ?? 'default'] = attachment.url;
-                }
-              } else {
-                processedAttachments.push(attachment);
-              }
-            }
-
-            // Convert PDF to images or other processing
-            const filesToUpload = processFiles({
-              inputObject: attachmentsToProcess,
-              pdfExtractText: false,
-            });
-
-            console.log(filesToUpload)
-            message.experimental_attachments = []; //
-
-            for (const v in filesToUpload) {
-              if (filesToUpload[v]) {
-                const fileMapper = (key: string, fileBase64: string) => {
-                  if (getMimeType(fileBase64)?.startsWith("image")) {
-                    processedAttachments.push({ // TODO: prevent multiple uploads
-                      url: fileBase64,
-                      contentType: getMimeType(fileBase64) || "application/octet-stream",
-                    });
-                  } else {
-                    (message.parts as Array<TextPart>).push({
-                      type: "text",
-                      text: `${fileBase64}`,
-                    });
-                  }
-                };
-
-                if (Array.isArray(filesToUpload[v])) {
-                  filesToUpload[v].forEach((fc) => fileMapper(v, fc as string));
-                } else {
-                  fileMapper(v, filesToUpload[v] as string);
-                }
-              }
-            }
-
-            message.experimental_attachments = processedAttachments;
-          }
-          console.log(message);
-        }
-        return messages;
-      }
-
-      messages = await processAttachments(messages);
+      messages = await processChatAttachments(messages);
     } catch (err) {
       console.error("Error converting files", err);
     }

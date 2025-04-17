@@ -14,15 +14,17 @@ import { createCreateOrderTool } from '@/tools/createOrderTool';
 import { createListProductsTool } from '@/tools/listProductsTool';
 import { createOrderListTool } from '@/tools/ordersListTool';
 import { createUpdateResultTool } from '@/tools/updateResultTool';
-import { CoreMessage, streamText } from 'ai';
+import { CoreMessage, Message, streamText } from 'ai';
 import { NextRequest } from 'next/server';
+import { processChatAttachments } from '@/lib/file-extractor';
+import { nanoid } from 'nanoid';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages }: { messages: CoreMessage[] } = await req.json();
+    let { messages }: { messages: Message[] } = await req.json();
     const databaseIdHash = req.headers.get('Database-Id-Hash');
     const agentId = req.headers.get('Agent-Id');
     const locale = req.headers.get('Agent-Locale') || 'en';
@@ -72,15 +74,23 @@ export async function POST(req: NextRequest) {
       return {
         role: 'system',
         content: `Session Id: ${result.sessionId}, E-mail: ${result.userEmail} User name: ${result.userName} [created at: ${result.createdAt}] - ${result.content}`
-      } as CoreMessage
+      } as Message
     })
 
     const systemPrompt = await renderPrompt(locale, 'results-chat', { agent, currentDateTimeIso, currentLocalDateTime, currentTimezone  });
 
     messages.unshift({
+      id: nanoid(),
       role: 'system',
       content: systemPrompt
-    } as CoreMessage, ...resultMessages)
+    } as Message, ...resultMessages)
+
+
+    try {
+      messages = await processChatAttachments(messages);
+    } catch (err) {
+      console.error("Error converting files", err);
+    }
 
     const result = await streamText({
       model: llmProviderSetup(),
