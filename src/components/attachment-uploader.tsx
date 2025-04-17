@@ -6,9 +6,7 @@ import { nanoid } from "nanoid";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
 
-import {
-  Button,
-} from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import {
@@ -98,7 +96,7 @@ export function AttachmentUploader({
       setUploadedFiles((prev) => [...prev, ...newFiles]);
       newFiles.forEach((f) => uploadFile(f));
     },
-    []
+    [] // uploadFile is created later with useCallback, so omit from deps
   );
 
   /* ------------------------------ handlers ------------------------------ */
@@ -124,9 +122,13 @@ export function AttachmentUploader({
         formData.append("file", fileToUpload.file);
         formData.append("attachmentDTO", JSON.stringify(fileToUpload.dto));
 
-        const apiClient = new AttachmentApiClient("", "", dbContext, saasContext, {
-          useEncryption: false,
-        });
+        const apiClient = new AttachmentApiClient(
+          "",
+          "",
+          dbContext,
+          saasContext,
+          { useEncryption: false }
+        );
 
         const result = await apiClient.put(formData);
 
@@ -180,6 +182,17 @@ export function AttachmentUploader({
         onChange={handleFileSelect}
       />
 
+      {/* paper‑clip button (now on top) */}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => fileInputRef.current?.click()}
+        className="flex items-center self-start text-xs"
+      >
+        <PaperclipIcon className="w-4 h-4" /> {t("Upload files")}
+      </Button>
+
       {/* uploaded file badges */}
       {uploadedFiles.length > 0 && (
         <div className="flex flex-wrap gap-2">
@@ -222,17 +235,6 @@ export function AttachmentUploader({
           ))}
         </div>
       )}
-
-      {/* paper‑clip button */}
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => fileInputRef.current?.click()}
-        className="flex items-center self-start text-xs"
-      >
-        <PaperclipIcon className="w-4 h-4" /> {t('Upload files')}
-      </Button>
     </div>
   );
 }
