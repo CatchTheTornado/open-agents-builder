@@ -149,8 +149,6 @@ export default function FilesPage() {
     return (
         <div className="space-y-6">
             <div>
-                <label className="block font-medium mb-3 flex"><UploadIcon className="mr-2"/> {t("Upload files")}</label>
-
                     <AttachmentUploader
                         dbContext={dbContext}
                         saasContext={saasContext}
