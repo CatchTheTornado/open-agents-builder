@@ -211,7 +211,7 @@ export const replaceBase64Content = (data) => {
 
 
 export const processChatAttachments = async (messages: Message[]) => {
-  for (const message of messages) { // TODO: extract to a function so it can be re-used in the other chat endpoints
+  for (const message of messages) { 
     if (message.experimental_attachments) {
 
       const processedAttachments = []
