@@ -57,7 +57,7 @@ export function prepareAgentTools({
     })[toolConfig.tool];
 
     if (!toolDescriptor) {
-      console.log(`Tool is not available ${toolConfig.tool}`);
+      console.error(`Tool is not available ${toolConfig.tool}`);
       continue;
     }
 

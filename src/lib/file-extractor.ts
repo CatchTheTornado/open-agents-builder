@@ -244,8 +244,6 @@ export const processChatAttachments = async (messages: Message[]) => {
         inputObject: attachmentsToProcess,
         pdfExtractText: false,
       });
-
-      console.log(filesToUpload)
       message.experimental_attachments = []; //
 
       for (const v in filesToUpload) {
@@ -274,7 +272,6 @@ export const processChatAttachments = async (messages: Message[]) => {
 
       message.experimental_attachments = processedAttachments;
     }
-    console.log(message);
   }
   return messages;
 }
