@@ -145,10 +145,7 @@ export default class ServerAttachmentRepository extends BaseRepository<Attachmen
           .all();
     
         const total = (await countQuery)[0].count;
-    
-        // Zamieńmy je na ProductDTO
-        const rows = dbRecords.map((r) => this.decryptItem(r));
-    
+        
         return {
           rows: await this.decryptItems(dbRecords as AttachmentDTO[]),
           total,
