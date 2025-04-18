@@ -100,7 +100,14 @@ export function processFiles({
     const mimeType = getMimeType(base64Str || '');
     if (!mimeType) {
       // If we can't detect a mime type, just pass it
-      result[key] = base64Str;
+      const content = Buffer.from(base64Str.split(',')[1], 'base64');
+      // Check if the content contains non-printable characters
+      const isBinary = content.some(byte => (byte < 32 && byte !== 9 && byte !== 10 && byte !== 13) || byte === 255);
+      if (isBinary) {
+        result[key] = base64Str; // keep as base64
+      } else {
+        result[key] = content.toString('utf-8'); // decode and return as text
+      }
       continue;
     }
 
