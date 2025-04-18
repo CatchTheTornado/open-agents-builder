@@ -76,7 +76,7 @@ export const AttachmentProvider = ({ children }: { children: ReactNode }) => {
       const resp = await client.delete(attachment);
       if (resp.status === 200) {
         setRefreshDataSync(new Date().toISOString());
-        toast.success("Attachment removed");
+        toast.success(t("Attachment removed"));
       } else {
         toast.error(resp.message);
         console.error("deleteAttachment error:", resp);
