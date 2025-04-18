@@ -253,7 +253,7 @@ export default function FilesPage() {
                                     setPreviewContent(attachment.content);
                                     setPreviewDialogOpen(true);
                                 }}>
-                                <ChatMessageMarkdown className="cursor-pointer text-xs h-40 p-4 border bg-white text-gray-500 shadow-sm border-gray-200 rounded mt-2">
+                                <ChatMessageMarkdown className="cursor-pointer text-xs h-40 p-4 border bg-white text-gray-500 shadow-sm border-gray-200 rounded mt-2 overflow-hidden">
                                     {attachment.content.length > 100 ? `${attachment.content.substring(0, 100)}...` : attachment.content}
                                 </ChatMessageMarkdown>
                                 </div>               

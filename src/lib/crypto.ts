@@ -141,7 +141,7 @@ async blobToArrayBuffer (blob: Blob): Promise<ArrayBuffer> {
         return cipherText;
       }
     } catch (e) {
-      console.error('Error decoding: ' + cipherText, e);
+      console.error('Error decoding: ' + (cipherText && cipherText.length > 100 ? cipherText.slice(0, 100) + '...' : cipherText), e);
       return cipherText; // probably the text was not encrypted on in bat ivHex/encryptedHex format
     }
   } 

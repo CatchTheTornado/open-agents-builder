@@ -163,14 +163,6 @@ export function findCodeBlocks(block: string, singleBlockMode = true) {
     const lang = syntax || 'none'
     const lineNumber = getLineNumber(block, matches)
     let hasError = false
-    /* // debug
-    console.log(`prefix: "${prefix}"`)
-    console.log(`postFix: "${postFix}"`)
-    console.log('syntax:', lang)
-    console.log('Content:')
-    console.log(content.trim())
-    console.log('───────────────────────')
-    /** */
 
     /* Validate code blocks */
     if (prefix && prefix.match(/\S/)) {
