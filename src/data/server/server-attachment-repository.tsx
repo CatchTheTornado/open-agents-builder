@@ -1,6 +1,5 @@
 import { BaseRepository, IFilter } from "./base-repository"
 import { AttachmentDTO, PaginatedResult } from "../dto";
-import { pool } from '@/data/server/db-provider'
 import { getCurrentTS } from "@/lib/utils";
 import { attachments } from "./db-schema";
 import { asc, count, desc, eq, like, or } from "drizzle-orm";
@@ -93,7 +92,6 @@ export default class ServerAttachmentRepository extends BaseRepository<Attachmen
       ): Promise<PaginatedResult<AttachmentDTO[]>> {
         const db = await this.db();
     
-        // domyślne sortowanie – np. po dacie malejąco
         let orderColumn = desc(attachments.createdAt);
     
         switch (orderBy) {
@@ -134,7 +132,6 @@ export default class ServerAttachmentRepository extends BaseRepository<Attachmen
           .where(whereCondition ?? undefined)
           .execute();
     
-        // Pobieżmy rekordy
         let dbRecords = db
           .select()
           .from(attachments)
