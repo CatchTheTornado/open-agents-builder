@@ -105,7 +105,6 @@ export function createExecFlowTool(context: ExecFlowToolContext): ToolDescriptor
       }
     }
     console.log('Executing flow', flow.code, execRequest);
-    console.log(execRequest.uiState);
     execRequestSchema.parse(execRequest); // vadlidae input for this specific flow
 
     // Handle execMode: async => run in background, return link to result

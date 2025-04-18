@@ -160,8 +160,6 @@ export function FlowsExecForm({
         setTimeElapsed((prv) => prv + 1);
       }, 1000);
 
-      console.log(flowUiState)
-
       const stream = await apiClient.execStream(
         agent?.id || "",
         agentFlow.code,

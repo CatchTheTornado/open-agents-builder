@@ -210,7 +210,6 @@ export default class ServerProductRepository extends BaseRepository<ProductDTO> 
       );
     }
 
-    console.log(id)
     if (id) {
         whereCondition = eq(products.id, id); // select single product by id
     }
