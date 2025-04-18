@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  open-agents-builder:
+    build: .
+    container_name: open-agents-dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    env_file:
+      - .env.local
+    environment:
+      NEXT_PUBLIC_ENV: dev
+    restart: unless-stopped
