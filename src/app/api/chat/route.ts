@@ -5,7 +5,7 @@ import ServerSessionRepository from '@/data/server/server-session-repository';
 import ServerStatRepository from '@/data/server/server-stat-repository';
 import { AuthorizedSaaSContext, authorizeSaasContext } from '@/lib/generic-api';
 import { renderPrompt } from '@/lib/templates';
-import { CoreMessage, Tool, streamText, tool } from 'ai';
+import { CoreMessage, ImagePart, Message, TextPart, Tool, convertToCoreMessages, streamText, tool } from 'ai';
 import { nanoid } from 'nanoid';
 import { NextRequest } from 'next/server';
 import { ZodObject } from 'zod';
@@ -14,6 +14,8 @@ import { llmProviderSetup } from '@/lib/llm-provider';
 import { getErrorMessage } from '@/lib/utils';
 import { createUpdateResultTool } from '@/tools/updateResultTool';
 import { validateTokenQuotas } from '@/lib/quotas';
+import { getMimeType, processChatAttachments, processFiles } from '@/lib/file-extractor';
+import fetch from 'node-fetch';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -42,25 +44,25 @@ export function prepareAgentTools({
   if (!tools) return {}
   const mappedTools: Record<string, Tool> = {};
 
-  for(const toolKey in tools) {
+  for (const toolKey in tools) {
     const toolConfig = tools[toolKey];
-    const toolDescriptor:ToolDescriptor = toolRegistry.init({ 
-      databaseIdHash, 
-      storageKey, 
-      agentId, 
-      sessionId, 
-      agent, 
+    const toolDescriptor: ToolDescriptor = toolRegistry.init({
+      databaseIdHash,
+      storageKey,
+      agentId,
+      sessionId,
+      agent,
       saasContext,
       streamingController
     })[toolConfig.tool];
 
     if (!toolDescriptor) {
-      console.log(`Tool is not available ${toolConfig.tool}`);
+      console.error(`Tool is not available ${toolConfig.tool}`);
       continue;
     }
 
     const paramsDefaults: Record<string, any> = {}
-    for(const preConfiguredOptionKey in toolConfig.options){
+    for (const preConfiguredOptionKey in toolConfig.options) {
       paramsDefaults[preConfiguredOptionKey] = toolConfig.options[preConfiguredOptionKey];
     }
 
@@ -72,11 +74,11 @@ export function prepareAgentTools({
       nonDefaultParameters = nonDefaultParameters.omit(omitKeys);
     }
     mappedTools[toolKey] = tool({
-      description: `${toolConfig.description ? toolConfig.description + ' - ': ''}${toolDescriptor.tool.description}`,
+      description: `${toolConfig.description ? toolConfig.description + ' - ' : ''}${toolDescriptor.tool.description}`,
       parameters: nonDefaultParameters,
       execute: async (params, options) => {
         if (toolDescriptor.tool.execute) {
-          return toolDescriptor.tool.execute({ ...params, ...paramsDefaults}, options);
+          return toolDescriptor.tool.execute({ ...params, ...paramsDefaults }, options);
         }
         throw new Error(`Tool executor has no execute method defined, tool: ${toolKey} - ${toolConfig.tool}`);
       }
@@ -87,12 +89,12 @@ export function prepareAgentTools({
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages }: { messages: CoreMessage[] } = await req.json();
+    let { messages }: { messages: Message[] } = await req.json();
     const databaseIdHash = req.headers.get('Database-Id-Hash');
     const sessionId = req.headers.get('Agent-Session-Id') || nanoid();
     const agentId = req.headers.get('Agent-Id');
 
-    if(!databaseIdHash || !agentId || !sessionId) {
+    if (!databaseIdHash || !agentId || !sessionId) {
       return Response.json('The required HTTP headers: Database-Id-Hash, Agent-Session-Id and Agent-Id missing', { status: 400 });
     }
 
@@ -112,20 +114,20 @@ export async function POST(req: NextRequest) {
 
 
     if (saasContext.isSaasMode) {
-        if (!saasContext.hasAccess) {
-            return Response.json({ message: "Unauthorized", status: 403 }, { status: 403 });
-        } else {
+      if (!saasContext.hasAccess) {
+        return Response.json({ message: "Unauthorized", status: 403 }, { status: 403 });
+      } else {
 
-            if (saasContext.saasContex) {
-                const resp = await validateTokenQuotas(saasContext.saasContex)
-                if (resp?.status !== 200) {
-                    return Response.json(resp)
-                }
-            } else {
-                return Response.json({ message: "Unauthorized", status: 403 }, { status: 403 });
-            }
+        if (saasContext.saasContex) {
+          const resp = await validateTokenQuotas(saasContext.saasContex)
+          if (resp?.status !== 200) {
+            return Response.json(resp)
+          }
+        } else {
+          return Response.json({ message: "Unauthorized", status: 403 }, { status: 403 });
         }
-    }  
+      }
+    }
 
     const sessionRepo = new ServerSessionRepository(databaseIdHash, saasContext.isSaasMode ? saasContext.saasContex?.storageKey : null);
     let existingSession = await sessionRepo.findOne({ id: sessionId });
@@ -133,14 +135,26 @@ export async function POST(req: NextRequest) {
     const promptName = agent.agentType ? agent.agentType : 'survey-agent';
     const systemPrompt = await renderPrompt(locale, promptName, { session: existingSession, agent, events: agent.events, currentDateTimeIso, currentLocalDateTime, currentTimezone });
 
-    messages.unshift( {
+    messages.unshift({
+      id: nanoid(),
       role: 'system',
       content: systemPrompt
     })
 
+
+    try {
+      messages = await processChatAttachments(messages);
+    } catch (err) {
+      console.error("Error converting files", err);
+    }
+
+
     const result = await streamText({
       model: llmProviderSetup(),
-      maxSteps: 10,  
+      maxSteps: 10,
+      onError: (error) => {
+        console.error('Error in streaming:', error);
+      },
       async onFinish({ response, usage }) {
         const chatHistory = [...messages, ...response.messages]
         existingSession = await sessionRepo.upsert({
@@ -155,7 +169,7 @@ export async function POST(req: NextRequest) {
           messages: JSON.stringify(chatHistory)
         } as SessionDTO);
 
-        const usageData:StatDTO = {
+        const usageData: StatDTO = {
           eventName: 'chat',
           completionTokens: usage.completionTokens,
           promptTokens: usage.promptTokens,
@@ -166,13 +180,13 @@ export async function POST(req: NextRequest) {
         if (saasContext.apiClient) {
           try {
             saasContext.apiClient.saveStats(databaseIdHash, {
-                ...result,
-                databaseIdHash: databaseIdHash
+              ...result,
+              databaseIdHash: databaseIdHash
             });
           } catch (e) {
             console.error(e);
           }
-      }        
+        }
 
       },
       tools: {

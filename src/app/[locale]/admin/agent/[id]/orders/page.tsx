@@ -200,6 +200,7 @@ export default function OrdersPage() {
                 handleSubmit={handleSubmit}
                 input={input}
                 displayName={t('Chat with orders')}
+                databaseIdHash={dbContext?.databaseIdHash ?? ''}
               />
             ): <div className='text-sm text-center text-red-500 p-4'>{t('Please verify your E-mail address and AI budget to use all features of Open Agents Builder')}</div>}
           </CredenzaContent>

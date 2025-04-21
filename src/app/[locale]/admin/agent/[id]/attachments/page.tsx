@@ -149,8 +149,6 @@ export default function FilesPage() {
     return (
         <div className="space-y-6">
             <div>
-                <label className="block font-medium mb-3 flex"><UploadIcon className="mr-2"/> {t("Upload files")}</label>
-
                     <AttachmentUploader
                         dbContext={dbContext}
                         saasContext={saasContext}
@@ -255,7 +253,7 @@ export default function FilesPage() {
                                     setPreviewContent(attachment.content);
                                     setPreviewDialogOpen(true);
                                 }}>
-                                <ChatMessageMarkdown className="cursor-pointer text-xs h-40 p-4 border bg-white text-gray-500 shadow-sm border-gray-200 rounded mt-2">
+                                <ChatMessageMarkdown className="cursor-pointer text-xs h-40 p-4 border bg-white text-gray-500 shadow-sm border-gray-200 rounded mt-2 overflow-hidden">
                                     {attachment.content.length > 100 ? `${attachment.content.substring(0, 100)}...` : attachment.content}
                                 </ChatMessageMarkdown>
                                 </div>               

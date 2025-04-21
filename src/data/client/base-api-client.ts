@@ -62,4 +62,35 @@ export class BaseApiClient {
       throw new ApiError('Request failed' + getErrorMessage(error) + ' [' + error.code + ']', error.code, error);
     }
   }
+
+  public async sendForm<T>(
+    endpoint: string,
+    method: 'POST' | 'PUT',
+    headers: Record<string, string> = {},
+    formData: FormData
+  ): Promise<T | T[]> {
+
+    if (this.databaseIdHash && !headers['Database-Id-Hash']) {
+      headers['Database-Id-Hash'] = this.databaseIdHash;
+    }
+
+    const config: AxiosRequestConfig = {
+      method,
+      url: `${this.baseUrl}${endpoint}`,
+      headers: {
+        ...headers,
+        'Content-Type': 'multipart/form-data',
+      },
+      data: formData,
+      validateStatus: (status) => status < 500,
+    };
+
+    try {
+      const response: AxiosResponse = await axios(config);
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      throw new ApiError('Request failed' + getErrorMessage(error) + ' [' + error.code + ']', error.code, error);
+    }
+  }
 }

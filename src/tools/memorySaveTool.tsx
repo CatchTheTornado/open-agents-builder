@@ -31,9 +31,6 @@ export function createMemorySaveTool(
           if (!id) id = nanoid();
           // Create vector store if not provided
           const baseDir = getDataDir(databaseIdHash);
-          console.log(sessionId, shortTerm, expirationPeriod);
-
-
           const generateEmbeddings = createOpenAIEmbeddings({
             apiKey: process.env.OPENAI_API_KEY
           });

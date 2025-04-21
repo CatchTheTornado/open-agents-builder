@@ -4,7 +4,7 @@ import { Agent } from '@/data/client/models';
 
 // Tu wczytaj swój defaultMetadata, np. z głównego layoutu
 // lub wyeksportuj je do osobnego pliku i tu zaimportuj
-import { defaultMetadata } from '@/app/layout';
+import { metadata } from '@/app/layout';
 
 import ExecLayoutClient from './layout-client';
 
@@ -24,11 +24,11 @@ export async function generateMetadata(
     const agt = Agent.fromDTO((await client.agent(id)).data);
 
     return {
-      title: agt.options?.ogTitle ?? agt.displayName,
+      title: agt.options?.ogTitle || agt.displayName,
       description:
-        agt.options?.ogDescription ??
-        agt.options?.welcomeMessage ??
-        defaultMetadata.description,
+        agt.options?.ogDescription ||
+        agt.options?.welcomeMessage ||
+        metadata.description,
       openGraph: {
         images: agt.icon
           ? [agt.icon]
@@ -40,7 +40,7 @@ export async function generateMetadata(
   }
 
   // fallback, gdyby powyższy kod rzucił wyjątek
-  return defaultMetadata;
+  return metadata;
 }
 
 export default function ExecLayout({
