@@ -16,10 +16,10 @@
     }
   },
   "scripts": {
-    "build": "rm -rf dist && tsc",
+    "build": "rimraf dist && tsc",
     "test": "jest",
     "lint": "eslint src --ext .ts",
-    "clean": "rm -rf dist",
+    "clean": "rimraf dist",
     "prebuild": "npm run clean"
   },
   "keywords": [

@@ -317,6 +317,22 @@ yarn dev
 
 That's it! Now you can get open your browser and navigate to: https://localhost:3000
 
+## Ollama Integration
+Open Agents Builder supports Ollama as an alternative LLM provider to OpenAI. Allowing you to run Ollama models on your own infrastructure.
+### Configuration
+To use Ollama with Open Agents Builder, set the following environment variables in `.env.local`:
+```bash
+# Select Ollama as the LLM provider
+LLM_PROVIDER=ollama
+
+# Set the Ollama API endpoint (default for local installation)
+OLLAMA_URL=http://localhost:11434/api
+
+# Specify which model to use (defaults to llama3.1 if not specified)
+LLM_MODEL=llama3.1
+```
+Ensure that the `OLLAMA_URL` is set to `<base-url>/api` so that the correct endpoints for Ollama are used.
+
 ## License
 
 Open Agents Builder is released under [MIT](LICENSE) license.
