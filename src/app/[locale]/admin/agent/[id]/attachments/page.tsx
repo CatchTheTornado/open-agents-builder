@@ -227,12 +227,12 @@ export default function FilesPage() {
                 {attachmentsData.rows.map((attachment) => (
                     <Card key={attachment.storageKey}>
                         <CardHeader>
-                            <CardTitle className="text-sm">
+                            <CardTitle className="text-sm overflow-hidden">
                                 {attachment.displayName}
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="text-xs">
-                            <p><span className="font-bold">{t('Type')}:</span> {attachment.mimeType}</p>
+                            <p className="overflow-hidden"><span className="font-bold">{t('Type')}:</span> {attachment.mimeType}</p>
                             {((!attachment.content && !attachment.extra?.status && !attachment.extra?.error && !attachment.mimeType?.startsWith('image')) || attachment.extra && attachment.extra.status === "extracting") && (
                                 <p className="text-xs h-40 p-4 border bg-white shadow-sm border-gray-200 rounded mt-2 items-center text-orange-500 flex p-4 text-center justify-center"><HourglassIcon className="mr-2 w-4 h-4" /> {t("Extracting content...")}</p>
                             )}
