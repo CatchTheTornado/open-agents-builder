@@ -1,6 +1,9 @@
 import { SaaSDTO } from "@/data/dto";
 
 export function validateTokenQuotas(saasContext: SaaSDTO): {message: string; status: number}  {
+
+    if (!process.env.NEXT_PUBLIC_SAAS) return { message: 'SaaS is not enabled, quotas are not validated', status: 200 };
+
     if(!saasContext?.emailVerified) {
         return { message: "You must verify e-mail to use the AI features", status: 403 };
     }

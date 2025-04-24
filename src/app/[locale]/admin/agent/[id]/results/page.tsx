@@ -106,7 +106,7 @@ export default function ResultsPage() {
             <Button size="sm" variant="outline" onClick={() => setResultsChatOpen(true)}><MessageCircleIcon /> {t('Chat about results ...')}</Button>
           </CredenzaTrigger>
           <CredenzaContent className="max-w-3xl">
-            {saasContext.saasToken && (saasContext.checkQuotas()).status === 200 ? ( 
+            {!saasContext.saasToken || (saasContext.checkQuotas()).status === 200 ? ( 
               <Chat
                 headers={getSessionHeaders()}
                 welcomeMessage={t("By using this chat you may **ask** some cool questions or **modify** the results and your schedule:\n\n- **What's my schedule for Tomorrow**?\n\n- **Please move the meeting from 9:00 to 11:00**\n\n- **What is the most frequently requested service**?\n\n- **How many meetings do I have on average per day this week?**")}
