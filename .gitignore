@@ -67,3 +67,4 @@ uploads/*
 run.sh
 dev.sh
 prod.sh
+dev-standalone.sh

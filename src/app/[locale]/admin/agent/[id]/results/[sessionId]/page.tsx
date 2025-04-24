@@ -94,7 +94,7 @@ export default function SingleResultPage() {
             <Button size="sm" variant="outline" onClick={() => history.back()}><MoveLeftIcon /> {t('Back')}</Button>
             <Credenza open={chatOpen} onOpenChange={setChatOpen}>
           <CredenzaContent>
-            {saasContext.saasToken && (saasContext.checkQuotas()).status === 200 ? ( 
+            {!saasContext.saasToken || (saasContext.checkQuotas()).status === 200 ? ( 
               <Chat
                 headers={getSessionHeaders()}
                 welcomeMessage={t('Lets chat')}

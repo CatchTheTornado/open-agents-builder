@@ -190,7 +190,7 @@ export default function OrdersPage() {
             <Button size="sm" variant="outline" onClick={() => setResultsChatOpen(true)}><MessageCircleIcon /> {t('Chat with orders ...')}</Button>
           </CredenzaTrigger>
           <CredenzaContent className="max-w-3xl">
-            {saasContext.saasToken && (saasContext.checkQuotas()).status === 200 ? ( 
+            {!saasContext.saasToken || (saasContext.checkQuotas()).status === 200 ? ( 
               <Chat
                 headers={getSessionHeaders()}
                 welcomeMessage={t("By using this chat you may **ask** some cool questions or **modify** the orders:\n\n- **List last 10 orders**?\n\n- **Change order status to Closed**\n\n- **What is the total order value from Today**?")}
