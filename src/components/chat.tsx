@@ -180,7 +180,7 @@ export function Chat({
       }));
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-2xl mx-auto border-none">
       {displayName ? (
         <CardHeader>
           <CardTitle>{displayName}</CardTitle>
