@@ -162,13 +162,6 @@
       "when": 1741799505735,
       "tag": "0022_sad_doctor_faustus",
       "breakpoints": true
-    },
-    {
-      "idx": 23,
-      "version": "6",
-      "when": 1745827234664,
-      "tag": "0023_furry_ironclad",
-      "breakpoints": true
     }
   ]
 }

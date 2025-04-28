@@ -254,7 +254,15 @@ export default function GeneralPage() {
     async function fetchProviders() {
       try {
         setIsLoadingProviders(true);
-        const response = await fetch('/api/llm/providers');
+        const token = sessionStorage.getItem('authToken');
+        const response = await fetch('/api/llm/providers', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch providers: ${response.status} ${response.statusText}`);
+        }
         const data = await response.json();
         if (data.providers) {
           setProviders(data.providers);
@@ -280,7 +288,15 @@ export default function GeneralPage() {
       
       try {
         setIsLoadingModels(true);
-        const response = await fetch(`/api/llm/models?provider=${encodeURIComponent(llmProviderValue)}`);
+        const token = sessionStorage.getItem('authToken');
+        const response = await fetch(`/api/llm/models?provider=${encodeURIComponent(llmProviderValue)}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch models: ${response.status} ${response.statusText}`);
+        }
         const data = await response.json();
         if (data.models) {
           setModels(data.models);

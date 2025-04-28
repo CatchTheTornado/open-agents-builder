@@ -1,8 +1,13 @@
 import { getDefaultModels } from '@/lib/llm-provider';
-import { NextRequest } from 'next/server';
+import { authorizeRequestContext } from "@/lib/authorization-api";
+import { getErrorMessage } from "@/lib/utils";
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest, res: NextResponse) {
   try {
+    // Authorize the request
+    await authorizeRequestContext(req, res);
+    
     const searchParams = req.nextUrl.searchParams;
     const provider = searchParams.get('provider');
     
@@ -14,6 +19,9 @@ export async function GET(req: NextRequest) {
     return Response.json({ models });
   } catch (error) {
     console.error('Error fetching LLM models:', error);
-    return Response.json({ error: 'Failed to fetch LLM models' }, { status: 500 });
+    return Response.json(
+      { error: 'Failed to fetch LLM models', message: getErrorMessage(error) },
+      { status: error.message?.includes("Unauthorized") ? 401 : 500 }
+    );
   }
 }
