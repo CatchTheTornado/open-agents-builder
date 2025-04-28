@@ -1,32 +1,51 @@
-'use client'
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { useTranslation } from 'react-i18next';
-import { useAgentContext } from '@/contexts/agent-context';
-import { use, useContext, useEffect, useState } from 'react';
-import { FormProvider, useForm, UseFormGetValues, UseFormSetValue, UseFormWatch } from 'react-hook-form';
-import { Agent } from '@/data/client/models';
-import { toast } from 'sonner';
-import { useParams, useRouter } from 'next/navigation';
-import { sha256 } from '@/lib/crypto';
-import { TFunction } from 'i18next';
-import { AgentStatus } from '@/components/layout/agent-status';
-import { MarkdownEditor } from '@/components/markdown-editor';
-import React from 'react';
-import { MDXEditorMethods } from '@mdxeditor/editor';
-import { LocaleSelect } from '@/components/locale-select';
-import { AgentTypeSelect } from '@/components/agent-type-select';
-import { SaveAgentAsTemplateButton } from '@/components/save-agent-as-template-button';
-import DataLoader from '@/components/data-loader';
-import { InfoIcon, TrashIcon } from 'lucide-react';
-import { AgentTypeDescriptor, agentTypesRegistry } from '@/agent-types/registry';
-import { AttachmentUploader } from '@/components/attachment-uploader';
-import { DatabaseContext } from '@/contexts/db-context';
-import { SaaSContext } from '@/contexts/saas-context';
-import ZoomableImage from '@/components/zoomable-image';
+"use client";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
+import { useAgentContext } from "@/contexts/agent-context";
+import { use, useContext, useEffect, useState } from "react";
+import {
+  FormProvider,
+  useForm,
+  UseFormGetValues,
+  UseFormSetValue,
+  UseFormWatch,
+} from "react-hook-form";
+import { Agent } from "@/data/client/models";
+import { toast } from "sonner";
+import { useParams, useRouter } from "next/navigation";
+import { sha256 } from "@/lib/crypto";
+import { TFunction } from "i18next";
+import { AgentStatus } from "@/components/layout/agent-status";
+import { MarkdownEditor } from "@/components/markdown-editor";
+import React from "react";
+import { MDXEditorMethods } from "@mdxeditor/editor";
+import { LocaleSelect } from "@/components/locale-select";
+import { AgentTypeSelect } from "@/components/agent-type-select";
+import { SaveAgentAsTemplateButton } from "@/components/save-agent-as-template-button";
+import DataLoader from "@/components/data-loader";
+import { InfoIcon, TrashIcon } from "lucide-react";
+import {
+  AgentTypeDescriptor,
+  agentTypesRegistry,
+} from "@/agent-types/registry";
+import { AttachmentUploader } from "@/components/attachment-uploader";
+import { DatabaseContext } from "@/contexts/db-context";
+import { SaaSContext } from "@/contexts/saas-context";
+import ZoomableImage from "@/components/zoomable-image";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export function onAgentSubmit(agent: Agent | null, watch: UseFormWatch<Record<string, any>>, setValue: UseFormSetValue<Record<string, any>>, getValues: UseFormGetValues<Record<string, any>>, updateAgent: (agent: Agent, setAsCurrent: boolean) => Promise<Agent>, t: TFunction<"translation", undefined>, router: AppRouterInstance, editors: Record<string, React.RefObject<MDXEditorMethods>>) {
+export function onAgentSubmit(
+  agent: Agent | null,
+  watch: UseFormWatch<Record<string, any>>,
+  setValue: UseFormSetValue<Record<string, any>>,
+  getValues: UseFormGetValues<Record<string, any>>,
+  updateAgent: (agent: Agent, setAsCurrent: boolean) => Promise<Agent>,
+  t: TFunction<"translation", undefined>,
+  router: AppRouterInstance,
+  editors: Record<string, React.RefObject<MDXEditorMethods>>
+) {
   // eslint-disable-next-line
   const [isDirty, setIsDirty] = useState(false);
   // eslint-disable-next-line
@@ -34,57 +53,83 @@ export function onAgentSubmit(agent: Agent | null, watch: UseFormWatch<Record<st
   // eslint-disable-next-line
   const agentContext = useAgentContext();
 
-
   // eslint-disable-next-line
   useEffect(() => {
-    if (agentContext.agents && agentContext.agents.length > 0 && !agent && params.id) { // agent does not exist, but id is provided
+    if (
+      agentContext.agents &&
+      agentContext.agents.length > 0 &&
+      !agent &&
+      params.id
+    ) {
+      // agent does not exist, but id is provided
       router.push(`/admin/agent/new/general`);
     }
   }, [agentContext.agents]);
 
   // eslint-disable-next-line
   useEffect(() => {
-    if (agent && agent.id === params.id) { // bind the tracking changes only for the currently selected agent
+    if (agent && agent.id === params.id) {
+      // bind the tracking changes only for the currently selected agent
       //agent.toForm(setValue); // load the database values
-      const dirtyCheck = (async (originalRecord: Record<string, any>, value: Record<string, any>) => {
-        const compareForms = async (editableForm: Record<string, any>, savedForm: Record<string, any>) => {
-          const sortedSavedState: Record<string, any> = {}
-          const sortedEditableState = Object.keys(editableForm).sort().reduce((acc: Record<string, any>, key: string) => {
-            acc[key] = editableForm[key];
-            sortedSavedState[key] = savedForm[key];
-            return acc;
-          }, {});
+      const dirtyCheck = async (
+        originalRecord: Record<string, any>,
+        value: Record<string, any>
+      ) => {
+        const compareForms = async (
+          editableForm: Record<string, any>,
+          savedForm: Record<string, any>
+        ) => {
+          const sortedSavedState: Record<string, any> = {};
+          const sortedEditableState = Object.keys(editableForm)
+            .sort()
+            .reduce((acc: Record<string, any>, key: string) => {
+              acc[key] = editableForm[key];
+              sortedSavedState[key] = savedForm[key];
+              return acc;
+            }, {});
 
-          const editableEntriesString = Object.entries(sortedEditableState).map(([key, value]) => `${key}:${JSON.stringify(value)}`).join(',');
-          const savedEntriesString = Object.entries(sortedSavedState).map(([key, value]) => `${key}:${JSON.stringify(value)}`).join(',');
+          const editableEntriesString = Object.entries(sortedEditableState)
+            .map(([key, value]) => `${key}:${JSON.stringify(value)}`)
+            .join(",");
+          const savedEntriesString = Object.entries(sortedSavedState)
+            .map(([key, value]) => `${key}:${JSON.stringify(value)}`)
+            .join(",");
           const [editableEntriesHash, savedEntriesHash] = await Promise.all([
-            sha256(editableEntriesString, ''),
-            sha256(savedEntriesString, '')
+            sha256(editableEntriesString, ""),
+            sha256(savedEntriesString, ""),
           ]);
 
           return editableEntriesHash === savedEntriesHash;
         };
 
-        const formChanged = !await compareForms(getValues(), originalRecord);
+        const formChanged = !(await compareForms(getValues(), originalRecord));
         if (formChanged) {
-          sessionStorage.setItem(`agent-${value['id']}`, JSON.stringify(getValues())); // save form values
+          sessionStorage.setItem(
+            `agent-${value["id"]}`,
+            JSON.stringify(getValues())
+          ); // save form values
         } else {
-          sessionStorage.removeItem(`agent-${value['id']}`);
+          sessionStorage.removeItem(`agent-${value["id"]}`);
         }
         setIsDirty(formChanged);
-      })
+      };
 
       const subscribeChanges = (originalRecord: Record<string, any>) => {
-        agentContext.setDirtyAgent(Agent.fromForm(getValues(), agentContext.current))
+        agentContext.setDirtyAgent(
+          Agent.fromForm(getValues(), agentContext.current)
+        );
         dirtyCheck(originalRecord, getValues());
         return watch((value) => {
-          agentContext.setDirtyAgent(Agent.fromForm(getValues(), agentContext.current))
+          agentContext.setDirtyAgent(
+            Agent.fromForm(getValues(), agentContext.current)
+          );
           dirtyCheck(originalRecord, value);
         });
       };
 
       const savedState = sessionStorage.getItem(`agent-${agent.id}`);
-      if (savedState) { // the form is dirty - load state from session storage
+      if (savedState) {
+        // the form is dirty - load state from session storage
         const parsedState = JSON.parse(savedState);
         Object.keys(parsedState).forEach((key) => {
           setValue(key, parsedState[key]);
@@ -94,121 +139,221 @@ export function onAgentSubmit(agent: Agent | null, watch: UseFormWatch<Record<st
         });
       } else {
         agent.toForm((field, value) => {
-          if (editors && editors.hasOwnProperty(field) && editors[field].current) {
+          if (
+            editors &&
+            editors.hasOwnProperty(field) &&
+            editors[field].current
+          ) {
             editors[field].current?.setMarkdown(value);
           }
           setValue(field, value);
-        })
+        });
       }
       subscribeChanges(agent.toForm(null));
-
     }
   }, [agent]);
 
   const onSubmit = async (data: Record<string, any>) => {
-
-    const newAgent = agent?.id === 'new';
+    const newAgent = agent?.id === "new";
     const updatedAgent = Agent.fromForm(data, agent);
 
-    const agentTypeDescriptor = agentTypesRegistry.find(at => at.type === updatedAgent.agentType);
+    const agentTypeDescriptor = agentTypesRegistry.find(
+      (at) => at.type === updatedAgent.agentType
+    );
     if (agentTypeDescriptor) {
       for (const requiredField of agentTypeDescriptor.requiredTabs) {
         const valToCheck = updatedAgent.toForm()[requiredField];
-        if (!valToCheck || (Array.isArray(valToCheck) && valToCheck.length === 0)) {
-          router.push(`/admin/agent/${updatedAgent.id}/${requiredField.replace(/[A-Z]/g, m => `-${m.toLowerCase()}`)}`);
-          toast.error(t('Field ') + t(requiredField) + t(' is required'));
+        if (
+          !valToCheck ||
+          (Array.isArray(valToCheck) && valToCheck.length === 0)
+        ) {
+          router.push(
+            `/admin/agent/${updatedAgent.id}/${requiredField.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}`
+          );
+          toast.error(t("Field ") + t(requiredField) + t(" is required"));
           agentContext.setStatus({
-            id: requiredField + '-required',
-            message: t('Field ') + t(requiredField) + t(' is required'),
-            type: 'error'
+            id: requiredField + "-required",
+            message: t("Field ") + t(requiredField) + t(" is required"),
+            type: "error",
           });
           return;
-
         }
       }
     }
 
     try {
       const response = await updateAgent(updatedAgent, true);
-      toast.success(t('Agent updated successfully'));
+      toast.success(t("Agent updated successfully"));
       agentContext.setStatus({
-        id: 'agent-updated',
-        message: t('Agent updated successfully'),
-        type: 'success'
+        id: "agent-updated",
+        message: t("Agent updated successfully"),
+        type: "success",
       });
-      if (newAgent)
-        sessionStorage.removeItem(`agent-new`);
-      else
-        sessionStorage.removeItem(`agent-${updatedAgent.id}`);
+      if (newAgent) sessionStorage.removeItem(`agent-new`);
+      else sessionStorage.removeItem(`agent-${updatedAgent.id}`);
 
       if (newAgent) router.push(`/admin/agent/${response.id}/general`);
     } catch (e) {
       console.error(e);
-      toast.error(t('Failed to update agent'));
+      toast.error(t("Failed to update agent"));
     }
   };
-  return { onSubmit, isDirty, setIsDirty }
+  return { onSubmit, isDirty, setIsDirty };
 }
 
-
 export default function GeneralPage() {
-
-
   const { t } = useTranslation();
   const router = useRouter();
-  const { setStatus, status, removeStatus, current: agent, updateAgent, loaderStatus } = useAgentContext();
-  const [agentDescriptor, setAgentDescriptor] = useState<AgentTypeDescriptor>({});
+  const {
+    setStatus,
+    status,
+    removeStatus,
+    current: agent,
+    updateAgent,
+    loaderStatus,
+  } = useAgentContext();
+  const [agentDescriptor, setAgentDescriptor] = useState<AgentTypeDescriptor>(
+    {}
+  );
   const dbContext = useContext(DatabaseContext);
   const saasContext = useContext(SaaSContext);
+  const [providers, setProviders] = useState<string[]>([]);
+  const [models, setModels] = useState<string[]>([]);
+  const [isLoadingProviders, setIsLoadingProviders] = useState(false);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
 
   const methods = useForm({
     defaultValues: agent ? agent.toForm(null) : {},
   });
-  const { register, handleSubmit, setValue, getValues, formState: { errors }, watch } = methods;
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    getValues,
+    formState: { errors },
+    watch,
+  } = methods;
 
   const editors = {
     welcomeInfo: React.useRef<MDXEditorMethods>(null),
-    termsConditions: React.useRef<MDXEditorMethods>(null)
-  }
-  register('icon');
-  register('welcomeInfo');
-  register('termsConditions', {
+    termsConditions: React.useRef<MDXEditorMethods>(null),
+  };
+  register("icon");
+  register("welcomeInfo");
+  register("termsConditions", {
     validate: {
-      termsConditions: (v) => (getValues('confirmTerms') === true && !v) ? false : true
-    }
+      termsConditions: (v) =>
+        getValues("confirmTerms") === true && !v ? false : true,
+    },
   });
+  register("llmProvider");
+  register("llmModel");
 
-  const { onSubmit, isDirty } = onAgentSubmit(agent, watch, setValue, getValues, updateAgent, t, router, editors);
+  // Fetch available LLM providers when the component mounts
+  useEffect(() => {
+    async function fetchProviders() {
+      try {
+        setIsLoadingProviders(true);
+        const response = await fetch('/api/llm/providers');
+        const data = await response.json();
+        if (data.providers) {
+          setProviders(data.providers);
+        }
+      } catch (error) {
+        console.error('Error fetching LLM providers:', error);
+        toast.error(t('Failed to fetch LLM providers'));
+      } finally {
+        setIsLoadingProviders(false);
+      }
+    }
+    fetchProviders();
+  }, []);
 
-  const agentTypeValue = watch('agentType');
+  // Fetch available models for the selected provider
+  const llmProviderValue = watch("llmProvider");
+  useEffect(() => {
+    async function fetchModels() {
+      if (!llmProviderValue) {
+        setModels([]);
+        return;
+      }
+      
+      try {
+        setIsLoadingModels(true);
+        const response = await fetch(`/api/llm/models?provider=${encodeURIComponent(llmProviderValue)}`);
+        const data = await response.json();
+        if (data.models) {
+          setModels(data.models);
+          
+          // If the current model isn't in the list of available models, reset it
+          const currentModel = getValues("llmModel");
+          if (currentModel && !data.models.includes(currentModel)) {
+            setValue("llmModel", data.models[0] || "");
+          } else if (!currentModel && data.models.length > 0) {
+            setValue("llmModel", data.models[0]);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching LLM models:', error);
+        toast.error(t('Failed to fetch LLM models'));
+      } finally {
+        setIsLoadingModels(false);
+      }
+    }
+    
+    fetchModels();
+  }, [llmProviderValue]);
+
+  const { onSubmit, isDirty } = onAgentSubmit(
+    agent,
+    watch,
+    setValue,
+    getValues,
+    updateAgent,
+    t,
+    router,
+    editors
+  );
+
+  const agentTypeValue = watch("agentType");
   useEffect(() => {
     if (agentTypeValue) {
-      const agentTypeDescriptor = agentTypesRegistry.find(at => at.type === agentTypeValue);
-      if (agentDescriptor) setAgentDescriptor(agentTypeDescriptor as AgentTypeDescriptor);
+      const agentTypeDescriptor = agentTypesRegistry.find(
+        (at) => at.type === agentTypeValue
+      );
+      if (agentDescriptor)
+        setAgentDescriptor(agentTypeDescriptor as AgentTypeDescriptor);
     }
   }, [agentTypeValue]);
 
-
   useEffect(() => {
     if (isDirty) {
-      setStatus({ id: 'dirty', message: t('You have unsaved changes'), type: 'warning' });
+      setStatus({
+        id: "dirty",
+        message: t("You have unsaved changes"),
+        type: "warning",
+      });
     } else {
-      removeStatus('dirty');
+      removeStatus("dirty");
     }
   }, [isDirty]);
 
   return (
     <div className="space-y-6">
-      {loaderStatus === 'loading' ? (
-
+      {loaderStatus === "loading" ? (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center">
           <DataLoader />
         </div>
-
-      ) : (null)}
+      ) : null}
 
       {isDirty ? (
-        <AgentStatus status={{ id: 'dirty', message: t('You have unsaved changes'), type: 'warning' }} />
+        <AgentStatus
+          status={{
+            id: "dirty",
+            message: t("You have unsaved changes"),
+            type: "warning",
+          }}
+        />
       ) : (
         <AgentStatus status={status} />
       )}
@@ -216,107 +361,235 @@ export default function GeneralPage() {
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
           <div>
             <label htmlFor="displayName" className="block text-sm font-medium">
-              {t('Agent Name')}
+              {t("Agent Name")}
             </label>
-            <Input type='hidden' id="id" {...register('id')} />
+            <Input type="hidden" id="id" {...register("id")} />
             <Input
               type="text"
               id="displayName"
-              {...register('displayName', { required: t('This field is required') })}
+              {...register("displayName", {
+                required: t("This field is required"),
+              })}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
-            {errors.displayName && <p className="mt-2 text-sm text-red-600">{errors.displayName.message}</p>}
+            {errors.displayName && (
+              <p className="mt-2 text-sm text-red-600">
+                {errors.displayName.message}
+              </p>
+            )}
           </div>
           <div>
             <label htmlFor="agentType" className="block text-sm font-medium">
-              {t('Agent type')}
+              {t("Agent type")}
             </label>
-            <AgentTypeSelect fieldName='agentType' register={register} />
+            <AgentTypeSelect fieldName="agentType" register={register} />
+          </div>
+          <div>
+            <label htmlFor="llmProvider" className="block text-sm font-medium">
+              {t("LLM Provider")}
+            </label>
+            {isLoadingProviders ? (
+              <div className="mt-2 h-9 w-full rounded-md border border-gray-300 bg-gray-100 animate-pulse"></div>
+            ) : (
+              <Select
+                value={getValues("llmProvider") || undefined}
+                onValueChange={(value) => setValue("llmProvider", value)}
+              >
+                <SelectTrigger className="mt-1 w-full">
+                  <SelectValue placeholder={t("Select LLM provider")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {providers.map((provider) => (
+                    <SelectItem key={provider} value={provider}>
+                      {provider}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          
+          <div>
+            <label htmlFor="llmModel" className="block text-sm font-medium">
+              {t("LLM Model")}
+            </label>
+            {isLoadingModels || !llmProviderValue ? (
+              <div className="mt-2 h-9 w-full rounded-md border border-gray-300 bg-gray-100 animate-pulse"></div>
+            ) : (
+              <Select
+                value={getValues("llmModel") || undefined}
+                onValueChange={(value) => setValue("llmModel", value)}
+                disabled={models.length === 0}
+              >
+                <SelectTrigger className="mt-1 w-full">
+                  <SelectValue placeholder={t("Select LLM model")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {models.map((model) => (
+                    <SelectItem key={model} value={model}>
+                      {model}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          <div>
+            <label
+              htmlFor="agentProvider"
+              className="block text-sm font-medium"
+            >
+              {t("Agent Provider")}
+            </label>
+            <AgentTypeSelect fieldName="agentProvider" register={register} />
           </div>
           <div>
             <label htmlFor="welcomeInfo" className="block text-sm font-medium">
-              {t(agentDescriptor?.supportsUserFacingUI ? 'Welcome Message' : 'Description')}
+              {t(
+                agentDescriptor?.supportsUserFacingUI
+                  ? "Welcome Message"
+                  : "Description"
+              )}
             </label>
-            <MarkdownEditor markdown={getValues('welcomeInfo') ?? agent?.options?.welcomeMessage ?? ''} ref={editors.welcomeInfo} onChange={(e) => setValue('welcomeInfo', e)} diffMarkdown={agent?.options?.welcomeMessage ?? ''} />
-            {errors.welcomeInfo && <p className="mt-2 text-sm text-red-600">{errors.welcomeInfo.message}</p>}
+            <MarkdownEditor
+              markdown={
+                getValues("welcomeInfo") ?? agent?.options?.welcomeMessage ?? ""
+              }
+              ref={editors.welcomeInfo}
+              onChange={(e) => setValue("welcomeInfo", e)}
+              diffMarkdown={agent?.options?.welcomeMessage ?? ""}
+            />
+            {errors.welcomeInfo && (
+              <p className="mt-2 text-sm text-red-600">
+                {errors.welcomeInfo.message}
+              </p>
+            )}
           </div>
           {agentDescriptor?.supportsUserFacingUI && (
             <div>
-              <label htmlFor="termsConditions" className="block text-sm font-medium">
-                {t('Terms and Conditions')}
+              <label
+                htmlFor="termsConditions"
+                className="block text-sm font-medium"
+              >
+                {t("Terms and Conditions")}
               </label>
-              <MarkdownEditor markdown={getValues('termsConditions') ?? agent?.options?.termsAndConditions} ref={editors.termsConditions ?? ''} onChange={(e) => setValue('termsConditions', e)} diffMarkdown={agent?.options?.termsAndConditions ?? ''} />
-              {errors.termsConditions && <p className="mt-2 text-sm text-red-600">{t('If you require terms to be accepted by the user, you should provide them.')}</p>}
+              <MarkdownEditor
+                markdown={
+                  getValues("termsConditions") ??
+                  agent?.options?.termsAndConditions
+                }
+                ref={editors.termsConditions ?? ""}
+                onChange={(e) => setValue("termsConditions", e)}
+                diffMarkdown={agent?.options?.termsAndConditions ?? ""}
+              />
+              {errors.termsConditions && (
+                <p className="mt-2 text-sm text-red-600">
+                  {t(
+                    "If you require terms to be accepted by the user, you should provide them."
+                  )}
+                </p>
+              )}
             </div>
           )}
           {agentDescriptor?.supportsUserFacingUI && (
             <div className="text-xs p-2 flex">
-              <div><InfoIcon className="w-4 h-4 mr-2" /></div>
-              <div><strong>{t('Important note on GDPR and Terms: ')}</strong> {t('if your agent is about to process the personal data of the users, you SHOULD provide the terms and conditions and ask for the user consent. If you offer a commerce service you SHOULD also apply the Consumer Laws and provide the user with the right to return the product.')}
+              <div>
+                <InfoIcon className="w-4 h-4 mr-2" />
+              </div>
+              <div>
+                <strong>{t("Important note on GDPR and Terms: ")}</strong>{" "}
+                {t(
+                  "if your agent is about to process the personal data of the users, you SHOULD provide the terms and conditions and ask for the user consent. If you offer a commerce service you SHOULD also apply the Consumer Laws and provide the user with the right to return the product."
+                )}
               </div>
             </div>
           )}
           {agentDescriptor?.supportsUserFacingUI && (
             <div>
-              <label htmlFor="confirmTerms" className="flex items-center text-sm font-medium">
+              <label
+                htmlFor="confirmTerms"
+                className="flex items-center text-sm font-medium"
+              >
                 <Input
                   type="checkbox"
                   id="confirmTerms"
-                  {...register('confirmTerms')}
+                  {...register("confirmTerms")}
                   className="mr-2 w-4"
                 />
-                {t('Must confirm terms and conditions')}
+                {t("Must confirm terms and conditions")}
               </label>
-              {errors.confirmTerms && <p className="mt-2 text-sm text-red-600">{errors.confirmTerms.message}</p>}
+              {errors.confirmTerms && (
+                <p className="mt-2 text-sm text-red-600">
+                  {errors.confirmTerms.message}
+                </p>
+              )}
             </div>
           )}
           {agentDescriptor?.supportsUserFacingUI && (
             <div>
-              <label htmlFor="resultEmail" className="block text-sm font-medium">
-                {t('Result Email')}
+              <label
+                htmlFor="resultEmail"
+                className="block text-sm font-medium"
+              >
+                {t("Result Email")}
               </label>
               <Input
                 type="email"
                 id="resultEmail"
-                {...register('resultEmail', { pattern: { value: /^\S+@\S+$/i, message: t('Invalid email address') } })}
+                {...register("resultEmail", {
+                  pattern: {
+                    value: /^\S+@\S+$/i,
+                    message: t("Invalid email address"),
+                  },
+                })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               />
-              {errors.resultEmail && <p className="mt-2 text-sm text-red-600">{errors.resultEmail.message}</p>}
+              {errors.resultEmail && (
+                <p className="mt-2 text-sm text-red-600">
+                  {errors.resultEmail.message}
+                </p>
+              )}
             </div>
           )}
           {agentDescriptor?.supportsUserFacingUI && (
             <div>
-              <label htmlFor="collectUserInfo" className="flex items-center text-sm font-medium">
+              <label
+                htmlFor="collectUserInfo"
+                className="flex items-center text-sm font-medium"
+              >
                 <Input
                   type="checkbox"
                   id="collectUserInfo"
-                  {...register('collectUserInfo')}
+                  {...register("collectUserInfo")}
                   className="mr-2 w-4"
                 />
-                {t('Collect user e-mail addresses and names')}
+                {t("Collect user e-mail addresses and names")}
               </label>
-              {errors.collectUserInfo && <p className="mt-2 text-sm text-red-600">{errors.collectUserInfo.message}</p>}
+              {errors.collectUserInfo && (
+                <p className="mt-2 text-sm text-red-600">
+                  {errors.collectUserInfo.message}
+                </p>
+              )}
             </div>
           )}
           {agentDescriptor?.supportsUserFacingUI && (
             <div>
               <label htmlFor="locale" className="block text-sm font-medium">
-                {t('Default language')}
+                {t("Default language")}
               </label>
-              <LocaleSelect fieldName='locale' register={register} />
+              <LocaleSelect fieldName="locale" register={register} />
             </div>
           )}
-
 
           {agentDescriptor?.supportsUserFacingUI && (
             <div>
               <label htmlFor="ogTitle" className="block text-sm font-medium">
-                {t('Open Graph Title')}
+                {t("Open Graph Title")}
               </label>
               <Input
                 type="text"
                 id="ogTitle"
-                {...register('ogTitle')}
+                {...register("ogTitle")}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               />
             </div>
@@ -324,12 +597,15 @@ export default function GeneralPage() {
 
           {agentDescriptor?.supportsUserFacingUI && (
             <div>
-              <label htmlFor="ogDescription" className="block text-sm font-medium">
-                {t('Open Graph Description')}
+              <label
+                htmlFor="ogDescription"
+                className="block text-sm font-medium"
+              >
+                {t("Open Graph Description")}
               </label>
               <Textarea
                 rows={4}
-                {...register('ogDescription')}
+                {...register("ogDescription")}
                 id="ogDescription"
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               />
@@ -337,21 +613,30 @@ export default function GeneralPage() {
           )}
 
           {agentDescriptor?.supportsUserFacingUI && (
-
             <div>
-
-              <label htmlFor="published" className="flex items-center text-sm font-medium">
-                {t('Open Graph Image')}
+              <label
+                htmlFor="published"
+                className="flex items-center text-sm font-medium"
+              >
+                {t("Open Graph Image")}
               </label>
 
-              {getValues('icon') && (
+              {getValues("icon") && (
                 <div>
-                  <ZoomableImage src={getValues('icon')} alt={''} className="cursor-pointer w-full h-full object-cover" />
-                  <Button variant={"outline"} size="icon" className="relative top-[-38px] left-[2px]" onClick={(e) => {
-                    e.preventDefault();
-                    setValue('icon', '');
-                  }
-                  }>
+                  <ZoomableImage
+                    src={getValues("icon")}
+                    alt={""}
+                    className="cursor-pointer w-full h-full object-cover"
+                  />
+                  <Button
+                    variant={"outline"}
+                    size="icon"
+                    className="relative top-[-38px] left-[2px]"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setValue("icon", "");
+                    }}
+                  >
                     <TrashIcon className="w-4 h-4" />
                   </Button>
                 </div>
@@ -363,40 +648,51 @@ export default function GeneralPage() {
                 saasContext={saasContext}
                 onUploaded={(uploaded) => {
                   if (uploaded) {
-                    setValue('icon', `${process.env.NEXT_PUBLIC_APP_URL}/storage/attachment/${dbContext?.databaseIdHash}/${uploaded.storageKey}`)
+                    setValue(
+                      "icon",
+                      `${process.env.NEXT_PUBLIC_APP_URL}/storage/attachment/${dbContext?.databaseIdHash}/${uploaded.storageKey}`
+                    );
                   }
                 }}
               />
             </div>
           )}
 
-
           <div>
-            <label htmlFor="published" className="flex items-center text-sm font-medium">
+            <label
+              htmlFor="published"
+              className="flex items-center text-sm font-medium"
+            >
               <Input
                 type="checkbox"
                 id="published"
-                {...register('published')}
+                {...register("published")}
                 className="mr-2 w-4"
               />
-              {t('Agent is published')}
+              {t("Agent is published")}
             </label>
-            {errors.collectUserInfo && <p className="mt-2 text-sm text-red-600">{errors.collectUserInfo.message}</p>}
+            {errors.collectUserInfo && (
+              <p className="mt-2 text-sm text-red-600">
+                {errors.collectUserInfo.message}
+              </p>
+            )}
           </div>
           <div className="flex justify-between">
             <Button
               type="submit"
               className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-              {t('Save')}
+              {t("Save")}
             </Button>
 
-            <SaveAgentAsTemplateButton getFormValues={getValues} agent={agent} onSaved={function (): void {
-            }} />
+            <SaveAgentAsTemplateButton
+              getFormValues={getValues}
+              agent={agent}
+              onSaved={function (): void {}}
+            />
           </div>
         </form>
       </FormProvider>
     </div>
   );
 }
-
