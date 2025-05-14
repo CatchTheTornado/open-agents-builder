@@ -153,12 +153,6 @@ export async function POST(req: NextRequest) {
       '/session': getExecutionTempDir(databaseIdHash, agentId, sessionId)
     });
 
-    const rs = await fileTools.listFilesTool.execute({
-      path: '/session'
-    })
-
-    console.log(rs)
-
     const result = await streamText({
       model: llmProviderSetup(),
       maxSteps: 10,

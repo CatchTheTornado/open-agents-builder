@@ -39,27 +39,27 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                                 <div className="mt-2">
                                                     <div className="font-bold">💻 {t('Code')}</div>
                                                     {/* @ts-ignore */}
-                                                    <SyntaxHighlighter language={(tl as any).args?.language ?? 'bash'} wrapLines={true}>
+                                                    <SyntaxHighlighter language={(tl as any).args?.language ?? 'bash'} wrapLines={true} customStyle={{ overflowX: 'auto' }}>
                                                         {(tl as any).args?.code}
                                                     </SyntaxHighlighter>
                                                 </div>
                                             ) }
-                                            { (tl.result as any).stdout && (
-                                                <div className="mt-2">
-                                                    <div className="font-bold">📤 {t('Output')}</div>
-                                                    {/* @ts-ignore */}
-                                                    <SyntaxHighlighter language="bash" wrapLines={true}>
-                                                        {(tl.result as any).stdout}
-                                                    </SyntaxHighlighter>
-                                                </div>) }
-                                            { (tl.result as any).stderr && (
-                                                <div className="mt-2">
-                                                    <div className="font-bold">❌ {t('Errors')}</div>
-                                                    {/* @ts-ignore */}
-                                                    <SyntaxHighlighter language="bash" wrapLines={true}>
-                                                        {(tl.result as any).stderr}
-                                                    </SyntaxHighlighter>
-                                                </div>) }
+                                                    { (tl.result as any).stdout && (
+                                                        <div className="mt-2">
+                                                            <div className="font-bold">📤 {t('Output')}</div>
+                                                            {/* @ts-ignore */}
+                                                            <SyntaxHighlighter language="bash" wrapLines={true} customStyle={{ overflowX: 'auto' }}>
+                                                                {(tl.result as any).stdout}
+                                                            </SyntaxHighlighter>
+                                                        </div>) }
+                                                    { (tl.result as any).stderr && (
+                                                        <div className="mt-2">
+                                                            <div className="font-bold">❌ {t('Errors')}</div>
+                                                            {/* @ts-ignore */}
+                                                            <SyntaxHighlighter language="bash" wrapLines={true} customStyle={{ overflowX: 'auto' }}>
+                                                                {(tl.result as any).stderr}
+                                                            </SyntaxHighlighter>
+                                                        </div>) }
                                         </div>
                                     )
                                 }
@@ -94,27 +94,27 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                                 <div className="mt-2">
                                                     <div className="font-bold">💻 {t('Code')}</div>
                                                     {/* @ts-ignore */}
-                                                    <SyntaxHighlighter language={(c as any).args?.language ?? 'bash'} wrapLines={true}>
+                                                    <SyntaxHighlighter language={(c as any).args?.language ?? 'bash'} wrapLines={true} customStyle={{ overflowX: 'auto' }}>
                                                         {(c as any).args?.code}
                                                     </SyntaxHighlighter>
                                                 </div>
                                             ) }
-                                            { (c.result as any).stdout && (
-                                                <div className="mt-2">
-                                                    <div className="font-bold">📤 {t('Output')}</div>
-                                                    {/* @ts-ignore */}
-                                                    <SyntaxHighlighter language="bash" wrapLines={true}>
-                                                        {(c.result as any).stdout}
-                                                    </SyntaxHighlighter>
-                                                </div>) }
-                                            { (c.result as any).stderr && (
-                                                <div className="mt-2">
-                                                    <div className="font-bold">❌ {t('Errors')}</div>
-                                                    {/* @ts-ignore */}
-                                                    <SyntaxHighlighter language="bash" wrapLines={true}>
-                                                        {(c.result as any).stderr}
-                                                    </SyntaxHighlighter>
-                                                </div>) }
+                                                    { (c.result as any).stdout && (
+                                                        <div className="mt-2">
+                                                            <div className="font-bold">📤 {t('Output')}</div>
+                                                            {/* @ts-ignore */}
+                                                            <SyntaxHighlighter language="bash" wrapLines={true} customStyle={{ overflowX: 'auto' }}>
+                                                                {(c.result as any).stdout}
+                                                            </SyntaxHighlighter>
+                                                        </div>) }
+                                                    { (c.result as any).stderr && (
+                                                        <div className="mt-2">
+                                                            <div className="font-bold">❌ {t('Errors')}</div>
+                                                            {/* @ts-ignore */}
+                                                            <SyntaxHighlighter language="bash" wrapLines={true} customStyle={{ overflowX: 'auto' }}>
+                                                                {(c.result as any).stderr}
+                                                            </SyntaxHighlighter>
+                                                        </div>) }
                                         </div>
                                     )
                                 }
