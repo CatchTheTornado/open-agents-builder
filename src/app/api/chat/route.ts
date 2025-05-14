@@ -17,7 +17,6 @@ import { validateTokenQuotas } from '@/lib/quotas';
 import { getExecutionTempDir, getMimeType, processChatAttachments, processFiles } from '@/lib/file-extractor';
 import { createFileTools } from 'interpreter-tools'  
 import fetch from 'node-fetch';
-import { createSessionFilesMessage } from '@/lib/session-files';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -135,7 +134,7 @@ export async function POST(req: NextRequest) {
     let existingSession = await sessionRepo.findOne({ id: sessionId });
 
     const promptName = agent.agentType ? agent.agentType : 'survey-agent';
-    const systemPrompt = await renderPrompt(locale, promptName, { session: existingSession, agent, events: agent.events, currentDateTimeIso, currentLocalDateTime, currentTimezone });
+    const systemPrompt = await renderPrompt(locale, promptName, { session: existingSession, agent, events: agent.events, currentDateTimeIso, currentLocalDateTime, currentTimezone, baseUrl: process.env.NEXT_PUBLIC_APP_URL });
 
     messages.unshift({
       id: nanoid(),
@@ -148,12 +147,6 @@ export async function POST(req: NextRequest) {
       messages = await processChatAttachments(messages, databaseIdHash, agentId, sessionId);
     } catch (err) {
       console.error("Error converting files", err);
-    }
-
-    // Add message with files for download, if any
-    const filesMessage = createSessionFilesMessage(databaseIdHash, agentId, sessionId, locale);
-    if (filesMessage) {
-      messages.push(filesMessage);
     }
 
     const fileTools = createFileTools(getExecutionTempDir(databaseIdHash, agentId, sessionId), {

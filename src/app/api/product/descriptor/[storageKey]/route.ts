@@ -68,7 +68,7 @@ export async function POST(req: NextRequest, { params }: { params: { storageKey:
     const srv: StorageService = new StorageService(databaseIdHash, 'commerce');
     const imageContent = srv.readAttachment(attachment.storageKey);
 
-    const systemPrompt = await renderPrompt(locale, 'describe-product', { product: parsed.data });
+    const systemPrompt = await renderPrompt(locale, 'describe-product', { product: parsed.data, baseUrl: process.env.NEXT_PUBLIC_APP_URL });
 
     const messages:CoreMessage[] = [
       {

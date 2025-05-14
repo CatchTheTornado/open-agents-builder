@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
       } as Message
     })
 
-    const systemPrompt = await renderPrompt(locale, 'results-chat', { agent, currentDateTimeIso, currentLocalDateTime, currentTimezone  });
+    const systemPrompt = await renderPrompt(locale, 'results-chat', { agent, currentDateTimeIso, currentLocalDateTime, currentTimezone, baseUrl: process.env.NEXT_PUBLIC_APP_URL  });
 
     messages.unshift({
       id: nanoid(),

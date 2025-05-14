@@ -12,7 +12,6 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const sessionId = params.id;
-    const requestContext = await authorizeRequestContext(request);
     const saasContext = await authorizeSaasContext(request);
 
     const sessionRepo = new ServerSessionRepository(requestContext.databaseIdHash, saasContext.isSaasMode ? saasContext.saasContex?.storageKey : null);
