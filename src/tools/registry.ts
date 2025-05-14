@@ -68,7 +68,7 @@ export const toolRegistry = {
       dayName: dayNameTool,
       createOrderTool: createCreateOrderTool(databaseIdHash, agentId, sessionId, storageKey),
       listProducts: createListProductsTool(databaseIdHash),
-      attachmentContent: createAttachmentContentTool(databaseIdHash, storageKey, StorageSchemas.Default),
+      attachmentContent: createAttachmentContentTool(databaseIdHash, storageKey, StorageSchemas.Default, agentId, sessionId),
       listAttachments: createListAttachmentsTool(databaseIdHash, storageKey, StorageSchemas.Default),
       updateResultTool: createUpdateResultTool(databaseIdHash, storageKey),
       httpTool: httpTool,
