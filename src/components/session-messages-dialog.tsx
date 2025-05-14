@@ -51,7 +51,7 @@ export function SessionMessagesDialog({ sessionId, displayToolResultsMode }: { s
     </DialogTrigger>
     <DialogContent className="max-w-3xl">
       <ScrollArea className="h-[80vh] pr-4">
-        <SessionHeader session={session ?? {}} />
+        <SessionHeader session={session ?? { id: '', name: 'Default Session', messages: [] }} />
 
         {messages ? (
           <ChatMessages             
