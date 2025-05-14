@@ -202,6 +202,7 @@ export async function POST(req: NextRequest) {
       tools: {
         ...await prepareAgentTools({ tools: agent.tools, databaseIdHash, storageKey: saasContext.isSaasMode ? saasContext.saasContex?.storageKey : null, agentId, sessionId, agent, saasContext }),
         listSessionFiles: fileTools.listFilesTool,
+        readSessionFile: fileTools.readFileTool,
         saveResults: createUpdateResultTool(databaseIdHash, saasContext.isSaasMode ? saasContext.saasContex?.storageKey : null).tool
       },
       messages,
