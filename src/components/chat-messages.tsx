@@ -13,7 +13,7 @@ export enum DisplayToolResultsMode {
     AsTextMessage = 'textmessage'
 }
 
-export function ChatMessages({ messages, displayToolResultsMode = DisplayToolResultsMode.None, displayTimestamps = false }: { messages: Message[], displayToolResultsMode?: DisplayToolResultsMode, displayTimestamps?: boolean }) {
+export function ChatMessages({ messages, displayToolResultsMode = DisplayToolResultsMode.AsTextMessage, displayTimestamps = false }: { messages: Message[], displayToolResultsMode?: DisplayToolResultsMode, displayTimestamps?: boolean }) {
     const { t } = useTranslation();
     return (
         messages.filter(m => m.role !== 'system' && (typeof m.content === 'string' || (m.content as unknown as Array<{ type: string, result?: string, text?: string }>).find(mc=> mc.type !== 'tool-call' && (mc.text !== '' || mc.result)))).map((m) => (
