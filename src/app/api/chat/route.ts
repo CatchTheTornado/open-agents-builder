@@ -14,7 +14,8 @@ import { llmProviderSetup } from '@/lib/llm-provider';
 import { getErrorMessage } from '@/lib/utils';
 import { createUpdateResultTool } from '@/tools/updateResultTool';
 import { validateTokenQuotas } from '@/lib/quotas';
-import { getMimeType, processChatAttachments, processFiles } from '@/lib/file-extractor';
+import { getExecutionTempDir, getMimeType, processChatAttachments, processFiles } from '@/lib/file-extractor';
+import { createFileTools } from 'interpreter-tools'  
 import fetch from 'node-fetch';
 
 // Allow streaming responses up to 30 seconds
@@ -148,6 +149,15 @@ export async function POST(req: NextRequest) {
       console.error("Error converting files", err);
     }
 
+    const fileTools = createFileTools(getExecutionTempDir(databaseIdHash, agentId, sessionId), {
+      '/session': getExecutionTempDir(databaseIdHash, agentId, sessionId)
+    });
+
+    const rs = await fileTools.listFilesTool.execute({
+      path: '/session'
+    })
+
+    console.log(rs)
 
     const result = await streamText({
       model: llmProviderSetup(),
@@ -191,6 +201,7 @@ export async function POST(req: NextRequest) {
       },
       tools: {
         ...await prepareAgentTools({ tools: agent.tools, databaseIdHash, storageKey: saasContext.isSaasMode ? saasContext.saasContex?.storageKey : null, agentId, sessionId, agent, saasContext }),
+        listSessionFiles: fileTools.listFilesTool,
         saveResults: createUpdateResultTool(databaseIdHash, saasContext.isSaasMode ? saasContext.saasContex?.storageKey : null).tool
       },
       messages,

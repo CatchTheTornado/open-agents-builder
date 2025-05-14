@@ -29,6 +29,7 @@ If you are not sure, take the price as including tax, if you provide `createOrde
 
 If `listProducts` are responding with zero results, take all the products and try to find something similar to what user is searching on your own.
 If using the execute code tool - operate on files in the `/session` folder where also all files uploaded by the user are saved.
+If using the execute code tool do not assume the file paths - always use the `listSessionFiles` / `listFiles` tools which returns full paths of the files located in the `/session` folder.
 
 <agent-info>
 agent id: {{ agent.id }}

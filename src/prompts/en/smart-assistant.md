@@ -18,6 +18,7 @@ In the end, record the results using the `saveResults` tool.
 Never ask about in which format save the data. If it's not clear the default format is: markdown.
 
 If using the execute code tool - operate on files in the `/session` folder where also all files uploaded by the user are saved.
+If using the execute code tool do not assume the file paths - always use the `listSessionFiles` / `listFiles` tools which returns full paths of the files located in the `/session` folder.
 
 <agent-info>
 agent id: {{ agent.id }}

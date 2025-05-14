@@ -234,6 +234,27 @@ export const processChatAttachments = async (
       const processedAttachments = []
       // Prepare temp workspace directory for this agent/session
       const tempWorkspaceDir = getExecutionTempDir(databaseIdHash, agentId, sessionId);
+
+      // Helper to save the original base64 attachment to disk
+      const saveOriginalAttachment = (name: string, base64Data: string, mimeTypeGuess?: string): void => {
+        const sanitize = (n: string) => n.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const mime = mimeTypeGuess || getMimeType(base64Data) || 'application/octet-stream';
+        const ext = getFileExtensionFromMimeType(mime) || 'bin';
+        const fileName = `${sanitize(name)}.${ext}`;
+        const filePath = join(tempWorkspaceDir, fileName);
+
+        try {
+          let dataPart = base64Data;
+          // Strip prefix if present
+          if (base64Data.startsWith('data:')) {
+            dataPart = base64Data.split(',')[1] ?? '';
+          }
+          writeFileSync(filePath, Buffer.from(dataPart, 'base64'));
+        } catch (err) {
+          console.error(`Error saving original attachment to ${filePath}`, err);
+        }
+      };
+
       const attachmentsToProcess: Record<string, string> = {};
       for (const attachment of message.experimental_attachments) {
         if (!attachment.contentType?.startsWith("image")) { // we do not need to process images
@@ -243,7 +264,10 @@ export const processChatAttachments = async (
               if (response.ok) {
                 const buffer = await response.arrayBuffer();
                 const base64String = Buffer.from(buffer).toString('base64');
-                attachmentsToProcess[attachment.name ?? 'default'] = `data:${attachment.contentType};base64,${base64String}`;
+                const base64Data = `data:${attachment.contentType};base64,${base64String}`;
+                const attName = attachment.name ?? 'default';
+                attachmentsToProcess[attName] = base64Data;
+                saveOriginalAttachment(attName, base64Data, attachment.contentType);
               } else {
                 console.error(`Failed to fetch file from URL: ${attachment.url}, Status: ${response.status}`);
               }
@@ -251,9 +275,17 @@ export const processChatAttachments = async (
               console.error(`Error fetching file from URL: ${attachment.url}`, error);
             }
           } else {
-            attachmentsToProcess[attachment.name ?? 'default'] = attachment.url;
+            const attName = attachment.name ?? 'default';
+            attachmentsToProcess[attName] = attachment.url;
+            saveOriginalAttachment(attName, attachment.url, attachment.contentType);
           }
         } else {
+          // For images we still save originals
+          try {
+            const imgData = attachment.url;
+            const attName = attachment.name ?? 'image';
+            saveOriginalAttachment(attName, imgData, attachment.contentType);
+          } catch {}
           processedAttachments.push(attachment);
         }
       }
@@ -265,41 +297,12 @@ export const processChatAttachments = async (
       });
       message.experimental_attachments = []; //
 
-      const sanitize = (name: string) => name.replace(/[^a-zA-Z0-9._-]/g, '_');
-
       for (const key in filesToUpload) {
         const fileContent = filesToUpload[key];
-        const saveContentToFile = (content: string, idx: number | null = null) => {
-          const mimeType = getMimeType(content);
-          const ext = mimeType ? getFileExtensionFromMimeType(mimeType) : 'txt';
-          const baseName = sanitize(key) + (idx !== null ? `_${idx}` : '');
-          const fileName = `${baseName}.${ext}`;
-          const filePath = join(tempWorkspaceDir, fileName);
 
-          try {
-            if (mimeType && content.startsWith('data:')) {
-              // Base64 with MIME prefix
-              const dataPart = content.split(',')[1] ?? '';
-              writeFileSync(filePath, Buffer.from(dataPart, 'base64'));
-            } else if (mimeType) {
-              // Base64 without prefix
-              writeFileSync(filePath, Buffer.from(content, 'base64'));
-            } else {
-              // Treat as plain text
-              writeFileSync(filePath, content, 'utf-8');
-            }
-          } catch (err) {
-            console.error(`Error saving attachment to ${filePath}`, err);
-          }
+        const fileMapper = (fileStr: string) => {
+          // No longer saving processed content, just augment chat
 
-          return filePath;
-        };
-
-        const fileMapper = (idx: number | null, fileStr: string) => {
-          // Save file to disk first
-          saveContentToFile(fileStr, idx);
-
-          // Then keep previous behaviour for chat message augmentation
           if (getMimeType(fileStr)?.startsWith('image')) {
             processedAttachments.push({
               url: fileStr,
@@ -314,9 +317,9 @@ export const processChatAttachments = async (
         };
 
         if (Array.isArray(fileContent)) {
-          fileContent.forEach((fc, idx) => fileMapper(idx + 1, fc as string));
+          fileContent.forEach((fc) => fileMapper(fc as string));
         } else {
-          fileMapper(null, fileContent as string);
+          fileMapper(fileContent as string);
         }
       }
 

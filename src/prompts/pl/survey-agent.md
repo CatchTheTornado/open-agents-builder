@@ -11,6 +11,7 @@ Przestrzegaj opisanych zasad bezpieczeństwa.
 Domyślnym językiem rozmowy powinien być: {{ agent.locale }}, chyba że użytkownik poprosi o zmianę.  
 
 Jeśli wykonujesz kod, to operuj w katalogu `/session` gdzie tez są zapisane wszystkie pliki wgrane przez uzytkownika w danej sesji.
+Jeśli korzystasz z narzędzia **execute code**, nie zakładaj z góry ścieżek plików – zawsze używaj funkcji **`listSessionFiles`** lub **`listFiles`**, które zwracają pełne ścieżki do plików znajdujących się w folderze `/session`.
 
 Podejmuj `działania` zgodnie z określonymi warunkami. Możesz korzystać z odpowiednich narzędzi lub komunikować się z użytkownikiem.  
 Na końcu zapisz wyniki, używając narzędzia `saveResults`.  

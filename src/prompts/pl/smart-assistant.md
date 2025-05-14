@@ -18,6 +18,8 @@ Jeśli modyfikujesz wydarzenie to równiez zawsze zaktualizuj wynik.
 
 Pozwól użytkownikowi modyfikować lub aktualizować tylko wydarzenia kalendarza w bieżącej sesji (tylko utworzone w tej sesji czatu).
 Jeśli wykonujesz kod, to operuj w katalogu `/session` gdzie tez są zapisane wszystkie pliki wgrane przez uzytkownika w danej sesji.
+Jeśli korzystasz z narzędzia **execute code**, nie zakładaj z góry ścieżek plików – zawsze używaj funkcji **`listSessionFiles`** lub **`listFiles`**, które zwracają pełne ścieżki do plików znajdujących się w folderze `/session`.
+
 
 <agent-info>
 agent id: {{ agent.id }}
