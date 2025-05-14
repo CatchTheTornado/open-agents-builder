@@ -2,6 +2,7 @@
 'use client';
 import React from 'react';
 import { Attachment, Message } from "ai";
+// @ts-ignore
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { useTranslation } from "react-i18next";
 import { TimerIcon } from "lucide-react";
@@ -34,9 +35,19 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                     return (
                                         <div key={tl.toolCallId} className="mb-2">
                                             <span className="font-bold">{t('Code Execution')}</span>
+                                            { (tl as any).args?.code && (
+                                                <div className="mt-2">
+                                                    <div className="font-bold">💻 {t('Code')}</div>
+                                                    {/* @ts-ignore */}
+                                                    <SyntaxHighlighter language={(tl as any).args?.language ?? 'bash'} wrapLines={true}>
+                                                        {(tl as any).args?.code}
+                                                    </SyntaxHighlighter>
+                                                </div>
+                                            ) }
                                             { (tl.result as any).stdout && (
                                                 <div className="mt-2">
                                                     <div className="font-bold">📤 {t('Output')}</div>
+                                                    {/* @ts-ignore */}
                                                     <SyntaxHighlighter language="bash" wrapLines={true}>
                                                         {(tl.result as any).stdout}
                                                     </SyntaxHighlighter>
@@ -44,6 +55,7 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                             { (tl.result as any).stderr && (
                                                 <div className="mt-2">
                                                     <div className="font-bold">❌ {t('Errors')}</div>
+                                                    {/* @ts-ignore */}
                                                     <SyntaxHighlighter language="bash" wrapLines={true}>
                                                         {(tl.result as any).stderr}
                                                     </SyntaxHighlighter>
@@ -78,9 +90,19 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                     return (
                                         <div className="mb-2" key={c.text}>
                                             <span className="font-bold">{t('Code Execution')}</span>
+                                            { (c as any).args?.code && (
+                                                <div className="mt-2">
+                                                    <div className="font-bold">💻 {t('Code')}</div>
+                                                    {/* @ts-ignore */}
+                                                    <SyntaxHighlighter language={(c as any).args?.language ?? 'bash'} wrapLines={true}>
+                                                        {(c as any).args?.code}
+                                                    </SyntaxHighlighter>
+                                                </div>
+                                            ) }
                                             { (c.result as any).stdout && (
                                                 <div className="mt-2">
                                                     <div className="font-bold">📤 {t('Output')}</div>
+                                                    {/* @ts-ignore */}
                                                     <SyntaxHighlighter language="bash" wrapLines={true}>
                                                         {(c.result as any).stdout}
                                                     </SyntaxHighlighter>
@@ -88,6 +110,7 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                             { (c.result as any).stderr && (
                                                 <div className="mt-2">
                                                     <div className="font-bold">❌ {t('Errors')}</div>
+                                                    {/* @ts-ignore */}
                                                     <SyntaxHighlighter language="bash" wrapLines={true}>
                                                         {(c.result as any).stderr}
                                                     </SyntaxHighlighter>
