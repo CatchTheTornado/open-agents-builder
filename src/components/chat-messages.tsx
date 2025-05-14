@@ -9,7 +9,6 @@ import { TimerIcon } from "lucide-react";
 import { ChatMessageToolResponse } from "./chat-message-tool-response";
 import { ChatMessageMarkdown } from "./chat-message-markdown";
 import { ImageAttachments } from './image-attachments';
-import useSWR from 'swr';
 
 export enum DisplayToolResultsMode {
     None = 'none',
@@ -26,8 +25,6 @@ interface ChatMessagesProps {
 
 export function ChatMessages({ messages, displayToolResultsMode = DisplayToolResultsMode.ForUser, displayTimestamps = false, sessionId }: ChatMessagesProps) {
     const { t } = useTranslation();
-    const fetcher = (url: string) => fetch(url).then(res => res.json());
-    const { data: fileList } = useSWR<string[]>(sessionId ? `/api/session/${sessionId}/files` : null, fetcher, { refreshInterval: 3000 });
 
     return (
         messages.filter(m => m.role !== 'system' && (typeof m.content === 'string' || (m.content as unknown as Array<{ type: string, result?: string, text?: string }>).find(mc=> mc.type !== 'tool-call' && (mc.text !== '' || mc.result)))).map((m) => (
@@ -71,23 +68,7 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                                                 {(tl.result as any).stderr}
                                                             </SyntaxHighlighter>
                                                         </div>) }
-                                            {/* Links to session files */}
-                                            {sessionId && fileList && fileList.length > 0 ? (
-                                                        (
-                                                            <div className="mt-2">
-                                                                <div className="font-bold">📂 {t('Files')}</div>
-                                                                <ul className="list-disc list-inside">
-                                                                    {fileList.map((file) => (
-                                                                        <li key={file}>
-                                                                            <a className="underline text-blue-600" href={`/api/session/${sessionId}/file?name=${encodeURIComponent(file)}`} download>
-                                                                                {file}
-                                                                            </a>
-                                                                        </li>
-                                                                    ))}
-                                                                </ul>
-                                                            </div>
-                                                        )
-                                            ) : null}
+                                            {/* Links to session files are now rendered server-side */}
                                         </div>
                                     )
                                 }
@@ -148,23 +129,7 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                                                 {(c.result as any).stderr}
                                                             </SyntaxHighlighter>
                                                         </div>) }
-                                            {/* Links to session files */}
-                                            {sessionId && fileList && fileList.length > 0 ? (
-                                                        (
-                                                            <div className="mt-2">
-                                                                <div className="font-bold">📂 {t('Files')}</div>
-                                                                <ul className="list-disc list-inside">
-                                                                    {fileList.map((file) => (
-                                                                        <li key={file}>
-                                                                            <a className="underline text-blue-600" href={`/api/session/${sessionId}/file?name=${encodeURIComponent(file)}`} download>
-                                                                                {file}
-                                                                            </a>
-                                                                        </li>
-                                                                    ))}
-                                                                </ul>
-                                                            </div>
-                                                        )
-                                            ) : null}
+                                            {/* Links to session files are now rendered server-side */}
                                         </div>
                                     )
                                 }
