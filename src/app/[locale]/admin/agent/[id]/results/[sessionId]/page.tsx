@@ -107,6 +107,8 @@ export default function SingleResultPage() {
                 input={input}
                 displayName={t('Modify result with chat')}
                 databaseIdHash={dbContext?.databaseIdHash ?? ''}
+                sessionId={result?.sessionId ?? ''}
+                displayToolResultsMode={DisplayToolResultsMode.ForUser}
               />
             ): <div className='text-sm text-center text-red-500 p-4'>{t('Please verify your E-mail address and AI budget to use all features of Open Agents Builder')}</div>}
           </CredenzaContent>

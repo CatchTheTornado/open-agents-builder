@@ -4,6 +4,7 @@ import { AIConsentBannerComponent } from "@/components/ai-consent-banner";
 import AuthorizationGuard from "@/components/authorization-guard";
 import { Chat } from "@/components/chat";
 import { ChatInitForm } from "@/components/chat-init-form";
+import { DisplayToolResultsMode } from "@/components/chat-messages";
 import { CookieConsentBannerComponent } from "@/components/cookie-consent-banner";
 import DataLoader from "@/components/data-loader";
 import FeedbackWidget from "@/components/feedback-widget";
@@ -71,7 +72,7 @@ export default function ChatPage({children,
         }
       }, [chatContext.agent, chatContext.initFormRequired, chatContext.initFormDone]);
 
-      const authorizedChat =  () => (
+      const authorizedChat =  (displayMode: DisplayToolResultsMode) => (
         (chatContext.initFormRequired && !chatContext.initFormDone) ? (
           <ChatInitForm
               welcomeMessage={chatContext.agent?.options?.welcomeMessage ?? ''}
@@ -89,6 +90,7 @@ export default function ChatPage({children,
               sessionId={chatContext.sessionId}
               displayName={chatContext.agent?.displayName ?? ''}
               databaseIdHash={chatContext?.databaseIdHash ?? ''}
+              displayToolResultsMode={displayMode}
               
           />
       )    
@@ -112,12 +114,12 @@ export default function ChatPage({children,
             </div>
           ): (
               chatContext.agent?.published ? (
-                authorizedChat()
+                authorizedChat(DisplayToolResultsMode.ForEasyUser)
             ) : (
                   <DatabaseContextProvider>
                     <SaaSContextProvider>
                       <AuthorizationGuard>
-                        {authorizedChat()}
+                        {authorizedChat(DisplayToolResultsMode.ForUser)}
                       </AuthorizationGuard>
                     </SaaSContextProvider>
                   </DatabaseContextProvider>

@@ -9,7 +9,7 @@ import remarkGfm from "remark-gfm";
 import Markdown from "react-markdown";
 import { useTranslation } from "react-i18next";
 import styles from "./chat.module.css";
-import { ChatMessages } from "./chat-messages";
+import { ChatMessages, DisplayToolResultsMode } from "./chat-messages";
 import { PaperclipIcon } from "./icons";
 import { TrashIcon, Loader2, CheckIcon, XIcon } from "lucide-react";
 import { nanoid } from "nanoid";
@@ -60,6 +60,7 @@ interface ChatProps {
   input?: string;
   databaseIdHash: string;
   sessionId: string;
+  displayToolResultsMode?: DisplayToolResultsMode;
 }
 
 export function Chat({
@@ -74,6 +75,7 @@ export function Chat({
   input,
   databaseIdHash,
   sessionId,
+  displayToolResultsMode
 }: ChatProps) {
   const { t } = useTranslation();
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
@@ -199,7 +201,7 @@ export function Chat({
               </span>
             </div>
           ) : null}
-          <ChatMessages messages={messages} displayTimestamps={false} sessionId={sessionId} databaseIdHash={databaseIdHash} />
+          <ChatMessages messages={messages} displayTimestamps={false} sessionId={sessionId} databaseIdHash={databaseIdHash} displayToolResultsMode={displayToolResultsMode} />
           {isLoading && (
             <div className="text-left">
               <span className="inline-block p-2 rounded-lg bg-muted">

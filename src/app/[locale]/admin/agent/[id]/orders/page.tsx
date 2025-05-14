@@ -33,6 +33,7 @@ import { Credenza, CredenzaContent, CredenzaTrigger } from "@/components/credenz
 import { Chat } from "@/components/chat";
 import { useChat } from "ai/react";
 import { OrderDeleteDialog } from "@/components/order-delete-dialog";
+import { DisplayToolResultsMode } from "@/components/chat-messages";
 
 /**
  * Strona z listą zamówień, analogiczna do "ProductsPage"
@@ -201,6 +202,7 @@ export default function OrdersPage() {
                 input={input}
                 displayName={t('Chat with orders')}
                 databaseIdHash={dbContext?.databaseIdHash ?? ''}
+                displayToolResultsMode={DisplayToolResultsMode.ForUser}
               />
             ): <div className='text-sm text-center text-red-500 p-4'>{t('Please verify your E-mail address and AI budget to use all features of Open Agents Builder')}</div>}
           </CredenzaContent>

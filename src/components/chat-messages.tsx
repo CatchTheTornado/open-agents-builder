@@ -14,7 +14,8 @@ import Link from 'next/link';
 export enum DisplayToolResultsMode {
     None = 'none',
     AsTextMessage = 'textmessage',
-    ForUser = 'foruser'
+    ForUser = 'foruser',
+    ForEasyUser = 'forEasyUser'
 }
 
 interface ChatMessagesProps {
@@ -25,7 +26,7 @@ interface ChatMessagesProps {
     databaseIdHash?: string;
 }
 
-export function ChatMessages({ messages, displayToolResultsMode = DisplayToolResultsMode.ForUser, displayTimestamps = false, sessionId, databaseIdHash }: ChatMessagesProps) {
+export function ChatMessages({ messages, displayToolResultsMode = DisplayToolResultsMode.ForEasyUser, displayTimestamps = false, sessionId, databaseIdHash }: ChatMessagesProps) {
     const { t } = useTranslation();
 
     // cache of files per message id
@@ -123,7 +124,15 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                         <div className="mb-2">
                             {m.toolInvocations.filter(tl=>tl.state === 'result').map((tl) => {
                                 const isStdIOResult = tl.result && typeof tl.result === 'object' && ('stdout' in (tl.result as any) || 'stderr' in (tl.result as any));
-                                if (displayToolResultsMode === DisplayToolResultsMode.ForUser && isStdIOResult) {
+                                if ((displayToolResultsMode === DisplayToolResultsMode.ForUser || displayToolResultsMode === DisplayToolResultsMode.ForEasyUser) && isStdIOResult) {
+                                    if (displayToolResultsMode === DisplayToolResultsMode.ForEasyUser) {
+                                        return (
+                                            <div key={tl.toolCallId} className="mb-2">
+                                                <span className="font-bold">{ (tl.result as any).stderr ? '❌ ' + t('Code executed with errors. Please try again') : '✅ ' + t('Code execution succeeded') }</span>
+                                                {renderSessionFiles(m.id)}
+                                            </div>
+                                        )
+                                    }
                                     return (
                                         <div key={tl.toolCallId} className="mb-2">
                                             <span className="font-bold">{t('Code Execution')}</span>
@@ -166,6 +175,11 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                     return null;
                                 }
 
+                                if (displayToolResultsMode === DisplayToolResultsMode.ForEasyUser) {
+                                    // skip all non-stdio results
+                                    return null;
+                                }
+
                                 return (
                                     <div key={tl.toolCallId} className="mb-2">
                                         <span className="font-bold">{t('Tool response: ')}</span>
@@ -188,7 +202,15 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                             if (c.type === 'text' && c.text) return (<ChatMessageMarkdown key={c.text}>{c.text}</ChatMessageMarkdown>)
                             if (c.type === 'tool-result' && c.result && displayToolResultsMode !== DisplayToolResultsMode.None) {
                                 const isStdIOResult = typeof c.result === 'object' && ('stdout' in (c.result as any) || 'stderr' in (c.result as any));
-                                if (displayToolResultsMode === DisplayToolResultsMode.ForUser && isStdIOResult) {
+                                if ((displayToolResultsMode === DisplayToolResultsMode.ForUser || displayToolResultsMode === DisplayToolResultsMode.ForEasyUser) && isStdIOResult) {
+                                    if (displayToolResultsMode === DisplayToolResultsMode.ForEasyUser) {
+                                        return (
+                                            <div className="mb-2" key={c.text}>
+                                                <span className="font-bold">{ (c.result as any).stderr ? '❌ ' + t('Code executed with errors. Please try again') : '✅ ' + t('Code execution succeeded') }</span>
+                                                {renderSessionFiles(m.id)}
+                                            </div>
+                                        )
+                                    }
                                     return (
                                         <div className="mb-2" key={c.text}>
                                             <span className="font-bold">{t('Code Execution')}</span>
@@ -228,6 +250,10 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
 
                                 if (displayToolResultsMode === DisplayToolResultsMode.ForUser) {
                                     // Skip non-code-execution results in ForUser mode
+                                    return null;
+                                }
+
+                                if (displayToolResultsMode === DisplayToolResultsMode.ForEasyUser) {
                                     return null;
                                 }
 

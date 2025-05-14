@@ -27,6 +27,7 @@ import { Credenza, CredenzaContent, CredenzaTrigger } from "./credenza"
 import { Chat } from "./chat"
 import { SaaSContext } from "@/contexts/saas-context"
 import { useSearchParams } from "next/navigation"
+import { DisplayToolResultsMode } from "./chat-messages"
 
 
 const localizer = momentLocalizer(moment);
@@ -219,6 +220,8 @@ export default function Scheduler() {
                 input={input}
                 displayName={t('Chat with results')}
                 databaseIdHash={dbContext?.databaseIdHash ?? ''}
+                displayToolResultsMode={DisplayToolResultsMode.ForUser}
+                sessionId={searchParams.get('sessionId') ?? ''}
               />
             ): <div className='text-sm text-center text-red-500 p-4'>{t('Please verify your E-mail address and AI budget to use all features of Open Agents Builder')}</div>}
           </CredenzaContent>
