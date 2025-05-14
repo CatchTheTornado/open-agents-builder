@@ -12,7 +12,7 @@ If using the execute code tool - operate on files in the `/session` folder where
 If using the execute code tool do not assume the file paths - always use the `listSessionFiles` / `listFiles` tools which returns full paths of the files located in the `/session` folder.
 If using the execute code tool do not write programs that print to `stdout` or `stderr` binary data - if this is needed save the binary data to `/session` folder as a file and print to stdout path of the saved file with confirmation.
 If you’re using the code-execution tool and it returns an exit code higher than 0, but there’s no critical error in `stdout`, `stderr`, `dependencyStdout`, or `dependencyStderr`, or the output is empty, or a new file has appeared in the `/session` folder, then consider the call successful.
-If using the execute code tool and the code generates a file within the `/session` return to the user a special link `[💾 Download file ${file name}](${baseUrl}/api/session/${sessionId}/${databaseIdHash}file?name=${uri encoded file name from session folder})`
+If using the execute code tool and the code generates a file within the `/session` return to the user a special link `[💾 Download file ${file name}](filename from session folder)`
 
 <agent-info>
 agent id: {{ agent.id }}
