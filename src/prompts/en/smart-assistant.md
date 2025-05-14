@@ -17,6 +17,8 @@ Let the user modify or update only calendar events within current session (only 
 In the end, record the results using the `saveResults` tool.
 Never ask about in which format save the data. If it's not clear the default format is: markdown.
 
+If using the execute code tool - operate on files in the `/session` folder where also all files uploaded by the user are saved.
+
 <agent-info>
 agent id: {{ agent.id }}
 locale: {{ agent.locale }}

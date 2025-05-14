@@ -17,6 +17,7 @@ Jeśli używasz narzędzia `calendarSchedule` do zaplanowania wydarzenia, zawsze
 Jeśli modyfikujesz wydarzenie to równiez zawsze zaktualizuj wynik.
 
 Pozwól użytkownikowi modyfikować lub aktualizować tylko wydarzenia kalendarza w bieżącej sesji (tylko utworzone w tej sesji czatu).
+Jeśli wykonujesz kod, to operuj w katalogu `/session` gdzie tez są zapisane wszystkie pliki wgrane przez uzytkownika w danej sesji.
 
 <agent-info>
 agent id: {{ agent.id }}

@@ -1,6 +1,6 @@
 import { Message, TextPart } from 'ai';
 import { execSync } from 'child_process';
-import { mkdtempSync, writeFileSync, readFileSync, readdirSync, unlinkSync, rmdirSync } from 'fs';
+import { mkdtempSync, writeFileSync, readFileSync, readdirSync, unlinkSync, rmdirSync, mkdirSync } from 'fs';
 import { file } from 'jszip';
 import { tmpdir } from 'os';
 import path, { join } from 'path';
@@ -215,18 +215,25 @@ function cleanupTempDir(dirPath: string) {
 }
 
 
-export const replaceBase64Content = (data) => {
+export const replaceBase64Content = (data: string): string => {
   // Remove all base64 encoded content from the "image" fields
     return data.replace(/data:image\/[a-zA-Z]+;base64,[a-zA-Z0-9+/=]+/g, "File content removed");
 };
 
 
 
-export const processChatAttachments = async (messages: Message[]) => {
+export const processChatAttachments = async (
+  messages: Message[],
+  databaseIdHash: string,
+  agentId: string,
+  sessionId: string
+) => {
   for (const message of messages) { 
     if (message.experimental_attachments) {
 
       const processedAttachments = []
+      // Prepare temp workspace directory for this agent/session
+      const tempWorkspaceDir = getExecutionTempDir(databaseIdHash, agentId, sessionId);
       const attachmentsToProcess: Record<string, string> = {};
       for (const attachment of message.experimental_attachments) {
         if (!attachment.contentType?.startsWith("image")) { // we do not need to process images
@@ -258,27 +265,58 @@ export const processChatAttachments = async (messages: Message[]) => {
       });
       message.experimental_attachments = []; //
 
-      for (const v in filesToUpload) {
-        if (filesToUpload[v]) {
-          const fileMapper = (key: string, fileBase64: string) => {
-            if (getMimeType(fileBase64)?.startsWith("image")) {
-              processedAttachments.push({ // TODO: prevent multiple uploads
-                url: fileBase64,
-                contentType: getMimeType(fileBase64) || "application/octet-stream",
-              });
-            } else {
-              (message.parts as Array<TextPart>).push({
-                type: "text",
-                text: `${fileBase64}`,
-              });
-            }
-          };
+      const sanitize = (name: string) => name.replace(/[^a-zA-Z0-9._-]/g, '_');
 
-          if (Array.isArray(filesToUpload[v])) {
-            filesToUpload[v].forEach((fc) => fileMapper(v, fc as string));
-          } else {
-            fileMapper(v, filesToUpload[v] as string);
+      for (const key in filesToUpload) {
+        const fileContent = filesToUpload[key];
+        const saveContentToFile = (content: string, idx: number | null = null) => {
+          const mimeType = getMimeType(content);
+          const ext = mimeType ? getFileExtensionFromMimeType(mimeType) : 'txt';
+          const baseName = sanitize(key) + (idx !== null ? `_${idx}` : '');
+          const fileName = `${baseName}.${ext}`;
+          const filePath = join(tempWorkspaceDir, fileName);
+
+          try {
+            if (mimeType && content.startsWith('data:')) {
+              // Base64 with MIME prefix
+              const dataPart = content.split(',')[1] ?? '';
+              writeFileSync(filePath, Buffer.from(dataPart, 'base64'));
+            } else if (mimeType) {
+              // Base64 without prefix
+              writeFileSync(filePath, Buffer.from(content, 'base64'));
+            } else {
+              // Treat as plain text
+              writeFileSync(filePath, content, 'utf-8');
+            }
+          } catch (err) {
+            console.error(`Error saving attachment to ${filePath}`, err);
           }
+
+          return filePath;
+        };
+
+        const fileMapper = (idx: number | null, fileStr: string) => {
+          // Save file to disk first
+          saveContentToFile(fileStr, idx);
+
+          // Then keep previous behaviour for chat message augmentation
+          if (getMimeType(fileStr)?.startsWith('image')) {
+            processedAttachments.push({
+              url: fileStr,
+              contentType: getMimeType(fileStr) || 'application/octet-stream'
+            });
+          } else {
+            (message.parts as Array<TextPart>).push({
+              type: 'text',
+              text: `${fileStr}`
+            });
+          }
+        };
+
+        if (Array.isArray(fileContent)) {
+          fileContent.forEach((fc, idx) => fileMapper(idx + 1, fc as string));
+        } else {
+          fileMapper(null, fileContent as string);
         }
       }
 
@@ -286,4 +324,23 @@ export const processChatAttachments = async (messages: Message[]) => {
     }
   }
   return messages;
+}
+
+// ---------------------------------------------------------------------------
+// Helper to generate and ensure temp execution directory shared across tools
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns a deterministic temp directory path for a given database, agent and session
+ * (/tmp/{databaseIdHash}/{agentId}/{sessionId}) and makes sure it exists.
+ */
+export function getExecutionTempDir(databaseIdHash: string, agentId: string, sessionId: string): string {
+  const dirPath = join('/tmp', databaseIdHash, agentId, sessionId);
+  try {
+    mkdirSync(dirPath, { recursive: true });
+  } catch (err) {
+    // Directory might already exist or creation failed due to permissions
+    // In production we might want to log this, here we swallow to avoid breaking the flow
+  }
+  return dirPath;
 }

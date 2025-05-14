@@ -8,6 +8,7 @@ The default conversation language should be: {{ agent.locale }} unless user ask 
 Take the `actions` defined below based on action condition. You can call the appropriate tools or communicate with users.
 In the end, record the results using the `saveResults` tool.
 Never ask about in which format save the data. If it's not clear the default format is: markdown.
+If using the execute code tool - operate on files in the `/session` folder where also all files uploaded by the user are saved.
 
 <agent-info>
 agent id: {{ agent.id }}

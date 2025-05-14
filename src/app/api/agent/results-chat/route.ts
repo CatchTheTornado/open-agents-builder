@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
 
 
     try {
-      messages = await processChatAttachments(messages);
+      messages = await processChatAttachments(messages, databaseIdHash, agentId, sessionId);
     } catch (err) {
       console.error("Error converting files", err);
     }
