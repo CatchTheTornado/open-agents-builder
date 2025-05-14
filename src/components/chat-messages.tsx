@@ -64,6 +64,11 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                     )
                                 }
 
+                                if (displayToolResultsMode === DisplayToolResultsMode.ForUser) {
+                                    // Skip non-code-execution results in ForUser mode
+                                    return null;
+                                }
+
                                 return (
                                     <div key={tl.toolCallId} className="mb-2">
                                         <span className="font-bold">{t('Tool response: ')}</span>
@@ -117,6 +122,11 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                                         </div>) }
                                         </div>
                                     )
+                                }
+
+                                if (displayToolResultsMode === DisplayToolResultsMode.ForUser) {
+                                    // Skip non-code-execution results in ForUser mode
+                                    return null;
                                 }
 
                                 return (
