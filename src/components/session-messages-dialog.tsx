@@ -51,13 +51,16 @@ export function SessionMessagesDialog({ sessionId, displayToolResultsMode }: { s
     </DialogTrigger>
     <DialogContent className="max-w-3xl">
       <ScrollArea className="h-[80vh] pr-4">
-        <SessionHeader session={session} />
+        <SessionHeader session={session ?? { id: '', name: 'Default Session', messages: [] }} />
 
         {messages ? (
-          <ChatMessages 
+          <ChatMessages             
+            databaseIdHash={dbContext?.databaseIdHash ?? ''}
             displayToolResultsMode={displayToolResultsMode}
             displayTimestamps={true}
             messages={messages}
+            agentId={session?.agentId ?? ''}
+            sessionId={sessionId}
           />
         ) : <div className="flex justify-center items-center h-64"><DataLoader /></div>}
       </ScrollArea>

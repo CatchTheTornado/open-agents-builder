@@ -17,6 +17,7 @@ import { RenderComponentToolConfigurator } from './renderComponentTool-configura
 import { getAvailableUIComponents } from './availableUIComponentsTool';
 import { MemoryStoreConfigurator } from './memoryStore-configurator';
 import { MemorySearchConfigurator } from './memorySearch-configurator';
+import { CodeExecutionToolConfigurator } from './codeExecutionTool-configurator';
 
 type ToolConfiguratorDescriptor = {
   displayName: string;
@@ -85,6 +86,10 @@ export const toolConfiguratorsRepository = {
         defaultOptions: {
           storeName: "default"
         }
+      },
+      codeExecutionTool: {
+        displayName: "Code Execution",
+        configurator: CodeExecutionToolConfigurator
       }
     }
 

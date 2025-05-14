@@ -27,6 +27,7 @@ import { Credenza, CredenzaContent, CredenzaTrigger } from "./credenza"
 import { Chat } from "./chat"
 import { SaaSContext } from "@/contexts/saas-context"
 import { useSearchParams } from "next/navigation"
+import { DisplayToolResultsMode } from "./chat-messages"
 
 
 const localizer = momentLocalizer(moment);
@@ -39,6 +40,7 @@ export default function Scheduler() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<SlotInfo | null>(null)
 
+  const [sessionId, setSessionId] = useState<string | null>(null)
   const searchParams = useSearchParams();
 
   const agentContext = useAgentContext();
@@ -56,6 +58,7 @@ export default function Scheduler() {
       'Database-Id-Hash': dbContext?.databaseIdHash ?? '',
       'Agent-Id': agentContext.current?.id ?? '',
       'Agent-Locale': i18n.language,
+      'Session-Id': sessionId ?? '',
       'Current-Datetime-Iso': new Date().toISOString(),
       'Current-Datetime': new Date().toLocaleString(),
       'Current-Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -63,6 +66,7 @@ export default function Scheduler() {
   }
   useEffect(() => {
     if (agentContext.current && isResultsChatOpen){
+      setSessionId(nanoid())
       append({
         id: nanoid(),
         role: "user",
@@ -219,6 +223,9 @@ export default function Scheduler() {
                 input={input}
                 displayName={t('Chat with results')}
                 databaseIdHash={dbContext?.databaseIdHash ?? ''}
+                displayToolResultsMode={DisplayToolResultsMode.ForUser}
+                sessionId={sessionId ?? ''}
+                agentId={agentContext.current?.id ?? ''}
               />
             ): <div className='text-sm text-center text-red-500 p-4'>{t('Please verify your E-mail address and AI budget to use all features of Open Agents Builder')}</div>}
           </CredenzaContent>

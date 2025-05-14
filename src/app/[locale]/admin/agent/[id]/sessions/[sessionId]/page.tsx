@@ -49,10 +49,13 @@ export default function SingleResultPage() {
         {session ? (
           <CardContent className="p-6">
                 <SessionHeader session={session} />
-                <RenderSession session={session} />
+                <RenderSession agent={agentContext.current} session={session} />
                 <SessionCalendarEvents displayMode={CalendarEventsDisplayMode.list} sessionId={session.id} />
                 <div className="p-4">
                   <ChatMessages 
+                        databaseIdHash={dbContext?.databaseIdHash ?? ''}
+                        sessionId={session.id}
+                        agentId={agentContext.current?.id ?? ''}
                         displayTimestamps={true}
                         displayToolResultsMode={DisplayToolResultsMode.AsTextMessage}
                         messages={session?.messages ?? []}

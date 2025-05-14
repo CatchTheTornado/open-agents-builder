@@ -27,6 +27,7 @@ import { SessionHeader } from '@/components/session-header';
 import { SessionMessagesDialog } from '@/components/session-messages-dialog';
 import { DisplayToolResultsMode } from '@/components/chat-messages';
 import { CalendarEventsDisplayMode, SessionCalendarEvents } from '@/components/session-calendar-events';
+import { SessionFiles, SessionFilesDisplayMode } from '@/components/session-files';
 
 
 export default function ResultsPage() {
@@ -47,6 +48,7 @@ export default function ResultsPage() {
 
   const [pageSize, setPageSize] = useState(4);
 
+  const [sessionId, setSessionId] = useState<string | null>(null)
   const { messages, handleInputChange, isLoading, append, handleSubmit, input} = useChat({
     api: "/api/agent/results-chat",
   });
@@ -60,6 +62,7 @@ export default function ResultsPage() {
       'Database-Id-Hash': dbContext?.databaseIdHash ?? '',
       'Agent-Id': agentContext.current?.id ?? '',
       'Agent-Locale': i18n.language,
+      'Session-Id': sessionId ?? '',
       'Current-Datetime-Iso': new Date().toISOString(),
       'Current-Datetime': new Date().toLocaleString(),
       'Current-Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -67,6 +70,7 @@ export default function ResultsPage() {
   }
   useEffect(() => {
     if (agentContext.current && isResultsChatOpen){
+      setSessionId(nanoid())
       if (messages.length === 0) {
         append({
           id: nanoid(),
@@ -117,6 +121,9 @@ export default function ResultsPage() {
                 input={input}
                 displayName={t('Chat with results')}
                 databaseIdHash={dbContext?.databaseIdHash ?? ''}
+                displayToolResultsMode={DisplayToolResultsMode.ForUser}
+                sessionId={sessionId ?? ''}
+                agentId={agentContext.current?.id ?? ''}
               />
             ): <div className='text-sm text-center text-red-500 p-4'>{t('Please verify your E-mail address and AI budget to use all features of Open Agents Builder')}</div>}
           </CredenzaContent>
@@ -171,6 +178,7 @@ export default function ResultsPage() {
           <CardContent className="text-sm">
             <SessionHeader session={result} />
             <RenderResult result={result} />
+            <SessionFiles sessionId={result.sessionId} displayMode={SessionFilesDisplayMode.list} />
             <SessionCalendarEvents displayMode={CalendarEventsDisplayMode.icon} sessionId={result.sessionId} />
             <div className="pt-4 flex justify-end">
               <ResultDeleteDialog result={result} />
