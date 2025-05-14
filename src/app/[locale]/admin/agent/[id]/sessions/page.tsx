@@ -22,7 +22,7 @@ import { SessionHeader } from '@/components/session-header';
 import { SessionMessagesDialog } from '@/components/session-messages-dialog';
 import { DisplayToolResultsMode } from '@/components/chat-messages';
 import { CalendarEventsDisplayMode, SessionCalendarEvents } from '@/components/session-calendar-events';
-
+import { SessionFilesDisplayMode, SessionFiles } from '@/components/session-files'; 
 
 export default function SessionsPage() {
   const agentContext = useAgentContext();
@@ -102,6 +102,7 @@ export default function SessionsPage() {
           <CardContent className="text-sm">
             <SessionHeader session={session} />
             <RenderSession agent={agentContext.current} session={session} />
+            <SessionFiles sessionId={session.id} displayMode={SessionFilesDisplayMode.list} />
             <SessionCalendarEvents displayMode={CalendarEventsDisplayMode.icon} sessionId={session.id} />
             <div className="pt-4 flex justify-end">
               <SessionDeleteDialog session={session} />

@@ -25,6 +25,8 @@ import DataLoader from '@/components/data-loader';
 import { CalendarEventsDisplayMode, SessionCalendarEvents } from '@/components/session-calendar-events';
 import Calendar from '../../calendar/page';
 import { agent } from 'flows-ai';
+import { SessionFiles } from '@/components/session-files';
+import { SessionFilesDisplayMode } from '@/components/session-files';
 
 
 export default function SingleResultPage() {
@@ -136,9 +138,13 @@ export default function SingleResultPage() {
                     <TabsTrigger value="chat" className="dark:data-[state=active]:bg-zinc-900 data-[state=active]:bg-zinc-100 data-[state=active]:text-gray-200 p-2 rounded-md text-sm">{t('Message history')}</TabsTrigger>
                   )}
                   <TabsTrigger value="calendar" className="dark:data-[state=active]:bg-zinc-900 data-[state=active]:bg-zinc-100 data-[state=active]:text-gray-200 p-2 rounded-md text-sm">{t('Calendar')}</TabsTrigger>
+                  <TabsTrigger value="files" className="dark:data-[state=active]:bg-zinc-900 data-[state=active]:bg-zinc-100 data-[state=active]:text-gray-200 p-2 rounded-md text-sm">{t('Files')}</TabsTrigger>
               </TabsList>
               <TabsContent value="calendar" className="p-2 text-sm">
                 <SessionCalendarEvents displayMode={CalendarEventsDisplayMode.list} sessionId={result?.sessionId} />
+              </TabsContent>
+              <TabsContent value="files" className="p-2 text-sm">
+                <SessionFiles sessionId={result?.sessionId} displayMode={SessionFilesDisplayMode.list} />
               </TabsContent>
               <TabsContent value="content" className="p-2 text-sm">
                 <RenderResult result={result} />

@@ -27,6 +27,7 @@ import { SessionHeader } from '@/components/session-header';
 import { SessionMessagesDialog } from '@/components/session-messages-dialog';
 import { DisplayToolResultsMode } from '@/components/chat-messages';
 import { CalendarEventsDisplayMode, SessionCalendarEvents } from '@/components/session-calendar-events';
+import { SessionFiles, SessionFilesDisplayMode } from '@/components/session-files';
 
 
 export default function ResultsPage() {
@@ -171,6 +172,7 @@ export default function ResultsPage() {
           <CardContent className="text-sm">
             <SessionHeader session={result} />
             <RenderResult result={result} />
+            <SessionFiles sessionId={result.sessionId} displayMode={SessionFilesDisplayMode.list} />
             <SessionCalendarEvents displayMode={CalendarEventsDisplayMode.icon} sessionId={result.sessionId} />
             <div className="pt-4 flex justify-end">
               <ResultDeleteDialog result={result} />
