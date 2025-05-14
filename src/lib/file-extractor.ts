@@ -240,7 +240,18 @@ export const processChatAttachments = async (
         const sanitize = (n: string) => n.replace(/[^a-zA-Z0-9._-]/g, '_');
         const mime = mimeTypeGuess || getMimeType(base64Data) || 'application/octet-stream';
         const ext = getFileExtensionFromMimeType(mime) || 'bin';
-        const fileName = `${sanitize(name)}.${ext}`;
+
+        // Ensure we do not duplicate file extensions if the name already contains one
+        let sanitizedName = sanitize(name);
+        const currentExt = path.extname(sanitizedName).replace('.', '').toLowerCase();
+
+        // Add extension only when the sanitized name does not already include any extension
+        // or includes a different one
+        if (!currentExt) {
+          sanitizedName = `${sanitizedName}.${ext}`;
+        }
+
+        const fileName = sanitizedName;
         const filePath = join(tempWorkspaceDir, fileName);
 
         try {
