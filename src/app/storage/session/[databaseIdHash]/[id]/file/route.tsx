@@ -1,7 +1,7 @@
 import { authorizeRequestContext } from "@/lib/authorization-api";
 import { authorizeSaasContext } from "@/lib/generic-api";
 import { getErrorMessage } from "@/lib/utils";
-import { getExecutionTempDir, getMimeType } from "@/lib/file-extractor";
+import { clearOldExecutionTempDirs, getExecutionTempDir, getMimeType } from "@/lib/file-extractor";
 import ServerSessionRepository from "@/data/server/server-session-repository";
 import { NextRequest } from "next/server";
 import { readFileSync } from "fs";
@@ -9,7 +9,7 @@ import path from "path";
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: { id: string, databaseIdHash: string } }) {
   try {
     const sessionId = params.id;
     const url = new URL(request.url);
@@ -18,17 +18,18 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return Response.json({ message: 'Filename missing', status: 400 }, { status: 400 });
     }
 
-    const requestContext = await authorizeRequestContext(request);
     const saasContext = await authorizeSaasContext(request);
 
-    const sessionRepo = new ServerSessionRepository(requestContext.databaseIdHash, saasContext.isSaasMode ? saasContext.saasContex?.storageKey : null);
+    const sessionRepo = new ServerSessionRepository(params.databaseIdHash, saasContext.isSaasMode ? saasContext.saasContex?.storageKey : null);
     const existingSession = await sessionRepo.findOne({ id: sessionId });
     if (!existingSession) {
       return Response.json({ message: 'Session not found', status: 404 }, { status: 404 });
     }
 
+    clearOldExecutionTempDirs(params.databaseIdHash); // remove old temp dirs
+
     const agentId = existingSession.agentId;
-    const sessionDir = getExecutionTempDir(requestContext.databaseIdHash, agentId, sessionId);
+    const sessionDir = getExecutionTempDir(params.databaseIdHash, agentId, sessionId);
     const filePath = path.join(sessionDir, path.basename(fileName));
 
     if (!path.resolve(filePath).startsWith(path.resolve(sessionDir))) {

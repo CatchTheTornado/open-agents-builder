@@ -166,6 +166,8 @@ export default function SingleResultPage() {
               {agentContext.current?.agentType !== 'flow' && (
                 <TabsContent value="chat" className="p-2 text-sm">
                   <ChatMessages 
+                        sessionId={result?.sessionId ?? ''}
+                        databaseIdHash={dbContext?.databaseIdHash ?? ''}
                         displayTimestamps={true}
                         displayToolResultsMode={DisplayToolResultsMode.AsTextMessage}
                         messages={session?.messages ?? []}

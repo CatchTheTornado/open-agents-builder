@@ -9,6 +9,7 @@ import { TimerIcon } from "lucide-react";
 import { ChatMessageToolResponse } from "./chat-message-tool-response";
 import { ChatMessageMarkdown } from "./chat-message-markdown";
 import { ImageAttachments } from './image-attachments';
+import Link from 'next/link';
 
 export enum DisplayToolResultsMode {
     None = 'none',
@@ -21,10 +22,93 @@ interface ChatMessagesProps {
     displayToolResultsMode?: DisplayToolResultsMode;
     displayTimestamps?: boolean;
     sessionId?: string;
+    databaseIdHash?: string;
 }
 
-export function ChatMessages({ messages, displayToolResultsMode = DisplayToolResultsMode.ForUser, displayTimestamps = false, sessionId }: ChatMessagesProps) {
+export function ChatMessages({ messages, displayToolResultsMode = DisplayToolResultsMode.ForUser, displayTimestamps = false, sessionId, databaseIdHash }: ChatMessagesProps) {
     const { t } = useTranslation();
+
+    // cache of files per message id
+    const [filesCache, setFilesCache] = React.useState<Record<string, string[]>>({});
+
+    // helper: determine if message contains code-execution stdout/stderr results
+    const hasStdIO = React.useCallback((msg: Message) => {
+        // check toolInvocations first
+        if ((msg as any).toolInvocations) {
+            if ((msg as any).toolInvocations.some((tl: any) => tl.state === 'result' && tl.result && typeof tl.result === 'object' && ('stdout' in tl.result || 'stderr' in tl.result))) {
+                return true;
+            }
+        }
+        // then check content blocks
+        if (Array.isArray(msg.content)) {
+            if ((msg.content as any).some((c: any) => c.type === 'tool-result' && c.result && typeof c.result === 'object' && ('stdout' in c.result || 'stderr' in c.result))) {
+                return true;
+            }
+        }
+        return false;
+    }, []);
+
+    const fetchDebounceRef = React.useRef<NodeJS.Timeout | null>(null);
+
+    React.useEffect(() => {
+        if (!sessionId) return;
+
+        const msgsToFetch = messages.filter((m) => hasStdIO(m) && !filesCache[m.id]);
+        if (msgsToFetch.length === 0) return;
+
+        // Clear any existing scheduled fetch
+        if (fetchDebounceRef.current) {
+            clearTimeout(fetchDebounceRef.current);
+        }
+
+        // Schedule a debounced fetch (500ms)
+        fetchDebounceRef.current = setTimeout(() => {
+            (async () => {
+                try {
+                    const res = await fetch(`/storage/session/${databaseIdHash}/${sessionId}/files`);
+                    if (!res.ok) return;
+                    const files: string[] = await res.json();
+                    setFilesCache((prev) => {
+                        const updated = { ...prev };
+                        msgsToFetch.forEach((msg) => {
+                            updated[msg.id] = files;
+                        });
+                        return updated;
+                    });
+                } catch (err) {
+                    console.error('Error fetching session files', err);
+                }
+            })();
+        }, 500); // debounce delay in ms
+
+        // Cleanup if component unmounts or dependencies change before timeout triggers
+        return () => {
+            if (fetchDebounceRef.current) {
+                clearTimeout(fetchDebounceRef.current);
+            }
+        };
+    }, [messages, sessionId, databaseIdHash, filesCache, hasStdIO]);
+
+    // helper to render list of files for specific message
+    const renderSessionFiles = (messageId: string) => {
+        if (!sessionId || !filesCache[messageId] || filesCache[messageId].length === 0) {
+            return null;
+        }
+        return (
+            <div className="mt-2 overflow-x-scroll">
+                <div className="font-bold">📂 {t('Files')}</div>
+                <ul className="list-disc list-inside">
+                    {filesCache[messageId].map((file) => (
+                        <li key={file}>
+                            <Link className="underline text-primary" href={`/storage/session/${databaseIdHash}/${sessionId}/file?name=${encodeURIComponent(file)}`} target="_blank">
+                                {file}
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        );
+    };
 
     return (
         messages.filter(m => m.role !== 'system' && (typeof m.content === 'string' || (m.content as unknown as Array<{ type: string, result?: string, text?: string }>).find(mc=> mc.type !== 'tool-call' && (mc.text !== '' || mc.result)))).map((m) => (
@@ -47,7 +131,11 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                                 <div className="mt-2  overflow-x-scroll">
                                                     <div className="font-bold">💻 {t('Code')}</div>
                                                     {/* @ts-ignore */}
-                                                    <SyntaxHighlighter language={(tl as any).args?.language ?? 'bash'} wrapLines={true} customStyle={{ overflowX: 'scroll' }}>
+                                                    <SyntaxHighlighter 
+                                                        language={(tl as any).args?.language ?? 'bash'} 
+                                                        wrapLines={true} 
+                                                        wrapLongLines={true}
+                                                        customStyle={{ overflowX: 'auto', maxWidth: '36rem', width: '100%' }}>
                                                         {(tl as any).args?.code}
                                                     </SyntaxHighlighter>
                                                 </div>
@@ -56,7 +144,7 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                                         <div className="mt-2 overflow-x-scroll">
                                                             <div className="font-bold">📤 {t('Output')}</div>
                                                             {/* @ts-ignore */}
-                                                            <SyntaxHighlighter language="bash" wrapLines={true} customStyle={{ overflowX: 'scroll' }}>
+                                                            <SyntaxHighlighter language="bash" wrapLines={true} wrapLongLines={true} customStyle={{ overflowX: 'auto', maxWidth: '36rem', width: '100%' }}>
                                                                 {(tl.result as any).stdout}
                                                             </SyntaxHighlighter>
                                                         </div>) }
@@ -64,11 +152,11 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                                         <div className="mt-2  overflow-x-scroll">
                                                             <div className="font-bold">❌ {t('Errors')}</div>
                                                             {/* @ts-ignore */}
-                                                            <SyntaxHighlighter language="bash" wrapLines={true} customStyle={{ overflowX: 'scroll' }}>
+                                                            <SyntaxHighlighter language="bash" wrapLines={true} wrapLongLines={true} customStyle={{ overflowX: 'auto', maxWidth: '36rem', width: '100%' }}>
                                                                 {(tl.result as any).stderr}
                                                             </SyntaxHighlighter>
                                                         </div>) }
-                                            {/* Links to session files are now rendered server-side */}
+                                            {renderSessionFiles(m.id)}
                                         </div>
                                     )
                                 }
@@ -108,7 +196,11 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                                 <div className="mt-2  overflow-x-scroll">
                                                     <div className="font-bold">💻 {t('Code')}</div>
                                                     {/* @ts-ignore */}
-                                                    <SyntaxHighlighter language={(c as any).args?.language ?? 'bash'} wrapLines={true} customStyle={{ overflowX: 'scroll' }}>
+                                                    <SyntaxHighlighter 
+                                                        language={(c as any).args?.language ?? 'bash'} 
+                                                        wrapLines={true} 
+                                                        wrapLongLines={true}
+                                                        customStyle={{ overflowX: 'auto', maxWidth: '36rem', width: '100%' }}>
                                                         {(c as any).args?.code}
                                                     </SyntaxHighlighter>
                                                 </div>
@@ -117,7 +209,7 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                                         <div className="mt-2 overflow-x-scroll">
                                                             <div className="font-bold">📤 {t('Output')}</div>
                                                             {/* @ts-ignore */}
-                                                            <SyntaxHighlighter language="bash" wrapLines={true} customStyle={{ overflowX: 'scroll' }}>
+                                                            <SyntaxHighlighter language="bash" wrapLines={true} wrapLongLines={true} customStyle={{ overflowX: 'auto', maxWidth: '36rem', width: '100%' }}>
                                                                 {(c.result as any).stdout}
                                                             </SyntaxHighlighter>
                                                         </div>) }
@@ -125,11 +217,11 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                                         <div className="mt-2 overflow-x-scroll">
                                                             <div className="font-bold">❌ {t('Errors')}</div>
                                                             {/* @ts-ignore */}
-                                                            <SyntaxHighlighter language="bash" wrapLines={true} customStyle={{ overflowX: 'scroll' }}>
+                                                            <SyntaxHighlighter language="bash" wrapLines={true} wrapLongLines={true} customStyle={{ overflowX: 'auto', maxWidth: '36rem', width: '100%' }}>
                                                                 {(c.result as any).stderr}
                                                             </SyntaxHighlighter>
                                                         </div>) }
-                                            {/* Links to session files are now rendered server-side */}
+                                            {renderSessionFiles(m.id)}
                                         </div>
                                     )
                                 }

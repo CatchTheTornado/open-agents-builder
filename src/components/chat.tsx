@@ -59,6 +59,7 @@ interface ChatProps {
   ) => void;
   input?: string;
   databaseIdHash: string;
+  sessionId: string;
 }
 
 export function Chat({
@@ -72,6 +73,7 @@ export function Chat({
   handleSubmit,
   input,
   databaseIdHash,
+  sessionId,
 }: ChatProps) {
   const { t } = useTranslation();
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
@@ -180,7 +182,7 @@ export function Chat({
       }));
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-2xl mx-auto border-none shadow-none">
       {displayName ? (
         <CardHeader>
           <CardTitle>{displayName}</CardTitle>
@@ -197,7 +199,7 @@ export function Chat({
               </span>
             </div>
           ) : null}
-          <ChatMessages messages={messages} displayTimestamps={false} />
+          <ChatMessages messages={messages} displayTimestamps={false} sessionId={sessionId} databaseIdHash={databaseIdHash} />
           {isLoading && (
             <div className="text-left">
               <span className="inline-block p-2 rounded-lg bg-muted">

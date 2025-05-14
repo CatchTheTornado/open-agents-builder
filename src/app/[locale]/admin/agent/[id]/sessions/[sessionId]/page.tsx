@@ -53,6 +53,8 @@ export default function SingleResultPage() {
                 <SessionCalendarEvents displayMode={CalendarEventsDisplayMode.list} sessionId={session.id} />
                 <div className="p-4">
                   <ChatMessages 
+                        databaseIdHash={dbContext?.databaseIdHash ?? ''}
+                        sessionId={session.id}
                         displayTimestamps={true}
                         displayToolResultsMode={DisplayToolResultsMode.AsTextMessage}
                         messages={session?.messages ?? []}

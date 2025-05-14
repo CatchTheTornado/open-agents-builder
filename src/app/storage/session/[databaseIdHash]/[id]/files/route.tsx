@@ -1,7 +1,7 @@
 import { authorizeRequestContext } from "@/lib/authorization-api";
 import { authorizeSaasContext } from "@/lib/generic-api";
 import { getErrorMessage } from "@/lib/utils";
-import { getExecutionTempDir } from "@/lib/file-extractor";
+import { clearOldExecutionTempDirs, getExecutionTempDir } from "@/lib/file-extractor";
 import ServerSessionRepository from "@/data/server/server-session-repository";
 import { NextRequest } from "next/server";
 import { readdirSync } from "fs";
@@ -9,19 +9,21 @@ import path from "path";
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: { id: string, databaseIdHash: string } }) {
   try {
     const sessionId = params.id;
     const saasContext = await authorizeSaasContext(request);
 
-    const sessionRepo = new ServerSessionRepository(requestContext.databaseIdHash, saasContext.isSaasMode ? saasContext.saasContex?.storageKey : null);
+    const sessionRepo = new ServerSessionRepository(params.databaseIdHash, saasContext.isSaasMode ? saasContext.saasContex?.storageKey : null);
     const existingSession = await sessionRepo.findOne({ id: sessionId });
     if (!existingSession) {
       return Response.json({ message: 'Session not found', status: 404 }, { status: 404 });
     }
 
+    clearOldExecutionTempDirs(params.databaseIdHash); // remove old temp dirs
+
     const agentId = existingSession.agentId;
-    const sessionDir = getExecutionTempDir(requestContext.databaseIdHash, agentId, sessionId);
+    const sessionDir = getExecutionTempDir(params.databaseIdHash, agentId, sessionId);
 
     // Safety check: only list files under /tmp
     if (!path.resolve(sessionDir).startsWith('/tmp')) {

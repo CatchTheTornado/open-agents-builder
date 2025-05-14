@@ -1,6 +1,6 @@
 import { Message, TextPart } from 'ai';
 import { execSync } from 'child_process';
-import { mkdtempSync, writeFileSync, readFileSync, readdirSync, unlinkSync, rmdirSync, mkdirSync } from 'fs';
+import { mkdtempSync, writeFileSync, readFileSync, readdirSync, unlinkSync, rmdirSync, mkdirSync, statSync, rmSync } from 'fs';
 import { file } from 'jszip';
 import { tmpdir } from 'os';
 import path, { join } from 'path';
@@ -349,7 +349,7 @@ export const processChatAttachments = async (
  * (/tmp/{databaseIdHash}/{agentId}/{sessionId}) and makes sure it exists.
  */
 export function getExecutionTempDir(databaseIdHash: string, agentId: string, sessionId: string): string {
-  const dirPath = join('/tmp', databaseIdHash, agentId, sessionId);
+  const dirPath = join('/tmp/open-agents-builder', databaseIdHash, agentId, sessionId);
   try {
     mkdirSync(dirPath, { recursive: true });
   } catch (err) {
@@ -357,4 +357,96 @@ export function getExecutionTempDir(databaseIdHash: string, agentId: string, ses
     // In production we might want to log this, here we swallow to avoid breaking the flow
   }
   return dirPath;
+}
+
+// ---------------------------------------------------------------------------
+// Utilities to purge old temp execution directories
+// ---------------------------------------------------------------------------
+
+/**
+ * Removes files and sub-directories under `/tmp/{databaseIdHash}` that have not
+ * been modified in the given number of days. By default it keeps the last
+ * seven days of artefacts.
+ *
+ * NOTE: We only touch paths that start with `/tmp/{databaseIdHash}` to avoid
+ * deleting unrelated system files. If the directory does not exist the
+ * function is a no-op.
+ *
+ * @param databaseIdHash Partition identifier used when calling
+ *                       `getExecutionTempDir`.
+ * @param maxAgeDays     Number of days to keep. Directories older than this
+ *                       threshold are deleted recursively. Defaults to 7.
+ */
+export function clearOldExecutionTempDirs(databaseIdHash: string, maxAgeDays = 7): void {
+  try {
+    const rootDir = join('/tmp/open-agents-builder', databaseIdHash);
+
+    // Safety: ensure the directory really lives under /tmp to prevent any
+    // accidental deletion of arbitrary paths.
+    if (!rootDir.startsWith('/tmp')) {
+      console.warn(`clearOldExecutionTempDirs: Refusing to operate on non-/tmp dir ${rootDir}`);
+      return;
+    }
+
+    // If the root directory does not exist, nothing to do
+    let agentDirs: string[] = [];
+    try {
+      agentDirs = readdirSync(rootDir);
+    } catch {
+      return;
+    }
+
+    const now = Date.now();
+    const maxAgeMs = maxAgeDays * 24 * 60 * 60 * 1000;
+
+    const isOlderThanThreshold = (filePath: string): boolean => {
+      try {
+        const stats = statSync(filePath);
+        const mtimeMs = stats.mtime.getTime();
+        return now - mtimeMs > maxAgeMs;
+      } catch {
+        return false;
+      }
+    };
+
+    // Traverse every agent and session directory
+    for (const agentDirName of agentDirs) {
+      const agentDir = join(rootDir, agentDirName);
+      let sessionDirs: string[] = [];
+      try {
+        sessionDirs = readdirSync(agentDir);
+      } catch {
+        continue;
+      }
+
+      for (const sessionDirName of sessionDirs) {
+        const sessionDir = join(agentDir, sessionDirName);
+
+        if (isOlderThanThreshold(sessionDir)) {
+          try {
+            // Node 14+: rmSync with recursive
+            rmSync(sessionDir, { recursive: true, force: true });
+          } catch (err) {
+            console.error(`Failed to remove old execution dir ${sessionDir}`, err);
+          }
+        }
+      }
+
+      // After cleaning sessions, if agent dir became empty & is old, remove it
+      try {
+        if (readdirSync(agentDir).length === 0 && isOlderThanThreshold(agentDir)) {
+          rmSync(agentDir, { recursive: true, force: true });
+        }
+      } catch {/* ignore */}
+    }
+
+    // Optionally, remove the root dir itself if empty and old
+    try {
+      if (readdirSync(rootDir).length === 0 && isOlderThanThreshold(rootDir)) {
+        rmSync(rootDir, { recursive: true, force: true });
+      }
+    } catch {/* ignore */}
+  } catch (err) {
+    console.error('clearOldExecutionTempDirs: unexpected error', err);
+  }
 }

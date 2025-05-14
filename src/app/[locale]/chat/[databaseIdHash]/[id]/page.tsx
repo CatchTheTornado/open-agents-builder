@@ -86,8 +86,10 @@ export default function ChatPage({children,
               isLoading={isLoading}
               handleSubmit={handleSubmit}
               input={input}
+              sessionId={chatContext.sessionId}
               displayName={chatContext.agent?.displayName ?? ''}
               databaseIdHash={chatContext?.databaseIdHash ?? ''}
+              
           />
       )    
     )

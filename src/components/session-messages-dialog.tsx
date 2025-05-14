@@ -54,7 +54,8 @@ export function SessionMessagesDialog({ sessionId, displayToolResultsMode }: { s
         <SessionHeader session={session ?? {}} />
 
         {messages ? (
-          <ChatMessages 
+          <ChatMessages             
+            databaseIdHash={dbContext?.databaseIdHash ?? ''}
             displayToolResultsMode={displayToolResultsMode}
             displayTimestamps={true}
             messages={messages}

@@ -14,6 +14,13 @@ export function ChatMessageMarkdown({ children, className = '', copyToCC = true 
     return (<div>
         <Markdown className={cn(styles.markdown, className)} remarkPlugins={[remarkGfm]} components={
             {
+                a(props) {
+                    if (props.href) {
+                        return <a {...props} />
+                    } else {
+                        return <span {...props} />
+                    }
+                },
                 img(props) {
 //                    if (props.alt?.startsWith('product')) {
                         return <ZoomableImage src={props.src} width={100} height={100} className="border" />
