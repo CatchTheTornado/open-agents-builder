@@ -9,6 +9,7 @@ import { TimerIcon } from "lucide-react";
 import { ChatMessageToolResponse } from "./chat-message-tool-response";
 import { ChatMessageMarkdown } from "./chat-message-markdown";
 import { ImageAttachments } from './image-attachments';
+import useSWR from 'swr';
 
 export enum DisplayToolResultsMode {
     None = 'none',
@@ -16,8 +17,18 @@ export enum DisplayToolResultsMode {
     ForUser = 'foruser'
 }
 
-export function ChatMessages({ messages, displayToolResultsMode = DisplayToolResultsMode.ForUser, displayTimestamps = false }: { messages: Message[], displayToolResultsMode?: DisplayToolResultsMode, displayTimestamps?: boolean }) {
+interface ChatMessagesProps {
+    messages: Message[];
+    displayToolResultsMode?: DisplayToolResultsMode;
+    displayTimestamps?: boolean;
+    sessionId?: string;
+}
+
+export function ChatMessages({ messages, displayToolResultsMode = DisplayToolResultsMode.ForUser, displayTimestamps = false, sessionId }: ChatMessagesProps) {
     const { t } = useTranslation();
+    const fetcher = (url: string) => fetch(url).then(res => res.json());
+    const { data: fileList } = useSWR<string[]>(sessionId ? `/api/session/${sessionId}/files` : null, fetcher, { refreshInterval: 3000 });
+
     return (
         messages.filter(m => m.role !== 'system' && (typeof m.content === 'string' || (m.content as unknown as Array<{ type: string, result?: string, text?: string }>).find(mc=> mc.type !== 'tool-call' && (mc.text !== '' || mc.result)))).map((m) => (
             <div key={m.id} className={`mb-4 ${m.role === "user" ? "text-right" : "text-left"}`}>
@@ -36,30 +47,47 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                         <div key={tl.toolCallId} className="mb-2">
                                             <span className="font-bold">{t('Code Execution')}</span>
                                             { (tl as any).args?.code && (
-                                                <div className="mt-2">
+                                                <div className="mt-2  overflow-x-scroll">
                                                     <div className="font-bold">💻 {t('Code')}</div>
                                                     {/* @ts-ignore */}
-                                                    <SyntaxHighlighter language={(tl as any).args?.language ?? 'bash'} wrapLines={true} customStyle={{ overflowX: 'auto' }}>
+                                                    <SyntaxHighlighter language={(tl as any).args?.language ?? 'bash'} wrapLines={true} customStyle={{ overflowX: 'scroll' }}>
                                                         {(tl as any).args?.code}
                                                     </SyntaxHighlighter>
                                                 </div>
                                             ) }
                                                     { (tl.result as any).stdout && (
-                                                        <div className="mt-2">
+                                                        <div className="mt-2 overflow-x-scroll">
                                                             <div className="font-bold">📤 {t('Output')}</div>
                                                             {/* @ts-ignore */}
-                                                            <SyntaxHighlighter language="bash" wrapLines={true} customStyle={{ overflowX: 'auto' }}>
+                                                            <SyntaxHighlighter language="bash" wrapLines={true} customStyle={{ overflowX: 'scroll' }}>
                                                                 {(tl.result as any).stdout}
                                                             </SyntaxHighlighter>
                                                         </div>) }
                                                     { (tl.result as any).stderr && (
-                                                        <div className="mt-2">
+                                                        <div className="mt-2  overflow-x-scroll">
                                                             <div className="font-bold">❌ {t('Errors')}</div>
                                                             {/* @ts-ignore */}
-                                                            <SyntaxHighlighter language="bash" wrapLines={true} customStyle={{ overflowX: 'auto' }}>
+                                                            <SyntaxHighlighter language="bash" wrapLines={true} customStyle={{ overflowX: 'scroll' }}>
                                                                 {(tl.result as any).stderr}
                                                             </SyntaxHighlighter>
                                                         </div>) }
+                                            {/* Links to session files */}
+                                            {sessionId && fileList && fileList.length > 0 ? (
+                                                        (
+                                                            <div className="mt-2">
+                                                                <div className="font-bold">📂 {t('Files')}</div>
+                                                                <ul className="list-disc list-inside">
+                                                                    {fileList.map((file) => (
+                                                                        <li key={file}>
+                                                                            <a className="underline text-blue-600" href={`/api/session/${sessionId}/file?name=${encodeURIComponent(file)}`} download>
+                                                                                {file}
+                                                                            </a>
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )
+                                            ) : null}
                                         </div>
                                     )
                                 }
@@ -96,30 +124,47 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                         <div className="mb-2" key={c.text}>
                                             <span className="font-bold">{t('Code Execution')}</span>
                                             { (c as any).args?.code && (
-                                                <div className="mt-2">
+                                                <div className="mt-2  overflow-x-scroll">
                                                     <div className="font-bold">💻 {t('Code')}</div>
                                                     {/* @ts-ignore */}
-                                                    <SyntaxHighlighter language={(c as any).args?.language ?? 'bash'} wrapLines={true} customStyle={{ overflowX: 'auto' }}>
+                                                    <SyntaxHighlighter language={(c as any).args?.language ?? 'bash'} wrapLines={true} customStyle={{ overflowX: 'scroll' }}>
                                                         {(c as any).args?.code}
                                                     </SyntaxHighlighter>
                                                 </div>
                                             ) }
                                                     { (c.result as any).stdout && (
-                                                        <div className="mt-2">
+                                                        <div className="mt-2 overflow-x-scroll">
                                                             <div className="font-bold">📤 {t('Output')}</div>
                                                             {/* @ts-ignore */}
-                                                            <SyntaxHighlighter language="bash" wrapLines={true} customStyle={{ overflowX: 'auto' }}>
+                                                            <SyntaxHighlighter language="bash" wrapLines={true} customStyle={{ overflowX: 'scroll' }}>
                                                                 {(c.result as any).stdout}
                                                             </SyntaxHighlighter>
                                                         </div>) }
                                                     { (c.result as any).stderr && (
-                                                        <div className="mt-2">
+                                                        <div className="mt-2 overflow-x-scroll">
                                                             <div className="font-bold">❌ {t('Errors')}</div>
                                                             {/* @ts-ignore */}
-                                                            <SyntaxHighlighter language="bash" wrapLines={true} customStyle={{ overflowX: 'auto' }}>
+                                                            <SyntaxHighlighter language="bash" wrapLines={true} customStyle={{ overflowX: 'scroll' }}>
                                                                 {(c.result as any).stderr}
                                                             </SyntaxHighlighter>
                                                         </div>) }
+                                            {/* Links to session files */}
+                                            {sessionId && fileList && fileList.length > 0 ? (
+                                                        (
+                                                            <div className="mt-2">
+                                                                <div className="font-bold">📂 {t('Files')}</div>
+                                                                <ul className="list-disc list-inside">
+                                                                    {fileList.map((file) => (
+                                                                        <li key={file}>
+                                                                            <a className="underline text-blue-600" href={`/api/session/${sessionId}/file?name=${encodeURIComponent(file)}`} download>
+                                                                                {file}
+                                                                            </a>
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )
+                                            ) : null}
                                         </div>
                                     )
                                 }
