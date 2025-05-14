@@ -59,6 +59,7 @@ export function SessionMessagesDialog({ sessionId, displayToolResultsMode }: { s
             displayToolResultsMode={displayToolResultsMode}
             displayTimestamps={true}
             messages={messages}
+            agentId={session?.agentId ?? ''}
             sessionId={sessionId}
           />
         ) : <div className="flex justify-center items-center h-64"><DataLoader /></div>}

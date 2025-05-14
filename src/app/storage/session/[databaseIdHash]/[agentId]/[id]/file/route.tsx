@@ -9,7 +9,7 @@ import path from "path";
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest, { params }: { params: { id: string, databaseIdHash: string } }) {
+export async function GET(request: NextRequest, { params }: { params: { id: string, databaseIdHash: string, agentId: string } }) {
   try {
     const sessionId = params.id;
     const url = new URL(request.url);
@@ -20,15 +20,15 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     const saasContext = await authorizeSaasContext(request);
 
-    const sessionRepo = new ServerSessionRepository(params.databaseIdHash, saasContext.isSaasMode ? saasContext.saasContex?.storageKey : null);
-    const existingSession = await sessionRepo.findOne({ id: sessionId });
-    if (!existingSession) {
-      return Response.json({ message: 'Session not found', status: 404 }, { status: 404 });
-    }
+//    const sessionRepo = new ServerSessionRepository(params.databaseIdHash, saasContext.isSaasMode ? saasContext.saasContex?.storageKey : null);
+//    const existingSession = await sessionRepo.findOne({ id: sessionId });
+//    if (!existingSession) {
+//      return Response.json({ message: 'Session not found', status: 404 }, { status: 404 });
+//    }
 
     clearOldExecutionTempDirs(params.databaseIdHash); // remove old temp dirs
 
-    const agentId = existingSession.agentId;
+    const agentId = params.agentId;
     const sessionDir = getExecutionTempDir(params.databaseIdHash, agentId, sessionId);
     const filePath = path.join(sessionDir, path.basename(fileName));
 

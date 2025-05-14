@@ -19,6 +19,7 @@ import { NextRequest } from 'next/server';
 import { getExecutionTempDir, processChatAttachments } from '@/lib/file-extractor';
 import { nanoid } from 'nanoid';
 import { createFileTools } from 'interpreter-tools';
+import { createCodeExecutionTool } from '@/tools/codeExecutionTool';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -93,6 +94,9 @@ export async function POST(req: NextRequest) {
       console.error("Error converting files", err);
     }
 
+    const codeExecutionTool = createCodeExecutionTool(agentId, sessionId, databaseIdHash, saasContext.saasContex?.storageKey)
+
+
     const fileTools = createFileTools(getExecutionTempDir(databaseIdHash, agentId, sessionId), {
       '/session': getExecutionTempDir(databaseIdHash, agentId, sessionId)
     });    
@@ -106,6 +110,7 @@ export async function POST(req: NextRequest) {
         calendarListEvents: createCalendarListTool(agentId, sessionId, databaseIdHash, saasContext.saasContex?.storageKey, true).tool,
         ordersList: createOrderListTool(agentId, sessionId, databaseIdHash, saasContext.saasContex?.storageKey).tool,
         createOrderTool: createCreateOrderTool(databaseIdHash, agentId, sessionId, saasContext.saasContex?.storageKey).tool,
+        codeExecutionTool: codeExecutionTool.tool,
         listSessionFiles: fileTools.listFilesTool,
         readSessionFile: fileTools.readFileTool,
         listProducts: createListProductsTool(databaseIdHash).tool,

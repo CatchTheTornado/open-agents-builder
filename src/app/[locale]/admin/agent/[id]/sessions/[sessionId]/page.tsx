@@ -55,6 +55,7 @@ export default function SingleResultPage() {
                   <ChatMessages 
                         databaseIdHash={dbContext?.databaseIdHash ?? ''}
                         sessionId={session.id}
+                        agentId={agentContext.current?.id ?? ''}
                         displayTimestamps={true}
                         displayToolResultsMode={DisplayToolResultsMode.AsTextMessage}
                         messages={session?.messages ?? []}

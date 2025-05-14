@@ -109,6 +109,7 @@ export default function SingleResultPage() {
                 databaseIdHash={dbContext?.databaseIdHash ?? ''}
                 sessionId={result?.sessionId ?? ''}
                 displayToolResultsMode={DisplayToolResultsMode.ForUser}
+                agentId={agentContext.current?.id ?? ''}
               />
             ): <div className='text-sm text-center text-red-500 p-4'>{t('Please verify your E-mail address and AI budget to use all features of Open Agents Builder')}</div>}
           </CredenzaContent>
@@ -175,6 +176,7 @@ export default function SingleResultPage() {
                 <TabsContent value="chat" className="p-2 text-sm">
                   <ChatMessages 
                         sessionId={result?.sessionId ?? ''}
+                        agentId={agentContext.current?.id ?? ''}
                         databaseIdHash={dbContext?.databaseIdHash ?? ''}
                         displayTimestamps={true}
                         displayToolResultsMode={DisplayToolResultsMode.AsTextMessage}

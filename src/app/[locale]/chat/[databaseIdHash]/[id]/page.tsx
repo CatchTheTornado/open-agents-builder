@@ -91,6 +91,7 @@ export default function ChatPage({children,
               displayName={chatContext.agent?.displayName ?? ''}
               databaseIdHash={chatContext?.databaseIdHash ?? ''}
               displayToolResultsMode={displayMode}
+              agentId={chatContext.agent?.id ?? ''}
               
           />
       )    

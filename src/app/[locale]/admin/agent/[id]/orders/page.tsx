@@ -44,6 +44,7 @@ export default function OrdersPage() {
   const router = useRouter();
   const dbContext = useContext(DatabaseContext);
   const saasContext = useContext(SaaSContext);
+  const [sessionId, setSessionId] = useState<string | null>(null)
 
   // Kontekst do obsługi zamówień
   const orderContext = useOrderContext();
@@ -153,6 +154,7 @@ export default function OrdersPage() {
       'Database-Id-Hash': dbContext?.databaseIdHash ?? '',
       'Agent-Id': agentContext.current?.id ?? '',
       'Agent-Locale': i18n.language,
+      'Session-Id': sessionId ?? '',
       'Current-Datetime-Iso': new Date().toISOString(),
       'Current-Datetime': new Date().toLocaleString(),
       'Current-Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -160,6 +162,7 @@ export default function OrdersPage() {
   }
   useEffect(() => {
     if (agentContext.current && isResultsChatOpen){
+      setSessionId(nanoid())
       append({
         id: nanoid(),
         role: "user",
@@ -203,6 +206,8 @@ export default function OrdersPage() {
                 displayName={t('Chat with orders')}
                 databaseIdHash={dbContext?.databaseIdHash ?? ''}
                 displayToolResultsMode={DisplayToolResultsMode.ForUser}
+                sessionId={sessionId ?? ''}
+                agentId={agentContext.current?.id ?? ''}
               />
             ): <div className='text-sm text-center text-red-500 p-4'>{t('Please verify your E-mail address and AI budget to use all features of Open Agents Builder')}</div>}
           </CredenzaContent>

@@ -60,6 +60,7 @@ interface ChatProps {
   input?: string;
   databaseIdHash: string;
   sessionId: string;
+  agentId: string;
   displayToolResultsMode?: DisplayToolResultsMode;
 }
 
@@ -75,6 +76,7 @@ export function Chat({
   input,
   databaseIdHash,
   sessionId,
+  agentId,
   displayToolResultsMode
 }: ChatProps) {
   const { t } = useTranslation();
@@ -201,7 +203,7 @@ export function Chat({
               </span>
             </div>
           ) : null}
-          <ChatMessages messages={messages} displayTimestamps={false} sessionId={sessionId} databaseIdHash={databaseIdHash} displayToolResultsMode={displayToolResultsMode} />
+          <ChatMessages messages={messages} displayTimestamps={false} sessionId={sessionId} databaseIdHash={databaseIdHash} displayToolResultsMode={displayToolResultsMode} agentId={agentId} />
           {isLoading && (
             <div className="text-left">
               <span className="inline-block p-2 rounded-lg bg-muted">

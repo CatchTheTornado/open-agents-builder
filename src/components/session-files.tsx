@@ -16,11 +16,13 @@ export enum SessionFilesDisplayMode {
 
 interface SessionFilesProps {
   sessionId: string;
+  agentId?: string;
   displayMode?: SessionFilesDisplayMode;
 }
 
 export function SessionFiles({
   sessionId,
+  agentId,
   displayMode = SessionFilesDisplayMode.icon,
 }: SessionFilesProps) {
   const dbContext = useContext(DatabaseContext);
@@ -34,7 +36,7 @@ export function SessionFiles({
     if (!sessionId || !dbContext?.databaseIdHash) return;
     setLoading(true);
 
-    const url = `/storage/session/${dbContext.databaseIdHash}/${sessionId}/files`;
+    const url = `/storage/session/${dbContext.databaseIdHash}/${agentId}/${sessionId}/files`;
     fetch(url)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -61,7 +63,7 @@ export function SessionFiles({
   }
 
   const fileUrl = (fileName: string) =>
-    `/storage/session/${dbContext?.databaseIdHash}/${sessionId}/file?name=${encodeURIComponent(
+    `/storage/session/${dbContext?.databaseIdHash}/${agentId}/${sessionId}/file?name=${encodeURIComponent(
       fileName
     )}`;
 

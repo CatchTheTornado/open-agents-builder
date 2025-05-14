@@ -24,9 +24,10 @@ interface ChatMessagesProps {
     displayTimestamps?: boolean;
     sessionId?: string;
     databaseIdHash?: string;
+    agentId?: string;
 }
 
-export function ChatMessages({ messages, displayToolResultsMode = DisplayToolResultsMode.ForEasyUser, displayTimestamps = false, sessionId, databaseIdHash }: ChatMessagesProps) {
+export function ChatMessages({ messages, displayToolResultsMode = DisplayToolResultsMode.ForEasyUser, displayTimestamps = false, sessionId, databaseIdHash, agentId }: ChatMessagesProps) {
     const { t } = useTranslation();
 
     // cache of files per message id
@@ -66,7 +67,7 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
         fetchDebounceRef.current = setTimeout(() => {
             (async () => {
                 try {
-                    const res = await fetch(`/storage/session/${databaseIdHash}/${sessionId}/files`);
+                    const res = await fetch(`/storage/session/${databaseIdHash}/${agentId}/${sessionId}/files`);
                     if (!res.ok) return;
                     const files: string[] = await res.json();
                     setFilesCache((prev) => {
@@ -101,7 +102,7 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                 <ul className="list-disc list-inside">
                     {filesCache[messageId].map((file) => (
                         <li key={file}>
-                            <Link className="underline text-primary" href={`/storage/session/${databaseIdHash}/${sessionId}/file?name=${encodeURIComponent(file)}`} target="_blank">
+                            <Link className="underline text-primary" href={`/storage/session/${databaseIdHash}/${agentId}/${sessionId}/file?name=${encodeURIComponent(file)}`} target="_blank">
                                 {file}
                             </Link>
                         </li>
