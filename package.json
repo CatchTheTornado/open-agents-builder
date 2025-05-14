@@ -90,7 +90,7 @@
     "i18next-browser-languagedetector": "^8.0.0",
     "i18next-http-backend": "^3.0.1",
     "i18next-resources-to-backend": "^1.2.1",
-    "interpreter-tools": "^0.9.7",
+    "interpreter-tools": "^0.9.8",
     "is-url": "^1.2.4",
     "jose": "^5.6.3",
     "json-edit-react": "^1.15.5",

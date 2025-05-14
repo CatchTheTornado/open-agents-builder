@@ -7896,10 +7896,10 @@ internal-slot@^1.1.0:
     hasown "^2.0.2"
     side-channel "^1.1.0"
 
-interpreter-tools@^0.9.7:
-  version "0.9.7"
-  resolved "https://registry.yarnpkg.com/interpreter-tools/-/interpreter-tools-0.9.7.tgz#a9c90bd98bfb3ec2d4130cf8cb4e8be2fcfae192"
-  integrity sha512-v+/rmXb45L5EuxK0MTFKzx7fIJtZmg+8guVqynhewTHlTT1c5VacjQbWaTkyyeOJHJXVuCv1Ymo+sfPzpj2kFw==
+interpreter-tools@^0.9.8:
+  version "0.9.8"
+  resolved "https://registry.yarnpkg.com/interpreter-tools/-/interpreter-tools-0.9.8.tgz#39cefdc9f17e9687d1aea70a9cbaab87df663d77"
+  integrity sha512-OEN82iIKIMGIioj4d47n7GZX9r4vXzPzPi18J4kQV8CkI/PW24oRGqFkDW5qQg3p729ZmHFp8ti4VRrqEmuR/A==
   dependencies:
     "@ai-sdk/openai" "*"
     adm-zip "^0.5.10"

@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+'use client';
+import React from 'react';
 import { Attachment, Message } from "ai";
-import Markdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import styles from './chat.module.css';
+import SyntaxHighlighter from 'react-syntax-highlighter';
 import { useTranslation } from "react-i18next";
 import { TimerIcon } from "lucide-react";
 import { ChatMessageToolResponse } from "./chat-message-tool-response";
@@ -33,8 +34,20 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                     return (
                                         <div key={tl.toolCallId} className="mb-2">
                                             <span className="font-bold">{t('Code Execution')}</span>
-                                            { (tl.result as any).stdout && <ChatMessageMarkdown className="mt-1" copyToCC={false}>{`STDOUT:\n${(tl.result as any).stdout}`}</ChatMessageMarkdown> }
-                                            { (tl.result as any).stderr && <ChatMessageMarkdown className="mt-1" copyToCC={false}>{`STDERR:\n${(tl.result as any).stderr}`}</ChatMessageMarkdown> }
+                                            { (tl.result as any).stdout && (
+                                                <div className="mt-2">
+                                                    <div className="font-bold">📤 {t('Output')}</div>
+                                                    <SyntaxHighlighter language="bash" wrapLines={true}>
+                                                        {(tl.result as any).stdout}
+                                                    </SyntaxHighlighter>
+                                                </div>) }
+                                            { (tl.result as any).stderr && (
+                                                <div className="mt-2">
+                                                    <div className="font-bold">❌ {t('Errors')}</div>
+                                                    <SyntaxHighlighter language="bash" wrapLines={true}>
+                                                        {(tl.result as any).stderr}
+                                                    </SyntaxHighlighter>
+                                                </div>) }
                                         </div>
                                     )
                                 }
@@ -65,8 +78,20 @@ export function ChatMessages({ messages, displayToolResultsMode = DisplayToolRes
                                     return (
                                         <div className="mb-2" key={c.text}>
                                             <span className="font-bold">{t('Code Execution')}</span>
-                                            { (c.result as any).stdout && <ChatMessageMarkdown className="mt-1" copyToCC={false}>{`STDOUT:\n${(c.result as any).stdout}`}</ChatMessageMarkdown> }
-                                            { (c.result as any).stderr && <ChatMessageMarkdown className="mt-1" copyToCC={false}>{`STDERR:\n${(c.result as any).stderr}`}</ChatMessageMarkdown> }
+                                            { (c.result as any).stdout && (
+                                                <div className="mt-2">
+                                                    <div className="font-bold">📤 {t('Output')}</div>
+                                                    <SyntaxHighlighter language="bash" wrapLines={true}>
+                                                        {(c.result as any).stdout}
+                                                    </SyntaxHighlighter>
+                                                </div>) }
+                                            { (c.result as any).stderr && (
+                                                <div className="mt-2">
+                                                    <div className="font-bold">❌ {t('Errors')}</div>
+                                                    <SyntaxHighlighter language="bash" wrapLines={true}>
+                                                        {(c.result as any).stderr}
+                                                    </SyntaxHighlighter>
+                                                </div>) }
                                         </div>
                                     )
                                 }
