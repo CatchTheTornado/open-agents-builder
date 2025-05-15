@@ -1,6 +1,6 @@
 import { Message, TextPart } from 'ai';
 import { execSync } from 'child_process';
-import { mkdtempSync, writeFileSync, readFileSync, readdirSync, unlinkSync, rmdirSync } from 'fs';
+import { mkdtempSync, writeFileSync, readFileSync, readdirSync, unlinkSync, rmdirSync, mkdirSync, statSync, rmSync } from 'fs';
 import { file } from 'jszip';
 import { tmpdir } from 'os';
 import path, { join } from 'path';
@@ -215,18 +215,57 @@ function cleanupTempDir(dirPath: string) {
 }
 
 
-export const replaceBase64Content = (data) => {
+export const replaceBase64Content = (data: string): string => {
   // Remove all base64 encoded content from the "image" fields
     return data.replace(/data:image\/[a-zA-Z]+;base64,[a-zA-Z0-9+/=]+/g, "File content removed");
 };
 
 
 
-export const processChatAttachments = async (messages: Message[]) => {
+export const processChatAttachments = async (
+  messages: Message[],
+  databaseIdHash: string,
+  agentId: string,
+  sessionId: string
+) => {
   for (const message of messages) { 
     if (message.experimental_attachments) {
 
       const processedAttachments = []
+      // Prepare temp workspace directory for this agent/session
+      const tempWorkspaceDir = getExecutionTempDir(databaseIdHash, agentId, sessionId);
+
+      // Helper to save the original base64 attachment to disk
+      const saveOriginalAttachment = (name: string, base64Data: string, mimeTypeGuess?: string): void => {
+        const sanitize = (n: string) => n.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const mime = mimeTypeGuess || getMimeType(base64Data) || 'application/octet-stream';
+        const ext = getFileExtensionFromMimeType(mime) || 'bin';
+
+        // Ensure we do not duplicate file extensions if the name already contains one
+        let sanitizedName = sanitize(name);
+        const currentExt = path.extname(sanitizedName).replace('.', '').toLowerCase();
+
+        // Add extension only when the sanitized name does not already include any extension
+        // or includes a different one
+        if (!currentExt) {
+          sanitizedName = `${sanitizedName}.${ext}`;
+        }
+
+        const fileName = sanitizedName;
+        const filePath = join(tempWorkspaceDir, fileName);
+
+        try {
+          let dataPart = base64Data;
+          // Strip prefix if present
+          if (base64Data.startsWith('data:')) {
+            dataPart = base64Data.split(',')[1] ?? '';
+          }
+          writeFileSync(filePath, Buffer.from(dataPart, 'base64'));
+        } catch (err) {
+          console.error(`Error saving original attachment to ${filePath}`, err);
+        }
+      };
+
       const attachmentsToProcess: Record<string, string> = {};
       for (const attachment of message.experimental_attachments) {
         if (!attachment.contentType?.startsWith("image")) { // we do not need to process images
@@ -236,7 +275,10 @@ export const processChatAttachments = async (messages: Message[]) => {
               if (response.ok) {
                 const buffer = await response.arrayBuffer();
                 const base64String = Buffer.from(buffer).toString('base64');
-                attachmentsToProcess[attachment.name ?? 'default'] = `data:${attachment.contentType};base64,${base64String}`;
+                const base64Data = `data:${attachment.contentType};base64,${base64String}`;
+                const attName = attachment.name ?? 'default';
+                attachmentsToProcess[attName] = base64Data;
+                saveOriginalAttachment(attName, base64Data, attachment.contentType);
               } else {
                 console.error(`Failed to fetch file from URL: ${attachment.url}, Status: ${response.status}`);
               }
@@ -244,9 +286,17 @@ export const processChatAttachments = async (messages: Message[]) => {
               console.error(`Error fetching file from URL: ${attachment.url}`, error);
             }
           } else {
-            attachmentsToProcess[attachment.name ?? 'default'] = attachment.url;
+            const attName = attachment.name ?? 'default';
+            attachmentsToProcess[attName] = attachment.url;
+            saveOriginalAttachment(attName, attachment.url, attachment.contentType);
           }
         } else {
+          // For images we still save originals
+          try {
+            const imgData = attachment.url;
+            const attName = attachment.name ?? 'image';
+            saveOriginalAttachment(attName, imgData, attachment.contentType);
+          } catch {}
           processedAttachments.push(attachment);
         }
       }
@@ -258,27 +308,29 @@ export const processChatAttachments = async (messages: Message[]) => {
       });
       message.experimental_attachments = []; //
 
-      for (const v in filesToUpload) {
-        if (filesToUpload[v]) {
-          const fileMapper = (key: string, fileBase64: string) => {
-            if (getMimeType(fileBase64)?.startsWith("image")) {
-              processedAttachments.push({ // TODO: prevent multiple uploads
-                url: fileBase64,
-                contentType: getMimeType(fileBase64) || "application/octet-stream",
-              });
-            } else {
-              (message.parts as Array<TextPart>).push({
-                type: "text",
-                text: `${fileBase64}`,
-              });
-            }
-          };
+      for (const key in filesToUpload) {
+        const fileContent = filesToUpload[key];
 
-          if (Array.isArray(filesToUpload[v])) {
-            filesToUpload[v].forEach((fc) => fileMapper(v, fc as string));
+        const fileMapper = (fileStr: string) => {
+          // No longer saving processed content, just augment chat
+
+          if (getMimeType(fileStr)?.startsWith('image')) {
+            processedAttachments.push({
+              url: fileStr,
+              contentType: getMimeType(fileStr) || 'application/octet-stream'
+            });
           } else {
-            fileMapper(v, filesToUpload[v] as string);
+            (message.parts as Array<TextPart>).push({
+              type: 'text',
+              text: `${fileStr}`
+            });
           }
+        };
+
+        if (Array.isArray(fileContent)) {
+          fileContent.forEach((fc) => fileMapper(fc as string));
+        } else {
+          fileMapper(fileContent as string);
         }
       }
 
@@ -286,4 +338,115 @@ export const processChatAttachments = async (messages: Message[]) => {
     }
   }
   return messages;
+}
+
+// ---------------------------------------------------------------------------
+// Helper to generate and ensure temp execution directory shared across tools
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns a deterministic temp directory path for a given database, agent and session
+ * (/tmp/{databaseIdHash}/{agentId}/{sessionId}) and makes sure it exists.
+ */
+export function getExecutionTempDir(databaseIdHash: string, agentId: string, sessionId: string): string {
+  const dirPath = join('/tmp/open-agents-builder', databaseIdHash, agentId, sessionId);
+  try {
+    mkdirSync(dirPath, { recursive: true });
+  } catch (err) {
+    // Directory might already exist or creation failed due to permissions
+    // In production we might want to log this, here we swallow to avoid breaking the flow
+  }
+  return dirPath;
+}
+
+// ---------------------------------------------------------------------------
+// Utilities to purge old temp execution directories
+// ---------------------------------------------------------------------------
+
+/**
+ * Removes files and sub-directories under `/tmp/{databaseIdHash}` that have not
+ * been modified in the given number of days. By default it keeps the last
+ * seven days of artefacts.
+ *
+ * NOTE: We only touch paths that start with `/tmp/{databaseIdHash}` to avoid
+ * deleting unrelated system files. If the directory does not exist the
+ * function is a no-op.
+ *
+ * @param databaseIdHash Partition identifier used when calling
+ *                       `getExecutionTempDir`.
+ * @param maxAgeDays     Number of days to keep. Directories older than this
+ *                       threshold are deleted recursively. Defaults to 7.
+ */
+export function clearOldExecutionTempDirs(databaseIdHash: string, maxAgeDays = 7): void {
+  try {
+    const rootDir = join('/tmp/open-agents-builder', databaseIdHash);
+
+    // Safety: ensure the directory really lives under /tmp to prevent any
+    // accidental deletion of arbitrary paths.
+    if (!rootDir.startsWith('/tmp')) {
+      console.warn(`clearOldExecutionTempDirs: Refusing to operate on non-/tmp dir ${rootDir}`);
+      return;
+    }
+
+    // If the root directory does not exist, nothing to do
+    let agentDirs: string[] = [];
+    try {
+      agentDirs = readdirSync(rootDir);
+    } catch {
+      return;
+    }
+
+    const now = Date.now();
+    const maxAgeMs = maxAgeDays * 24 * 60 * 60 * 1000;
+
+    const isOlderThanThreshold = (filePath: string): boolean => {
+      try {
+        const stats = statSync(filePath);
+        const mtimeMs = stats.mtime.getTime();
+        return now - mtimeMs > maxAgeMs;
+      } catch {
+        return false;
+      }
+    };
+
+    // Traverse every agent and session directory
+    for (const agentDirName of agentDirs) {
+      const agentDir = join(rootDir, agentDirName);
+      let sessionDirs: string[] = [];
+      try {
+        sessionDirs = readdirSync(agentDir);
+      } catch {
+        continue;
+      }
+
+      for (const sessionDirName of sessionDirs) {
+        const sessionDir = join(agentDir, sessionDirName);
+
+        if (isOlderThanThreshold(sessionDir)) {
+          try {
+            // Node 14+: rmSync with recursive
+            rmSync(sessionDir, { recursive: true, force: true });
+          } catch (err) {
+            console.error(`Failed to remove old execution dir ${sessionDir}`, err);
+          }
+        }
+      }
+
+      // After cleaning sessions, if agent dir became empty & is old, remove it
+      try {
+        if (readdirSync(agentDir).length === 0 && isOlderThanThreshold(agentDir)) {
+          rmSync(agentDir, { recursive: true, force: true });
+        }
+      } catch {/* ignore */}
+    }
+
+    // Optionally, remove the root dir itself if empty and old
+    try {
+      if (readdirSync(rootDir).length === 0 && isOlderThanThreshold(rootDir)) {
+        rmSync(rootDir, { recursive: true, force: true });
+      }
+    } catch {/* ignore */}
+  } catch (err) {
+    console.error('clearOldExecutionTempDirs: unexpected error', err);
+  }
 }

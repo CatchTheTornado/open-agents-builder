@@ -14,7 +14,8 @@ import { llmProviderSetup } from '@/lib/llm-provider';
 import { getErrorMessage } from '@/lib/utils';
 import { createUpdateResultTool } from '@/tools/updateResultTool';
 import { validateTokenQuotas } from '@/lib/quotas';
-import { getMimeType, processChatAttachments, processFiles } from '@/lib/file-extractor';
+import { getExecutionTempDir, getMimeType, processChatAttachments, processFiles } from '@/lib/file-extractor';
+import { createFileTools } from 'interpreter-tools'  
 import fetch from 'node-fetch';
 
 // Allow streaming responses up to 30 seconds
@@ -28,7 +29,7 @@ interface AgentToolsParams {
   sessionId: string;
   agent?: Agent;
   saasContext?: AuthorizedSaaSContext;
-  streamingController?: ReadableStreamDefaultController<any> | null;
+  streamingController?: ReadableStreamDefaultController<any>;
 }
 
 export function prepareAgentTools({
@@ -133,7 +134,7 @@ export async function POST(req: NextRequest) {
     let existingSession = await sessionRepo.findOne({ id: sessionId });
 
     const promptName = agent.agentType ? agent.agentType : 'survey-agent';
-    const systemPrompt = await renderPrompt(locale, promptName, { session: existingSession, agent, events: agent.events, currentDateTimeIso, currentLocalDateTime, currentTimezone });
+    const systemPrompt = await renderPrompt(locale, promptName, { session: existingSession, agent, events: agent.events, currentDateTimeIso, currentLocalDateTime, currentTimezone, baseUrl: process.env.NEXT_PUBLIC_APP_URL });
 
     messages.unshift({
       id: nanoid(),
@@ -143,11 +144,14 @@ export async function POST(req: NextRequest) {
 
 
     try {
-      messages = await processChatAttachments(messages);
+      messages = await processChatAttachments(messages, databaseIdHash, agentId, sessionId);
     } catch (err) {
       console.error("Error converting files", err);
     }
 
+    const fileTools = createFileTools(getExecutionTempDir(databaseIdHash, agentId, sessionId), {
+      '/session': getExecutionTempDir(databaseIdHash, agentId, sessionId)
+    });
 
     const result = await streamText({
       model: llmProviderSetup(),
@@ -191,6 +195,8 @@ export async function POST(req: NextRequest) {
       },
       tools: {
         ...await prepareAgentTools({ tools: agent.tools, databaseIdHash, storageKey: saasContext.isSaasMode ? saasContext.saasContex?.storageKey : null, agentId, sessionId, agent, saasContext }),
+        listSessionFiles: fileTools.listFilesTool,
+        readSessionFile: fileTools.readFileTool,
         saveResults: createUpdateResultTool(databaseIdHash, saasContext.isSaasMode ? saasContext.saasContex?.storageKey : null).tool
       },
       messages,

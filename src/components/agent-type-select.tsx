@@ -12,7 +12,6 @@ export function AgentTypeSelect() {
   const { control } = useFormContext();
   const [agentDescription, setAgentDescription] = React.useState("");
 
-
   // Tie the `Select` to the "locale" field using React Hook Form's useController
   const {
     field: { onChange, onBlur, value, ref },
@@ -21,9 +20,16 @@ export function AgentTypeSelect() {
     name: "agentType", 
     control,
     rules: { required: t("This field is required") },
-    // Optionally set a default value here or in the parent useForm({ defaultValues: { locale: ... } }).
-    defaultValue: "",
+    // Set default agent type to the first entry in the registry (if none was provided by the parent form).
+    defaultValue: agentTypesRegistry[0]?.type ?? "",
   });
+
+  // Keep the local description in sync with the selected type and language
+  React.useEffect(() => {
+    if (!value) return;
+    const descriptor = agentTypesRegistry.find((at) => at.type === value);
+    setAgentDescription(descriptor ? descriptor.description[i18n.language] ?? "" : "");
+  }, [value, i18n.language]);
 
   return (
     <div>
@@ -31,8 +37,6 @@ export function AgentTypeSelect() {
         value={value}
         onChange={(e) => {
           onChange(e);
-          const agentDescriptor = agentTypesRegistry.find(a=>a.type === e.target.value);
-          setAgentDescription(agentDescriptor ?(agentDescriptor.description[i18n.language] ?? '') : '');
         }}
         onBlur={onBlur}
         ref={ref}
@@ -50,7 +54,7 @@ export function AgentTypeSelect() {
       </select>
       <div className="text-xs p-2 flex">
         <div><InfoIcon className="w-4 h-4 mr-2" /></div>
-        <Markdown>{agentTypesRegistry.find(at => at.type == value)?.description[i18n.language]}</Markdown>
+        <Markdown>{agentDescription}</Markdown>
       </div>
 
       {error && (

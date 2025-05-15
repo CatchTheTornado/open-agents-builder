@@ -16,8 +16,10 @@ import { createOrderListTool } from '@/tools/ordersListTool';
 import { createUpdateResultTool } from '@/tools/updateResultTool';
 import { CoreMessage, Message, streamText } from 'ai';
 import { NextRequest } from 'next/server';
-import { processChatAttachments } from '@/lib/file-extractor';
+import { getExecutionTempDir, processChatAttachments } from '@/lib/file-extractor';
 import { nanoid } from 'nanoid';
+import { createFileTools } from 'interpreter-tools';
+import { createCodeExecutionTool } from '@/tools/codeExecutionTool';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -77,7 +79,7 @@ export async function POST(req: NextRequest) {
       } as Message
     })
 
-    const systemPrompt = await renderPrompt(locale, 'results-chat', { agent, currentDateTimeIso, currentLocalDateTime, currentTimezone  });
+    const systemPrompt = await renderPrompt(locale, 'results-chat', { agent, currentDateTimeIso, currentLocalDateTime, currentTimezone, baseUrl: process.env.NEXT_PUBLIC_APP_URL  });
 
     messages.unshift({
       id: nanoid(),
@@ -87,10 +89,17 @@ export async function POST(req: NextRequest) {
 
 
     try {
-      messages = await processChatAttachments(messages);
+      messages = await processChatAttachments(messages, databaseIdHash, agentId, sessionId);
     } catch (err) {
       console.error("Error converting files", err);
     }
+
+    const codeExecutionTool = createCodeExecutionTool(agentId, sessionId, databaseIdHash, saasContext.saasContex?.storageKey)
+
+
+    const fileTools = createFileTools(getExecutionTempDir(databaseIdHash, agentId, sessionId), {
+      '/session': getExecutionTempDir(databaseIdHash, agentId, sessionId)
+    });    
 
     const result = await streamText({
       model: llmProviderSetup(),
@@ -101,7 +110,9 @@ export async function POST(req: NextRequest) {
         calendarListEvents: createCalendarListTool(agentId, sessionId, databaseIdHash, saasContext.saasContex?.storageKey, true).tool,
         ordersList: createOrderListTool(agentId, sessionId, databaseIdHash, saasContext.saasContex?.storageKey).tool,
         createOrderTool: createCreateOrderTool(databaseIdHash, agentId, sessionId, saasContext.saasContex?.storageKey).tool,
-
+        codeExecutionTool: codeExecutionTool.tool,
+        listSessionFiles: fileTools.listFilesTool,
+        readSessionFile: fileTools.readFileTool,
         listProducts: createListProductsTool(databaseIdHash).tool,
         updateResults: createUpdateResultTool(databaseIdHash, saasContext.saasContex?.storageKey).tool
       },
