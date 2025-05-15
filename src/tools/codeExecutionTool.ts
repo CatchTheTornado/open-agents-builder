@@ -18,7 +18,7 @@ export function createCodeExecutionTool(agentId: string, sessionId: string, data
     ],
     defaultStrategy: 'per_execution',
     sessionId,
-    verbosity: 'info',
+    verbosity: 'debug',
     workspaceSharing: 'isolated'
   });
 
