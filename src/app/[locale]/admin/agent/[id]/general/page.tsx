@@ -26,14 +26,15 @@ import { DatabaseContext } from '@/contexts/db-context';
 import { SaaSContext } from '@/contexts/saas-context';
 import ZoomableImage from '@/components/zoomable-image';
 
-export function onAgentSubmit(agent: Agent | null, watch: UseFormWatch<Record<string, any>>, setValue: UseFormSetValue<Record<string, any>>, getValues: UseFormGetValues<Record<string, any>>, updateAgent: (agent: Agent, setAsCurrent: boolean) => Promise<Agent>, t: TFunction<"translation", undefined>, router: AppRouterInstance, editors: Record<string, React.RefObject<MDXEditorMethods>>) {
+export function onAgentSubmit(agent: Agent | null, watch: UseFormWatch<Record<string, any>>, setValue: UseFormSetValue<Record<string, any>>, getValues: UseFormGetValues<Record<string, any>>, updateAgent: (agent: Agent, setAsCurrent: boolean) => Promise<Agent>, t: TFunction<"translation", undefined>, router: any, editors: Record<string, React.RefObject<MDXEditorMethods>>) {
   // eslint-disable-next-line
   const [isDirty, setIsDirty] = useState(false);
   // eslint-disable-next-line
   const params = useParams();
   // eslint-disable-next-line
   const agentContext = useAgentContext();
-
+  // keep the watch subscription to be able to unsubscribe when the record is saved
+  const watchSubscription = React.useRef<{ unsubscribe: () => void } | null>(null);
 
   // eslint-disable-next-line
   useEffect(() => {
@@ -75,12 +76,23 @@ export function onAgentSubmit(agent: Agent | null, watch: UseFormWatch<Record<st
       })
 
       const subscribeChanges = (originalRecord: Record<string, any>) => {
-        agentContext.setDirtyAgent(Agent.fromForm(getValues(), agentContext.current))
+        // if there is already an active watcher – remove it before creating a new one
+        if (watchSubscription.current) {
+          watchSubscription.current.unsubscribe();
+        }
+
+        agentContext.setDirtyAgent(Agent.fromForm(getValues(), agentContext.current));
         dirtyCheck(originalRecord, getValues());
-        return watch((value) => {
-          agentContext.setDirtyAgent(Agent.fromForm(getValues(), agentContext.current))
+
+        const subscription = watch((value) => {
+          agentContext.setDirtyAgent(Agent.fromForm(getValues(), agentContext.current));
           dirtyCheck(originalRecord, value);
         });
+
+        // store the subscription so we can clean it up later (eg. on save)
+        watchSubscription.current = subscription;
+
+        return subscription;
       };
 
       const savedState = sessionStorage.getItem(`agent-${agent.id}`);
@@ -129,6 +141,9 @@ export function onAgentSubmit(agent: Agent | null, watch: UseFormWatch<Record<st
     }
 
     try {
+      // stop watching for form changes while we persist the data to avoid race conditions
+      if (watchSubscription.current) watchSubscription.current.unsubscribe();
+
       const response = await updateAgent(updatedAgent, true);
       toast.success(t('Agent updated successfully'));
       agentContext.setStatus({
