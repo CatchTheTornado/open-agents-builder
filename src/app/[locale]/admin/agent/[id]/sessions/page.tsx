@@ -102,7 +102,7 @@ export default function SessionsPage() {
           <CardContent className="text-sm">
             <SessionHeader session={session} />
             <RenderSession agent={agentContext.current} session={session} />
-            <SessionFiles sessionId={session.id} displayMode={SessionFilesDisplayMode.list} />
+            <SessionFiles agentId={agentContext.current?.id} sessionId={session.id} displayMode={SessionFilesDisplayMode.list} />
             <SessionCalendarEvents displayMode={CalendarEventsDisplayMode.icon} sessionId={session.id} />
             <div className="pt-4 flex justify-end">
               <SessionDeleteDialog session={session} />

@@ -178,7 +178,7 @@ export default function ResultsPage() {
           <CardContent className="text-sm">
             <SessionHeader session={result} />
             <RenderResult result={result} />
-            <SessionFiles sessionId={result.sessionId} displayMode={SessionFilesDisplayMode.list} />
+            <SessionFiles agentId={agentContext.current?.id} sessionId={result.sessionId} displayMode={SessionFilesDisplayMode.list} />
             <SessionCalendarEvents displayMode={CalendarEventsDisplayMode.icon} sessionId={result.sessionId} />
             <div className="pt-4 flex justify-end">
               <ResultDeleteDialog result={result} />
