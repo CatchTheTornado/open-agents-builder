@@ -147,7 +147,7 @@ export default function SingleResultPage() {
                 <SessionCalendarEvents displayMode={CalendarEventsDisplayMode.list} sessionId={result?.sessionId} />
               </TabsContent>
               <TabsContent value="files" className="p-2 text-sm">
-                <SessionFiles sessionId={result?.sessionId} displayMode={SessionFilesDisplayMode.list} />
+                <SessionFiles agentId={agentContext.current?.id} sessionId={result?.sessionId} displayMode={SessionFilesDisplayMode.list} />
               </TabsContent>
               <TabsContent value="content" className="p-2 text-sm">
                 <RenderResult result={result} />
