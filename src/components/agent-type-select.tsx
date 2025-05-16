@@ -21,7 +21,7 @@ export function AgentTypeSelect() {
     control,
     rules: { required: t("This field is required") },
     // Set default agent type to the first entry in the registry (if none was provided by the parent form).
-    defaultValue: agentTypesRegistry[0]?.type ?? "",
+    defaultValue: agentTypesRegistry[0]?.type ?? "smart-assistant",
   });
 
   // Keep the local description in sync with the selected type and language
