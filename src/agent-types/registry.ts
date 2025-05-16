@@ -7,19 +7,6 @@ export type AgentTypeDescriptor = {
 }
 export const agentTypesRegistry : AgentTypeDescriptor[] = [
     {
-        type: 'survey-agent',
-        description: {
-            pl: "Agenci ankietowi służą do zbierania informacji lub opinii od użytkowników. Na podstawie poprzednich odpowiedzi mogą **dynamicznie dostosowywać** kolejne pytania. Ci agenci zapisują odpowiedzi do dalszego przetwarzania w pożądanym formacie. Mogą zastąpić narzędzia takie jak **Formularze, Ankiety, Formularze zgłoszeniowe** itp.",
-            en: "Survey agents are used to collect information or opinions from users. Based on previous answers, they can **dynamically adjust** the next questions. These agents save the answers for further processing in the desired format. They can replace tools like **Forms, Polls, Intake forms** etc."    
-        },
-        supportsUserFacingUI: true,
-        requiredTabs: ['prompt', 'expectedResult'],
-        displayName: {
-            'pl': 'Agent przeprowadzający ankiety [Chat]',
-            'en': 'Survey agent [Chat]'
-        }
-    },
-    {
         type: 'smart-assistant',
         description: {
             pl: "Inteligentni asystenci to **agenci ogólnego przeznaczenia**. Mogą korzystać z narzędzi, na przykład sprawdzając Twój kalendarz lub rezerwując nowe wydarzenia. Mogą być również używane do ankiet (mieszane z innymi zadaniami), ale muszą być dostosowane do tego na poziomie promptu.",
@@ -30,6 +17,19 @@ export const agentTypesRegistry : AgentTypeDescriptor[] = [
         displayName: {
             'pl': 'Inteligentny asystent [Chat]',
             'en': 'Smart assistant [Chat]'
+        }
+    },    
+    {
+        type: 'survey-agent',
+        description: {
+            pl: "Agenci ankietowi służą do zbierania informacji lub opinii od użytkowników. Na podstawie poprzednich odpowiedzi mogą **dynamicznie dostosowywać** kolejne pytania. Ci agenci zapisują odpowiedzi do dalszego przetwarzania w pożądanym formacie. Mogą zastąpić narzędzia takie jak **Formularze, Ankiety, Formularze zgłoszeniowe** itp.",
+            en: "Survey agents are used to collect information or opinions from users. Based on previous answers, they can **dynamically adjust** the next questions. These agents save the answers for further processing in the desired format. They can replace tools like **Forms, Polls, Intake forms** etc."    
+        },
+        supportsUserFacingUI: true,
+        requiredTabs: ['prompt', 'expectedResult'],
+        displayName: {
+            'pl': 'Agent przeprowadzający ankiety [Chat]',
+            'en': 'Survey agent [Chat]'
         }
     },
     {

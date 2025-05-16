@@ -14,6 +14,7 @@ import { DeleteSessionResponse, SessionApiClient } from '@/data/client/session-a
 import { useProductContext } from './product-context';
 import { useAttachmentContext } from './attachment-context';
 import { agent } from 'flows-ai';
+import { agentTypesRegistry } from '@/agent-types/registry';
 
 export type AgentStatusType = {
     id: string;
@@ -183,6 +184,7 @@ export const AgentProvider = ({ children }: { children: ReactNode }) => {
             {
                 id: 'new',
                 displayName: t('Add new agent ...'),
+                agentType: agentTypesRegistry[0]?.type ?? "smart-assistant",
                 prompt: '',
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
