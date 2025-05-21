@@ -10,7 +10,7 @@ interface GmailToolSettings {
   expiryDate: number;
 }
 
-export function createCheckGmailTool(databaseIdHash: string, agentId: string): ToolDescriptor {
+export function createCheckGmailTool(databaseIdHash: string, agentId: string, storageKey: string | undefined | null): ToolDescriptor {
   return {
     displayName: 'Check Gmail',
     tool: tool({
@@ -22,7 +22,7 @@ export function createCheckGmailTool(databaseIdHash: string, agentId: string): T
       }),
       execute: async (args) => {
         // Get settings from config repository
-        const configRepo = new ServerConfigRepository(databaseIdHash);
+        const configRepo = new ServerConfigRepository(databaseIdHash, storageKey);
         const settings = await getGmailSettings(configRepo, agentId);
         if (!settings) {
           throw new Error('Gmail settings not found. Please configure Gmail access first.');

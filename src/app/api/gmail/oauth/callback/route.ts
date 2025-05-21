@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import ServerConfigRepository from '@/data/server/server-config-repository';
+import { authorizeSaasContext, authorizeSaasToken } from '@/lib/generic-api';
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
@@ -39,8 +40,9 @@ export async function GET(request: Request) {
       );
     }
 
+    const saasContex = await authorizeSaasToken(databaseIdHash);
     // Store tokens in config repository
-    const configRepo = new ServerConfigRepository(databaseIdHash);
+    const configRepo = new ServerConfigRepository(databaseIdHash, saasContex.isSaasMode ? saasContex.saasContex?.storageKey : null);
     await configRepo.upsert(
       { key: `gmail_settings_${agentId}` },
       {
