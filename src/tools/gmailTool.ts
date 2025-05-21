@@ -3,6 +3,9 @@ import { ToolDescriptor } from './registry';
 import { tool } from 'ai';
 import { z } from 'zod';
 import ServerConfigRepository from '@/data/server/server-config-repository';
+import { getExecutionTempDir, getMimeType, processFiles } from '@/lib/file-extractor';
+import { writeFileSync } from 'fs';
+import path, { join } from 'path';
 
 interface GmailToolSettings {
   accessToken: string;
@@ -18,6 +21,15 @@ interface GmailMessage {
   snippet: string;
 }
 
+interface GmailAttachment {
+  id: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  content?: string; // base64 content if available
+  textContent?: string; // text content if available
+}
+
 interface GmailMessageDetails {
   id: string;
   subject: string;
@@ -25,11 +37,7 @@ interface GmailMessageDetails {
   to: string;
   date: string;
   body: string;
-  attachments?: Array<{
-    filename: string;
-    mimeType: string;
-    size: number;
-  }>;
+  attachments?: GmailAttachment[];
 }
 
 interface Attachment {
@@ -88,14 +96,14 @@ async function fetchAttachmentFromUrl(url: string): Promise<{ content: string; m
   };
 }
 
-export function createGmailTool(databaseIdHash: string, agentId: string, storageKey: string | undefined | null): ToolDescriptor {
+export function createGmailTool(databaseIdHash: string, agentId: string, sessionId: string, storageKey: string | undefined | null): ToolDescriptor {
   return {
     displayName: 'Check Gmail',
     tool: tool({
       description: 'Access and manage Gmail emails using OAuth2 authentication',
       parameters: z.object({
         action: z.enum(['list', 'read', 'search', 'reply', 'send']).describe('The action to perform - list is the default action and lists the last emails with basic info, read reads the full content of an email, search searches for emails, reply sends a reply to an email, send sends a new email').default('list'),
-        query: z.string().optional().describe('The query to perform - list and search only'),
+        query: z.string().optional().describe('The query to perform - list, read and search only. Provide the email id for read action'),
         maxResults: z.number().optional().default(10).describe('The maximum number of results to return'),
         messageId: z.string().optional().describe('The ID of the email to reply to (required for reply action)'),
         replyMessage: z.string().optional().describe('The message content for the reply (required for reply action)'),
@@ -177,6 +185,10 @@ export function createGmailTool(databaseIdHash: string, agentId: string, storage
               if (!args.query) {
                 throw new Error('Email ID is required for read action');
               }
+
+              // Create temp directory for attachments
+              getExecutionTempDir(databaseIdHash, agentId, sessionId);
+
               response = await gmail.users.messages.get({
                 userId: 'me',
                 id: args.query,
@@ -201,14 +213,62 @@ export function createGmailTool(databaseIdHash: string, agentId: string, storage
                 }
               }
 
-              // Get attachments info
-              const attachments = message.payload?.parts
-                ?.filter(part => part.filename && part.filename.length > 0)
-                .map(part => ({
-                  filename: part.filename || '',
-                  mimeType: part.mimeType || '',
-                  size: part.body?.size || 0
-                }));
+              // Process attachments
+              const attachments: GmailAttachment[] = [];
+              const attachmentsToProcess: Record<string, string> = {};
+
+              const sanitize = (n: string) => n.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+              if (message.payload?.parts) {
+                for (const part of message.payload.parts) {
+                  if (part.filename && part.filename.length > 0 && part.body?.attachmentId) {
+                    // Get attachment content
+                    const attachmentResponse = await gmail.users.messages.attachments.get({
+                      userId: 'me',
+                      messageId: message.id!,
+                      id: part.body.attachmentId
+                    });
+
+                    const attachmentData = attachmentResponse.data.data;
+                    if (attachmentData) {
+                      const base64Content = `data:${part.mimeType};base64,${attachmentData}`;
+                      const sanitizedName = sanitize(part.filename);
+                      attachmentsToProcess[sanitizedName] = base64Content;
+                    }
+                  }
+                }
+              }
+
+              // Process attachments using processFiles
+              if (Object.keys(attachmentsToProcess).length > 0) {
+                const processedFiles = processFiles({
+                  inputObject: attachmentsToProcess,
+                  pdfExtractText: false
+                });
+
+                console.log('processedFiles', processedFiles);
+
+                // Handle processed files
+                for (const [filename, content] of Object.entries(processedFiles)) {
+                  const originalAttachment = message.payload?.parts?.find(
+                    part => sanitize(part.filename || '') === filename
+                  );
+
+                  if (originalAttachment) {
+                    const mimeType = getMimeType(content as string);
+                    const isImage = mimeType?.startsWith('image');
+
+                    attachments.push({
+                      id: originalAttachment.body?.attachmentId || '',
+                      filename: originalAttachment.filename || filename,
+                      mimeType: originalAttachment.mimeType || 'application/octet-stream',
+                      size: originalAttachment.body?.size || 0,
+                      content: isImage ? content as string : undefined,
+                      textContent: !isImage ? content as string : undefined
+                    });
+                  }
+                }
+              }
 
               const messageDetails: GmailMessageDetails = {
                 id: message.id!,
