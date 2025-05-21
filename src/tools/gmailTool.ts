@@ -32,16 +32,60 @@ interface GmailMessageDetails {
   }>;
 }
 
-function createEmailBody(to: string, subject: string, message: string): string {
+interface Attachment {
+  filename: string;
+  mimeType: string;
+  content: string; // base64 encoded content or URL
+  isUrl?: boolean;
+}
+
+function createEmailBody(to: string, subject: string, message: string, attachments: Attachment[] = []): string {
+  const boundary = 'foo_bar_baz';
   const emailLines = [
     'MIME-Version: 1.0',
-    'Content-Type: text/plain; charset="UTF-8"',
+    `Content-Type: multipart/mixed; boundary=${boundary}`,
     `To: ${to}`,
     `Subject: ${subject}`,
     '',
+    `--${boundary}`,
+    'Content-Type: text/plain; charset="UTF-8"',
+    '',
     message
   ];
+
+  // Add attachments if any
+  for (const attachment of attachments) {
+    emailLines.push(
+      '',
+      `--${boundary}`,
+      `Content-Type: ${attachment.mimeType}`,
+      'Content-Transfer-Encoding: base64',
+      `Content-Disposition: attachment; filename="${attachment.filename}"`,
+      '',
+      attachment.content
+    );
+  }
+
+  // Close the multipart message
+  emailLines.push(`--${boundary}--`);
+
   return emailLines.join('\r\n');
+}
+
+async function fetchAttachmentFromUrl(url: string): Promise<{ content: string; mimeType: string }> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch attachment from URL: ${url}`);
+  }
+
+  const contentType = response.headers.get('content-type') || 'application/octet-stream';
+  const buffer = await response.arrayBuffer();
+  const base64Content = Buffer.from(buffer).toString('base64');
+
+  return {
+    content: base64Content,
+    mimeType: contentType
+  };
 }
 
 export function createGmailTool(databaseIdHash: string, agentId: string, storageKey: string | undefined | null): ToolDescriptor {
@@ -50,11 +94,20 @@ export function createGmailTool(databaseIdHash: string, agentId: string, storage
     tool: tool({
       description: 'Access and manage Gmail emails using OAuth2 authentication',
       parameters: z.object({
-        action: z.enum(['list', 'read', 'search', 'reply']).describe('The action to perform - list is the default action and lists the last emails with basic info, read reads the full content of an email, search searches for emails, reply sends a reply to an email').default('list'),
+        action: z.enum(['list', 'read', 'search', 'reply', 'send']).describe('The action to perform - list is the default action and lists the last emails with basic info, read reads the full content of an email, search searches for emails, reply sends a reply to an email, send sends a new email').default('list'),
         query: z.string().optional().describe('The query to perform - list and search only'),
         maxResults: z.number().optional().default(10).describe('The maximum number of results to return'),
         messageId: z.string().optional().describe('The ID of the email to reply to (required for reply action)'),
-        replyMessage: z.string().optional().describe('The message content for the reply (required for reply action)')
+        replyMessage: z.string().optional().describe('The message content for the reply (required for reply action)'),
+        to: z.string().optional().describe('The recipient email address (required for send action)'),
+        subject: z.string().optional().describe('The email subject (required for send action)'),
+        message: z.string().optional().describe('The email message content (required for send action)'),
+        attachments: z.array(z.object({
+          filename: z.string(),
+          mimeType: z.string(),
+          content: z.string().describe('Base64 encoded content or URL of the attachment'),
+          isUrl: z.boolean().optional().describe('Whether the content is a URL that needs to be fetched')
+        })).optional().describe('Array of attachments to include in the email')
       }),
       execute: async (args) => {
         // Get settings from config repository
@@ -257,6 +310,54 @@ export function createGmailTool(databaseIdHash: string, agentId: string, storage
                 success: true,
                 messageId: response.data.id,
                 threadId: response.data.threadId
+              };
+            }
+
+            case 'send': {
+              if (!args.to || !args.subject || !args.message) {
+                throw new Error('To, subject, and message are required for send action');
+              }
+
+              // Process attachments if any
+              const processedAttachments: Attachment[] = [];
+              if (args.attachments && args.attachments.length > 0) {
+                for (const attachment of args.attachments) {
+                  if (attachment.isUrl) {
+                    // Fetch attachment from URL
+                    const { content, mimeType } = await fetchAttachmentFromUrl(attachment.content);
+                    processedAttachments.push({
+                      filename: attachment.filename,
+                      mimeType: mimeType,
+                      content: content
+                    });
+                  } else {
+                    // Use base64 content directly
+                    processedAttachments.push(attachment);
+                  }
+                }
+              }
+
+              // Create email body with attachments
+              const emailBody = createEmailBody(args.to, args.subject, args.message, processedAttachments);
+              
+              // Encode the email body
+              const encodedEmail = Buffer.from(emailBody)
+                .toString('base64')
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/, '');
+
+              // Send the email
+              response = await gmail.users.messages.send({
+                userId: 'me',
+                requestBody: {
+                  raw: encodedEmail
+                }
+              });
+
+              return {
+                success: true,
+                messageId: response.data.id
               };
             }
 

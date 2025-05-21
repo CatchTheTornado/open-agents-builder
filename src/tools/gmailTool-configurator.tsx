@@ -3,6 +3,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { useAgentContext } from '@/contexts/agent-context';
+import { DatabaseContext } from '@/contexts/db-context';
 
 interface GmailToolSettings {
   accessToken: string;
@@ -22,31 +24,23 @@ export function GmailToolConfigurator({
   onChange
 }: GmailToolConfiguratorProps) {
   const { t } = useTranslation();
-
+  const dbContext = React.useContext(DatabaseContext);
+  const agentContext = useAgentContext();
+  
   const handleAuth = async () => {
-    if (!options.databaseIdHash || !options.agentId) {
-      console.error('Missing databaseIdHash or agentId');
+    if (!dbContext?.databaseIdHash || !agentContext.current?.id) {
+      console.error('No database ID hash or agent ID available');
       return;
     }
-
     try {
-      const response = await fetch('/api/gmail/oauth/auth-url', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          databaseIdHash: options.databaseIdHash,
-          agentId: options.agentId
-        }),
-      });
+      const response = await fetch(`/api/gmail/oauth/auth-url?state=${dbContext.databaseIdHash}&agentId=${agentContext.current.id}`);
 
       if (!response.ok) {
         throw new Error('Failed to get auth URL');
       }
 
-      const { url } = await response.json();
-      window.location.href = url;
+      const { authUrl } = await response.json();
+      window.location.href = authUrl;
     } catch (error) {
       console.error('Failed to start Gmail auth:', error);
     }
