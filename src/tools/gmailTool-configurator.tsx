@@ -86,9 +86,9 @@ export function GmailToolConfigurator({
           {t('Expiry Date')}
         </label>
         <input
-          type="text"
+          type="number"
           value={options.expiryDate || ''}
-          onChange={(e) => onChange({ ...options, expiryDate: parseInt(e.target.value) || 0 })}
+          onChange={(e) => onChange({ ...options, expiryDate: e.target.value ? parseInt(e.target.value) : 0 })}
           className="w-full p-2 border rounded"
         />
       </div>
