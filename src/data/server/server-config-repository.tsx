@@ -58,7 +58,7 @@ export default class ServerConfigRepository extends BaseRepository<ConfigDTO> {
             item = await this.encryptItem(item);
             existingRecord = item;
             existingRecord.updatedAt = getCurrentTS();
-            db.update(config).set(existingRecord).where(eq(config.key, query.key)).run();
+            await db.update(config).set(existingRecord).where(eq(config.key, query.key)).run();
             existingRecord = await this.decryptItem(existingRecord);
         }
         return Promise.resolve(existingRecord as ConfigDTO)   
