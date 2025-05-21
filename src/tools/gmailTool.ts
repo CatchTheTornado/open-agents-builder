@@ -273,22 +273,33 @@ export function createGmailTool(databaseIdHash: string, agentId: string, storage
               const originalMessage = await gmail.users.messages.get({
                 userId: 'me',
                 id: args.messageId,
-                format: 'metadata',
-                metadataHeaders: ['Subject', 'From', 'To']
+                format: 'full'
               });
 
               const headers = originalMessage.data.payload?.headers || [];
               const subject = headers.find(h => h.name === 'Subject')?.value || '(No Subject)';
               const from = headers.find(h => h.name === 'From')?.value || '';
+              const references = headers.find(h => h.name === 'References')?.value || '';
               
               // Extract email address from the From field
               const fromEmail = from.match(/<([^>]+)>/)?.[1] || from;
               
               // Create reply subject
               const replySubject = subject.startsWith('Re:') ? subject : `Re: ${subject}`;
-              
-              // Create email body
-              const emailBody = createEmailBody(fromEmail, replySubject, args.replyMessage);
+
+              // Create email headers for threading
+              const emailLines = [
+                'MIME-Version: 1.0',
+                'Content-Type: text/plain; charset="UTF-8"',
+                `To: ${fromEmail}`,
+                `Subject: ${replySubject}`,
+                `In-Reply-To: ${originalMessage.data.id}`,
+                `References: ${references ? `${references} ` : ''}${originalMessage.data.id}`,
+                '',
+                args.replyMessage
+              ];
+
+              const emailBody = emailLines.join('\r\n');
               
               // Encode the email body
               const encodedEmail = Buffer.from(emailBody)
