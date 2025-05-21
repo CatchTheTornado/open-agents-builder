@@ -11,10 +11,11 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const state = url.searchParams.get('state'); // databaseIdHash
+    const agentId = url.searchParams.get('agentId');
 
-    if (!state) {
+    if (!state || !agentId) {
       return NextResponse.json(
-        { error: 'State parameter is required' },
+        { error: 'State and agentId parameters are required' },
         { status: 400 }
       );
     }
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
-      state,
+      state: `${state}|${agentId}`,
       prompt: 'consent'
     });
 

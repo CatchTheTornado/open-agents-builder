@@ -12,24 +12,39 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const code = url.searchParams.get('code');
-    const state = url.searchParams.get('state'); // Contains databaseIdHash
+    const state = url.searchParams.get('state');
 
     if (!code || !state) {
       return NextResponse.json(
-        { error: 'Authorization code and state are required' },
+        { error: 'Code and state parameters are required' },
         { status: 400 }
       );
     }
 
-    // Exchange the code for tokens
-    const { tokens } = await oauth2Client.getToken(code);
+    // Split state into databaseIdHash and agentId
+    const [databaseIdHash, agentId] = state.split('|');
+    if (!databaseIdHash || !agentId) {
+      return NextResponse.json(
+        { error: 'Invalid state parameter' },
+        { status: 400 }
+      );
+    }
 
-    // Store the tokens in the config repository
-    const configRepo = new ServerConfigRepository(state);
+    // Exchange code for tokens
+    const { tokens } = await oauth2Client.getToken(code);
+    if (!tokens.access_token || !tokens.refresh_token) {
+      return NextResponse.json(
+        { error: 'Failed to get access token' },
+        { status: 500 }
+      );
+    }
+
+    // Store tokens in config repository
+    const configRepo = new ServerConfigRepository(databaseIdHash);
     await configRepo.upsert(
-      { key: 'gmail_settings' },
+      { key: `gmail_settings_${agentId}` },
       {
-        key: 'gmail_settings',
+        key: `gmail_settings_${agentId}`,
         value: JSON.stringify({
           accessToken: tokens.access_token,
           refreshToken: tokens.refresh_token,
@@ -39,12 +54,12 @@ export async function GET(request: Request) {
       }
     );
 
-    // Redirect back to the admin page
-    return NextResponse.redirect(new URL('/admin/settings', request.url));
+    // Redirect back to the app
+    return NextResponse.redirect(new URL('/settings', request.url));
   } catch (error) {
-    console.error('OAuth callback error:', error);
+    console.error('Failed to handle OAuth callback:', error);
     return NextResponse.json(
-      { error: 'Failed to complete OAuth flow' },
+      { error: 'Failed to handle OAuth callback' },
       { status: 500 }
     );
   }

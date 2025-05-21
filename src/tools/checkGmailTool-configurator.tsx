@@ -4,6 +4,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { DatabaseContext } from '@/contexts/db-context';
+import { useAgentContext } from '@/contexts/agent-context';
 
 type GmailToolSettings = {
   accessToken: string;
@@ -22,15 +23,16 @@ export function CheckGmailToolConfigurator({
 }: CheckGmailToolConfiguratorProps) {
   const { t } = useTranslation();
   const dbContext = React.useContext(DatabaseContext);
+  const agentContext = useAgentContext();
 
   const handleAuth = async () => {
-    if (!dbContext?.databaseIdHash) {
-      console.error('No database ID hash available');
+    if (!dbContext?.databaseIdHash || !agentContext.current?.id) {
+      console.error('No database ID hash or agent ID available');
       return;
     }
 
     try {
-      const response = await fetch(`/api/gmail/oauth/auth-url?state=${dbContext.databaseIdHash}`);
+      const response = await fetch(`/api/gmail/oauth/auth-url?state=${dbContext.databaseIdHash}&agentId=${agentContext.current.id}`);
       const data = await response.json();
       
       if (data.authUrl) {

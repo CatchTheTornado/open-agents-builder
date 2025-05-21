@@ -10,7 +10,7 @@ interface GmailToolSettings {
   expiryDate: number;
 }
 
-export function createCheckGmailTool(databaseIdHash: string): ToolDescriptor {
+export function createCheckGmailTool(databaseIdHash: string, agentId: string): ToolDescriptor {
   return {
     displayName: 'Check Gmail',
     tool: tool({
@@ -23,7 +23,7 @@ export function createCheckGmailTool(databaseIdHash: string): ToolDescriptor {
       execute: async (args) => {
         // Get settings from config repository
         const configRepo = new ServerConfigRepository(databaseIdHash);
-        const settings = await getGmailSettings(configRepo);
+        const settings = await getGmailSettings(configRepo, agentId);
         if (!settings) {
           throw new Error('Gmail settings not found. Please configure Gmail access first.');
         }
@@ -90,11 +90,11 @@ export function createCheckGmailTool(databaseIdHash: string): ToolDescriptor {
   };
 }
 
-async function getGmailSettings(configRepo: ServerConfigRepository): Promise<GmailToolSettings | null> {
+async function getGmailSettings(configRepo: ServerConfigRepository, agentId: string): Promise<GmailToolSettings | null> {
   try {
     const config = await configRepo.findAll();
-    const gmailConfig = config.find(c => c.key === 'gmail_settings');
-    if (!gmailConfig) {
+    const gmailConfig = config.find(c => c.key === `gmail_settings_${agentId}`);
+    if (!gmailConfig?.value) {
       return null;
     }
     return JSON.parse(gmailConfig.value) as GmailToolSettings;

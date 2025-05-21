@@ -74,7 +74,7 @@ export const toolRegistry = {
       updateResultTool: createUpdateResultTool(databaseIdHash, storageKey),
       httpTool: httpTool,
       codeExecutionTool: createCodeExecutionTool(agentId, sessionId, databaseIdHash, storageKey),
-      checkGmailTool: createCheckGmailTool(databaseIdHash)
+      checkGmailTool: createCheckGmailTool(databaseIdHash, agentId)
     }
 
     if (agent) {
