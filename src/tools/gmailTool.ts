@@ -3,7 +3,7 @@ import { ToolDescriptor } from './registry';
 import { tool } from 'ai';
 import { z } from 'zod';
 import ServerConfigRepository from '@/data/server/server-config-repository';
-import { getExecutionTempDir, getMimeType, processFiles } from '@/lib/file-extractor';
+import { getExecutionTempDir, processFiles } from '@/lib/file-extractor';
 import { writeFileSync } from 'fs';
 import path, { join } from 'path';
 
@@ -94,6 +94,42 @@ async function fetchAttachmentFromUrl(url: string): Promise<{ content: string; m
     content: base64Content,
     mimeType: contentType
   };
+}
+
+function saveOriginalAttachment(tempWorkspaceDir: string, name: string, base64Data: string): void {
+  const sanitize = (n: string) => n.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const ext = path.extname(name || '').replace('.', '').toLowerCase() || 'bin';
+
+  // Ensure we do not duplicate file extensions if the name already contains one
+  let sanitizedName = sanitize(name);
+  const currentExt = path.extname(sanitizedName).replace('.', '').toLowerCase();
+
+  // Add extension only when the sanitized name does not already include any extension
+  // or includes a different one
+  if (!currentExt) {
+    sanitizedName = `${sanitizedName}.${ext}`;
+  }
+
+  const fileName = sanitizedName;
+  const filePath = join(tempWorkspaceDir, fileName);
+
+  try {
+    let dataPart = base64Data;
+    // Strip prefix if present
+    if (base64Data.startsWith('data:')) {
+      dataPart = base64Data.split(',')[1] ?? '';
+    }
+    writeFileSync(filePath, Buffer.from(dataPart, 'base64'));
+  } catch (err) {
+    console.error(`Error saving original attachment to ${filePath}`, err);
+  }
+}
+
+function getMimeType(base64Data: string | undefined | null): string | null {
+  if (!base64Data || typeof base64Data !== 'string') return null;
+  // Expecting strings like: data:application/pdf;base64,JVBERi0x...
+  const match = base64Data.match(/^data:([^;]+);base64,/);
+  return match ? match[1] : null;
 }
 
 export function createGmailTool(databaseIdHash: string, agentId: string, sessionId: string, storageKey: string | undefined | null): ToolDescriptor {
@@ -187,7 +223,7 @@ export function createGmailTool(databaseIdHash: string, agentId: string, session
               }
 
               // Create temp directory for attachments
-              getExecutionTempDir(databaseIdHash, agentId, sessionId);
+              const tempWorkspaceDir = getExecutionTempDir(databaseIdHash, agentId, sessionId);
 
               response = await gmail.users.messages.get({
                 userId: 'me',
@@ -217,8 +253,6 @@ export function createGmailTool(databaseIdHash: string, agentId: string, session
               const attachments: GmailAttachment[] = [];
               const attachmentsToProcess: Record<string, string> = {};
 
-              const sanitize = (n: string) => n.replace(/[^a-zA-Z0-9._-]/g, '_');
-
               if (message.payload?.parts) {
                 for (const part of message.payload.parts) {
                   if (part.filename && part.filename.length > 0 && part.body?.attachmentId) {
@@ -232,7 +266,11 @@ export function createGmailTool(databaseIdHash: string, agentId: string, session
                     const attachmentData = attachmentResponse.data.data;
                     if (attachmentData) {
                       const base64Content = `data:${part.mimeType};base64,${attachmentData}`;
-                      const sanitizedName = sanitize(part.filename);
+                      const sanitizedName = part.filename?.replace(/[^a-zA-Z0-9._-]/g, '_') || 'attachment';
+                      
+                      // Save original attachment
+                      saveOriginalAttachment(tempWorkspaceDir, part.filename || 'attachment', base64Content);
+                      
                       attachmentsToProcess[sanitizedName] = base64Content;
                     }
                   }
@@ -243,7 +281,7 @@ export function createGmailTool(databaseIdHash: string, agentId: string, session
               if (Object.keys(attachmentsToProcess).length > 0) {
                 const processedFiles = processFiles({
                   inputObject: attachmentsToProcess,
-                  pdfExtractText: false
+                  pdfExtractText: true
                 });
 
                 console.log('processedFiles', processedFiles);
@@ -251,12 +289,17 @@ export function createGmailTool(databaseIdHash: string, agentId: string, session
                 // Handle processed files
                 for (const [filename, content] of Object.entries(processedFiles)) {
                   const originalAttachment = message.payload?.parts?.find(
-                    part => sanitize(part.filename || '') === filename
+                    part => part.filename?.replace(/[^a-zA-Z0-9._-]/g, '_') === filename
                   );
 
                   if (originalAttachment) {
-                    const mimeType = getMimeType(content as string);
-                    const isImage = mimeType?.startsWith('image');
+                    let mimeType: string | null = null;
+                    let isImage = false;
+                    
+                    if (typeof content === 'string') {
+                      mimeType = getMimeType(content);
+                      isImage = mimeType?.startsWith('image') || false;
+                    }
 
                     attachments.push({
                       id: originalAttachment.body?.attachmentId || '',
