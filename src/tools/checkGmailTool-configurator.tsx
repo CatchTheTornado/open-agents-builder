@@ -12,12 +12,12 @@ type GmailToolSettings = {
 };
 
 interface CheckGmailToolConfiguratorProps {
-  settings: GmailToolSettings;
-  onChange: (settings: GmailToolSettings) => void;
+  options: Partial<GmailToolSettings>;
+  onChange: (options: Partial<GmailToolSettings>) => void;
 }
 
 export function CheckGmailToolConfigurator({
-  settings,
+  options,
   onChange
 }: CheckGmailToolConfiguratorProps) {
   const { t } = useTranslation();
@@ -43,7 +43,7 @@ export function CheckGmailToolConfigurator({
     }
   };
 
-  if (!settings.accessToken) {
+  if (!options.accessToken) {
     return (
       <div className="space-y-4">
         <p>{t('gmail.connectPrompt')}</p>
@@ -62,8 +62,8 @@ export function CheckGmailToolConfigurator({
         </label>
         <input
           type="text"
-          value={settings.accessToken}
-          onChange={(e) => onChange({ ...settings, accessToken: e.target.value })}
+          value={options.accessToken || ''}
+          onChange={(e) => onChange({ ...options, accessToken: e.target.value })}
           className="w-full p-2 border rounded"
         />
       </div>
@@ -73,8 +73,8 @@ export function CheckGmailToolConfigurator({
         </label>
         <input
           type="text"
-          value={settings.refreshToken}
-          onChange={(e) => onChange({ ...settings, refreshToken: e.target.value })}
+          value={options.refreshToken || ''}
+          onChange={(e) => onChange({ ...options, refreshToken: e.target.value })}
           className="w-full p-2 border rounded"
         />
       </div>
@@ -84,8 +84,8 @@ export function CheckGmailToolConfigurator({
         </label>
         <input
           type="text"
-          value={settings.expiryDate}
-          onChange={(e) => onChange({ ...settings, expiryDate: e.target.value })}
+          value={options.expiryDate || ''}
+          onChange={(e) => onChange({ ...options, expiryDate: e.target.value })}
           className="w-full p-2 border rounded"
         />
       </div>

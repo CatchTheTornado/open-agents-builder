@@ -18,6 +18,7 @@ import { getAvailableUIComponents } from './availableUIComponentsTool';
 import { MemoryStoreConfigurator } from './memoryStore-configurator';
 import { MemorySearchConfigurator } from './memorySearch-configurator';
 import { CodeExecutionToolConfigurator } from './codeExecutionTool-configurator';
+import { CheckGmailToolConfigurator } from './checkGmailTool-configurator';
 
 type ToolConfiguratorDescriptor = {
   displayName: string;
@@ -90,6 +91,10 @@ export const toolConfiguratorsRepository = {
       codeExecutionTool: {
         displayName: "Code Execution",
         configurator: CodeExecutionToolConfigurator
+      },
+      checkGmailTool: {
+        displayName: "Check Gmail",
+        configurator: CheckGmailToolConfigurator
       }
     }
 

@@ -24,6 +24,7 @@ import { createRenderComponentTool } from './renderComponentTool';
 import { createMemorySaveTool } from './memorySaveTool';
 import { createMemorySearchTool } from './memorySearchTool';
 import { createCodeExecutionTool } from './codeExecutionTool';
+import { createCheckGmailTool } from './checkGmailTool';
 export type ToolDescriptor = {
   displayName: string;
   tool: Tool;
@@ -72,7 +73,8 @@ export const toolRegistry = {
       listAttachments: createListAttachmentsTool(databaseIdHash, storageKey, StorageSchemas.Default),
       updateResultTool: createUpdateResultTool(databaseIdHash, storageKey),
       httpTool: httpTool,
-      codeExecutionTool: createCodeExecutionTool(agentId, sessionId, databaseIdHash, storageKey)
+      codeExecutionTool: createCodeExecutionTool(agentId, sessionId, databaseIdHash, storageKey),
+      checkGmailTool: createCheckGmailTool(databaseIdHash)
     }
 
     if (agent) {
