@@ -57,7 +57,7 @@ export async function GET(request: Request) {
     );
 
     // Redirect back to the app
-    return NextResponse.redirect(new URL('/settings', request.url));
+    return NextResponse.redirect(new URL('/admin/agent/' + encodeURIComponent(agentId) + '/tools', request.url));
   } catch (error) {
     console.error('Failed to handle OAuth callback:', error);
     return NextResponse.json(

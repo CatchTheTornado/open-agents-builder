@@ -24,7 +24,7 @@ import { createRenderComponentTool } from './renderComponentTool';
 import { createMemorySaveTool } from './memorySaveTool';
 import { createMemorySearchTool } from './memorySearchTool';
 import { createCodeExecutionTool } from './codeExecutionTool';
-import { createCheckGmailTool } from './checkGmailTool';
+import { createGmailTool } from './gmailTool';
 export type ToolDescriptor = {
   displayName: string;
   tool: Tool;
@@ -74,7 +74,7 @@ export const toolRegistry = {
       updateResultTool: createUpdateResultTool(databaseIdHash, storageKey),
       httpTool: httpTool,
       codeExecutionTool: createCodeExecutionTool(agentId, sessionId, databaseIdHash, storageKey),
-      checkGmailTool: createCheckGmailTool(databaseIdHash, agentId, storageKey)
+      gmailTool: createGmailTool(databaseIdHash, agentId, storageKey)
     }
 
     if (agent) {
