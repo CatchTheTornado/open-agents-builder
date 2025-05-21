@@ -46,9 +46,9 @@ export function CheckGmailToolConfigurator({
   if (!options.accessToken) {
     return (
       <div className="space-y-4">
-        <p>{t('gmail.connectPrompt')}</p>
+        <p>{t('Authorize Google API')}</p>
         <Button onClick={handleAuth}>
-          {t('gmail.connectButton')}
+          {t('Authorize Gmail...')}
         </Button>
       </div>
     );
@@ -69,7 +69,7 @@ export function CheckGmailToolConfigurator({
       </div>
       <div className="space-y-2">
         <label className="text-sm font-medium">
-          {t('gmail.refreshToken')}
+          {t('Refresh authorization token')}
         </label>
         <input
           type="text"
@@ -80,7 +80,7 @@ export function CheckGmailToolConfigurator({
       </div>
       <div className="space-y-2">
         <label className="text-sm font-medium">
-          {t('gmail.expiryDate')}
+          {t('Token expiry date')}
         </label>
         <input
           type="text"

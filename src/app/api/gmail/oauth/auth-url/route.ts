@@ -27,7 +27,8 @@ export async function GET(request: Request) {
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
-      state
+      state,
+      prompt: 'consent'
     });
 
     return NextResponse.json({ authUrl });
