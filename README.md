@@ -333,6 +333,30 @@ LLM_MODEL=llama3.1
 ```
 Ensure that the `OLLAMA_URL` is set to `<base-url>/api` so that the correct endpoints for Ollama are used.
 
+## Gmail Integration Setup
+
+To enable Gmail functionality in your agents, you need to set up OAuth2 credentials:
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the Gmail API for your project
+4. Go to "Credentials" and create an OAuth 2.0 Client ID
+   - Application type: Web application
+   - Authorized redirect URIs: Add `http://localhost:3000/api/gmail/oauth/callback` (for development)
+   - For production, add your production callback URL
+
+5. Add the following environment variables to your `.env` file:
+```env
+GOOGLE_CLIENT_ID=your_client_id_here
+GOOGLE_CLIENT_SECRET=your_client_secret_here
+GOOGLE_REDIRECT_URI=http://localhost:3000/api/gmail/oauth/callback
+```
+
+Note: For production, make sure to:
+- Update the `GOOGLE_REDIRECT_URI` to your production callback URL
+- Keep your client secret secure and never commit it to version control
+- Consider using environment-specific configuration for development and production
+
 ## License
 
 Open Agents Builder is released under [MIT](LICENSE) license.
