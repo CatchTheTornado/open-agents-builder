@@ -4,6 +4,7 @@ import { TestCase } from '@/data/client/agent-api-client';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 import { llmProviderSetup } from '@/lib/llm-provider';
+import { nanoid } from 'nanoid';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -76,8 +77,10 @@ export async function POST(
             if (messages[i].role === 'user') {
               const chatResponse = await client.chat.collectMessages(messages.slice(0, i + 1), {
                 agentId,
-                sessionId: response?.sessionId
+                sessionId: nanoid()
               });
+
+              console.log('!!!',chatResponse);
 
               // Convert the response messages to our expected format
               const convertedMessages = chatResponse.messages.map(msg => ({

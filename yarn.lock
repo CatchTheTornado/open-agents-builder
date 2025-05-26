@@ -10261,10 +10261,10 @@ onetime@^7.0.0:
   dependencies:
     mimic-function "^5.0.0"
 
-open-agents-builder-client@^1.5.0:
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/open-agents-builder-client/-/open-agents-builder-client-1.5.0.tgz#f1795bfec6b02f9a4783f69cf64fcf3260052f2a"
-  integrity sha512-C7dnIXyGr/bH8ggJDPrZoC6Gj2bQ3CEwTyJyf1Uvkl9PL0RprFWen5nIt4Le7ZQEVWjstH3GZi85dX6HxJeCjg==
+open-agents-builder-client@^1.5.1:
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/open-agents-builder-client/-/open-agents-builder-client-1.5.1.tgz#507082f87efce5df615a683270f4adcf7232a09d"
+  integrity sha512-eC7/SKEZYXnKgty1hE7wB8dY2DJa6IvRLWr3Sy6s0clHWX0jiVkvE8sNsrCDvkUfjCxMVcLMuHcHqn7nnQXL3Q==
   dependencies:
     dotenv "^16.4.5"
     nanoid "^5.1.5"
