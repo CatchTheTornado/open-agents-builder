@@ -4,10 +4,24 @@ import { z } from 'zod';
 import { nanoid } from 'nanoid';
 import { authorizeRequestContext } from '@/lib/authorization-api';
 import { precheckAPIRequest } from '@/lib/middleware-precheck-api';
+import { generateObject } from 'ai';
+import { llmProviderSetup } from '@/lib/llm-provider';
 
 const adjustTestCaseSchema = z.object({
   testCaseId: z.string(),
   actualResult: z.string(),
+});
+
+const adjustedTestCaseSchema = z.object({
+  messages: z.array(z.object({
+    role: z.enum(['user', 'assistant']),
+    content: z.string(),
+    toolCalls: z.array(z.object({
+      name: z.string(),
+      arguments: z.record(z.unknown())
+    })).optional()
+  })),
+  expectedResult: z.string()
 });
 
 export async function POST(
@@ -36,10 +50,18 @@ export async function POST(
     Actual Result:
     ${actualResult}
     
-    Please provide:
-    1. The adjusted test case messages
-    2. The adjusted expected result
-    3. A brief explanation of the changes made`;
+    Please provide the adjusted test case in the following JSON format:
+    {
+      "messages": [
+        {
+          "role": "user",
+          "content": "user message"
+        }
+      ],
+      "expectedResult": "expected result"
+    }
+
+    The messages array should contain the conversation that leads to this result, and the expectedResult should match the actual result.`;
 
     let collectedContent = '';
     await client.chat.streamChatWithCallbacks(
@@ -61,15 +83,20 @@ export async function POST(
     }
 
     // Parse the response to extract the adjusted test case
+    const result = await generateObject({
+      model: llmProviderSetup(),
+      maxTokens: 1000,
+      temperature: 0.2,
+      schema: adjustedTestCaseSchema,
+      prompt: `Parse the following response into a test case structure. If the response contains JSON, use that. Otherwise, create a test case structure based on the content:
+
+      ${collectedContent}`
+    });
+
     const adjustedTestCase = {
       id: testCaseId,
-      messages: [
-        {
-          role: 'user',
-          content: collectedContent,
-        },
-      ],
-      expectedResult: actualResult,
+      messages: result.object.messages,
+      expectedResult: result.object.expectedResult,
       status: 'completed',
       actualResult,
       evaluation: {
