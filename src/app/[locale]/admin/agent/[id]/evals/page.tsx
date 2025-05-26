@@ -33,6 +33,7 @@ export default function EvalsPage() {
   const agentContext = useAgentContext();
   const dbContext = useContext(DatabaseContext);
   const keyContext = useKeyContext();
+  const [adjustingCaseId, setAdjustingCaseId] = useState<string | null>(null);
 
   const generateTestCases = async () => {
     if (!agentContext.current?.prompt || !agentContext.current?.id) return;
@@ -178,6 +179,7 @@ export default function EvalsPage() {
     if (!agentContext.current?.id || !testCase.actualResult) return;
 
     try {
+      setAdjustingCaseId(testCase.id);
       const client = new AgentApiClient(
         process.env.NEXT_PUBLIC_API_URL || '',
         dbContext
@@ -198,6 +200,8 @@ export default function EvalsPage() {
       }
     } catch (error) {
       console.error('Failed to adjust test case:', error);
+    } finally {
+      setAdjustingCaseId(null);
     }
   };
 
@@ -355,9 +359,19 @@ export default function EvalsPage() {
                                 adjustCaseToResult(testCase);
                               }}
                               className="mt-2"
+                              disabled={adjustingCaseId === testCase.id}
                             >
-                              <RefreshCw className="mr-2 h-4 w-4" />
-                              {t('Adjust case to this result')}
+                              {adjustingCaseId === testCase.id ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  {t('Adjusting...')}
+                                </>
+                              ) : (
+                                <>
+                                  <RefreshCw className="mr-2 h-4 w-4" />
+                                  {t('Adjust case to this result')}
+                                </>
+                              )}
                             </Button>
                           )}
                         </div>
