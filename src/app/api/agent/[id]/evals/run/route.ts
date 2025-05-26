@@ -116,8 +116,22 @@ export async function POST(
                     content: messages[i].content
                   });
 
-                  // If this is a user message, get the assistant's response
+                  // Send TX status for user message
                   if (messages[i].role === 'user') {
+                    controller.enqueue(
+                      new TextEncoder().encode(
+                        JSON.stringify({
+                          type: 'test_case_update',
+                          data: {
+                            ...testCase,
+                            status: 'TX',
+                            conversationFlow,
+                            sessionId
+                          }
+                        }) + '\n'
+                      )
+                    );
+
                     // Send the entire conversation history up to this point
                     await client.chat.streamChatWithCallbacks(
                       conversationFlow.messages,
@@ -126,6 +140,30 @@ export async function POST(
                         sessionId,
                         onText: (text) => {
                           collectedContent += text;
+                          // Send RX status with intermediate updates
+                          controller.enqueue(
+                            new TextEncoder().encode(
+                              JSON.stringify({
+                                type: 'test_case_update',
+                                data: {
+                                  ...testCase,
+                                  status: 'RX',
+                                  conversationFlow: {
+                                    ...conversationFlow,
+                                    messages: [
+                                      ...conversationFlow.messages,
+                                      {
+                                        role: 'assistant',
+                                        content: collectedContent,
+                                        toolCalls: toolCalls.length > 0 ? toolCalls : undefined
+                                      }
+                                    ]
+                                  },
+                                  sessionId
+                                }
+                              }) + '\n'
+                            )
+                          );
                         },
                         onToolCall: (toolCall) => {
                           toolCalls.push(toolCall);
@@ -163,7 +201,7 @@ export async function POST(
               const actualResult = conversationFlow.messages[conversationFlow.messages.length - 1].content;
               const evaluation = await evaluateResult(actualResult, testCase.expectedResult, conversationFlow);
 
-              // Send the updated test case through the stream
+              // Send the final test case update through the stream
               controller.enqueue(
                 new TextEncoder().encode(
                   JSON.stringify({
