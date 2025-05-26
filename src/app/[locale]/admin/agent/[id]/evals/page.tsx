@@ -264,11 +264,11 @@ export default function AgentEvalsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12"></TableHead>
-                <TableHead>First Message</TableHead>
-                <TableHead>Expected Result</TableHead>
+                <TableHead className="max-w-[200px]">First Message</TableHead>
+                <TableHead className="max-w-[200px]">Expected Result</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Actual Result</TableHead>
-                <TableHead>Evaluation</TableHead>
+                <TableHead className="max-w-[200px]">Actual Result</TableHead>
+                <TableHead className="max-w-[200px]">Evaluation</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
@@ -295,10 +295,10 @@ export default function AgentEvalsPage() {
                         )}
                       </Button>
                     </TableCell>
-                    <TableCell className="max-w-md truncate">
+                    <TableCell className="max-w-[200px] break-words">
                       {testCase.messages[0]?.content || ''}
                     </TableCell>
-                    <TableCell className="max-w-md">
+                    <TableCell className="max-w-[200px]">
                       <Textarea
                         value={testCase.expectedResult}
                         onChange={e => {
@@ -312,6 +312,7 @@ export default function AgentEvalsPage() {
                         placeholder={t('Expected result...')}
                         onClick={e => e.stopPropagation()}
                         disabled={testCase.status === 'running'}
+                        className="resize-none"
                       />
                     </TableCell>
                     <TableCell>
@@ -333,14 +334,14 @@ export default function AgentEvalsPage() {
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="max-w-md truncate">
+                    <TableCell className="max-w-[200px] break-words">
                       {testCase.actualResult ? (
                         <ChatMessageMarkdown>{testCase.actualResult}</ChatMessageMarkdown>
                       ) : (
                         <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
-                    <TableCell className="max-w-md truncate">
+                    <TableCell className="max-w-[200px] break-words">
                       {testCase.evaluation?.explanation ? (
                         <ChatMessageMarkdown>{testCase.evaluation.explanation}</ChatMessageMarkdown>
                       ) : (

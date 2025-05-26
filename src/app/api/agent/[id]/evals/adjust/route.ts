@@ -56,12 +56,20 @@ export async function POST(
         {
           "role": "user",
           "content": "user message"
+        },
+        {
+          "role": "assistant",
+          "content": "assistant response"
         }
       ],
       "expectedResult": "expected result"
     }
 
-    The messages array should contain the conversation that leads to this result, and the expectedResult should match the actual result.`;
+    Important requirements:
+    1. The messages array MUST contain at least 2 messages - one from the user and one from the assistant
+    2. The conversation should be natural and lead to the actual result
+    3. The expectedResult should match the actual result
+    4. The assistant's response should be meaningful and relevant to the user's message`;
 
     let collectedContent = '';
     await client.chat.streamChatWithCallbacks(
@@ -105,6 +113,13 @@ export async function POST(
         score: 1.0,
       },
     };
+
+    // Update status based on evaluation score
+    if (adjustedTestCase.evaluation.score <= 0.5) {
+      adjustedTestCase.status = 'failed';
+    } else if (adjustedTestCase.evaluation.score <= 0.75) {
+      adjustedTestCase.status = 'warning';
+    }
 
     return NextResponse.json({ testCase: adjustedTestCase });
   } catch (error) {
