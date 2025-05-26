@@ -8,7 +8,7 @@ import { DatabaseContext } from '@/contexts/db-context';
 import { useKeyContext } from '@/contexts/key-context';
 import { AgentApiClient, TestCase } from '@/data/client/agent-api-client';
 import { useState } from 'react';
-import { Plus, Play, Loader2, Wand2, Trash2, RefreshCw, ChevronDown, ChevronRight, MessageSquare } from 'lucide-react';
+import { Plus, Play, Loader2, Wand2, Trash2, RefreshCw, ChevronDown, ChevronRight, MessageSquare, Download, Upload } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from 'react-i18next';
 import { ChatMessageMarkdown } from '@/components/chat-message-markdown';
@@ -305,6 +305,35 @@ export default function AgentEvalsPage() {
     }
   };
 
+  const exportTestCases = () => {
+    const dataStr = JSON.stringify(testCases, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = 'test-cases.json';
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
+  const importTestCases = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const importedCases = JSON.parse(content);
+        setTestCases(importedCases);
+      } catch (error) {
+        console.error('Failed to import test cases:', error);
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <div className="space-y-6">
       {isDirty ? (
@@ -315,31 +344,50 @@ export default function AgentEvalsPage() {
 
       <div className="flex space-x-4 ">
             <div className="flex space-x-2">
-
-              
-        <Button size="sm" variant="outline" onClick={generateTestCases} disabled={isGeneratingTests}>
-          {isGeneratingTests ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {t('Generating...')}
-            </>
-          ) : (
-            <>
-              <Wand2 className="mr-2 h-4 w-4" />
-              {t('Generate Test Cases')}
-            </>
-          )}
-        </Button>
-        <Button size="sm" variant="outline" onClick={addTestCase}>
-          <Plus className="mr-2 h-4 w-4" />
-          {t('Add Test Case')}
-        </Button>
-        <Button size="sm" variant="outline" onClick={runEvals} disabled={testCases.length === 0}>
-          <Play className="mr-2 h-4 w-4" />
-          {t('Run Evals')}
-        </Button>
+              <Button size="sm" variant="outline" onClick={generateTestCases} disabled={isGeneratingTests}>
+                {isGeneratingTests ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t('Generating...')}
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="mr-2 h-4 w-4" />
+                    {t('Generate Test Cases')}
+                  </>
+                )}
+              </Button>
+              <Button size="sm" variant="outline" onClick={addTestCase}>
+                <Plus className="mr-2 h-4 w-4" />
+                {t('Add Test Case')}
+              </Button>
+              <Button size="sm" variant="outline" onClick={runEvals} disabled={testCases.length === 0}>
+                <Play className="mr-2 h-4 w-4" />
+                {t('Run Evals')}
+              </Button>
+              <Button size="sm" variant="outline" onClick={exportTestCases} disabled={testCases.length === 0}>
+                <Download className="mr-2 h-4 w-4" />
+                {t('Export JSON')}
+              </Button>
+              <div className="relative">
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={importTestCases}
+                  className="hidden"
+                  id="import-test-cases"
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => document.getElementById('import-test-cases')?.click()}
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  {t('Import JSON')}
+                </Button>
+              </div>
+            </div>
       </div>
-</div>
       <div className="mt-6">
         <div className="border rounded-lg overflow-hidden">
           <Table>

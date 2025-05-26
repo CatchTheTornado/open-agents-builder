@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 import { llmProviderSetup } from '@/lib/llm-provider';
+import { authorizeRequestContext } from '@/lib/authorization-api';
 
 const testCaseSchema = z.object({
   id: z.string(),
@@ -22,10 +23,12 @@ const generateTestCasesSchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
+   response: NextResponse
 ) {
   try {
     const { prompt } = await request.json();
+    const requestContext = await authorizeRequestContext(request, response);
 
     const result = await generateObject({
       model: llmProviderSetup(),
