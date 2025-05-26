@@ -222,6 +222,36 @@ export default function EvalsPage() {
     });
   };
 
+  const getStatusDisplay = (status: string | undefined) => {
+    switch (status) {
+      case 'running':
+        return (
+          <div className="flex items-center space-x-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>{t('Running')}</span>
+          </div>
+        );
+      case 'completed':
+        return (
+          <div className="flex items-center space-x-2 text-green-600">
+            <span>{t('Completed')}</span>
+          </div>
+        );
+      case 'failed':
+        return (
+          <div className="flex items-center space-x-2 text-red-600">
+            <span>{t('Failed')}</span>
+          </div>
+        );
+      default:
+        return (
+          <div className="flex items-center space-x-2 text-muted-foreground">
+            <span>{t('Pending')}</span>
+          </div>
+        );
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex space-x-4">
@@ -278,11 +308,13 @@ export default function EvalsPage() {
               {testCases.map((testCase) => (
                 <React.Fragment key={testCase.id}>
                   <TableRow 
-                    className={`cursor-pointer hover:bg-muted/50 ${selectedCase === testCase.id ? 'bg-muted' : ''}`}
+                    className={`cursor-pointer hover:bg-muted/50 ${selectedCase === testCase.id ? 'bg-muted' : ''} ${
+                      testCase.status === 'running' ? 'bg-muted/80' : ''
+                    }`}
                     onClick={() => toggleExpand(testCase.id)}
                   >
                     <TableCell>{testCase.id}</TableCell>
-                    <TableCell>{testCase.status || t('pending')}</TableCell>
+                    <TableCell>{getStatusDisplay(testCase.status)}</TableCell>
                     <TableCell className="max-w-[200px] truncate">
                       {testCase.messages[0]?.content || ''}
                     </TableCell>
@@ -292,6 +324,7 @@ export default function EvalsPage() {
                         onChange={(e) => updateExpectedResult(testCase.id, e.target.value)}
                         placeholder={t('Expected result...')}
                         onClick={(e) => e.stopPropagation()}
+                        disabled={testCase.status === 'running'}
                       />
                     </TableCell>
                     <TableCell>
@@ -313,7 +346,7 @@ export default function EvalsPage() {
                           <ChatMessageMarkdown>
                             {testCase.evaluation.explanation}
                           </ChatMessageMarkdown>
-                          {testCase.actualResult && (
+                          {testCase.actualResult && testCase.status !== 'running' && (
                             <Button
                               variant="outline"
                               size="sm"
@@ -338,6 +371,7 @@ export default function EvalsPage() {
                           e.stopPropagation();
                           removeTestCase(testCase.id);
                         }}
+                        disabled={testCase.status === 'running'}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -356,6 +390,7 @@ export default function EvalsPage() {
                                     onValueChange={(value: 'user' | 'assistant') => 
                                       updateMessageRole(testCase.id, index, value)
                                     }
+                                    disabled={testCase.status === 'running'}
                                   >
                                     <SelectTrigger className="w-[120px]">
                                       <SelectValue placeholder={t('Select role')} />
@@ -373,6 +408,7 @@ export default function EvalsPage() {
                                     e.stopPropagation();
                                     removeMessage(testCase.id, index);
                                   }}
+                                  disabled={testCase.status === 'running'}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -381,6 +417,7 @@ export default function EvalsPage() {
                                 value={message.content}
                                 onChange={(e) => updateMessage(testCase.id, index, e.target.value)}
                                 placeholder={`${message.role} ${t('message...')}`}
+                                disabled={testCase.status === 'running'}
                               />
                             </div>
                           ))}
@@ -391,6 +428,7 @@ export default function EvalsPage() {
                               e.stopPropagation();
                               addMessage(testCase.id);
                             }}
+                            disabled={testCase.status === 'running'}
                           >
                             <Plus className="mr-2 h-4 w-4" />
                             {t('Add Message')}
