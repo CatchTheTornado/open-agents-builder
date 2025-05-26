@@ -138,8 +138,6 @@ export async function POST(
                       )
                     );
 
-                    console.log(conversationFlow.messages)
-
                     // Send the entire conversation history up to this point
                     await client.chat.streamChatWithCallbacks(
                         conversationFlow.messages,
