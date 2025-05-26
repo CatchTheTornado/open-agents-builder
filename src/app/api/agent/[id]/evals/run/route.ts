@@ -110,14 +110,16 @@ export async function POST(
                   let collectedContent = '';
                   const toolCalls: { name: string; arguments: Record<string, unknown> }[] = [];
                   
-                  // Add the current message to the conversation flow
-                  conversationFlow.messages.push({
-                    role: messages[i].role,
-                    content: messages[i].content
-                  });
 
                   // Send TX status for user message
                   if (messages[i].role === 'user') {
+                    // Add the current message to the conversation flow
+                    conversationFlow.messages.push({
+                        role: messages[i].role,
+                        content: messages[i].content
+                    });
+
+
                     controller.enqueue(
                       new TextEncoder().encode(
                         JSON.stringify({

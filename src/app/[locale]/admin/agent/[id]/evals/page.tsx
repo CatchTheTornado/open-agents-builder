@@ -349,7 +349,7 @@ export default function AgentEvalsPage() {
                             }
                           >
                             {testCase.status}
-                            {testCase.statusSpinner && (
+                            {testCase.statusSpinner && testCase.status !== 'completed' && testCase.status !== 'failed' && (
                               <Loader2 className="ml-2 h-3 w-3 animate-spin inline" />
                             )}
                           </Badge>
