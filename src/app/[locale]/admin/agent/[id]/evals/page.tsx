@@ -9,9 +9,10 @@ import { DatabaseContext } from '@/contexts/db-context';
 import { useKeyContext } from '@/contexts/key-context';
 import { AgentApiClient, TestCase } from '@/data/client/agent-api-client';
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Plus, Play } from 'lucide-react';
+import { Plus, Play, Loader2, Wand2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
+import { useTranslation } from 'react-i18next';
 
 interface Evaluation {
   isCompliant: boolean;
@@ -20,8 +21,11 @@ interface Evaluation {
 }
 
 export default function EvalsPage() {
+  const { t } = useTranslation();
   const [testCases, setTestCases] = useState<(TestCase & { evaluation?: Evaluation })[]>([]);
   const [expandedCases, setExpandedCases] = useState<Set<string>>(new Set());
+  const [isGeneratingTests, setIsGeneratingTests] = useState(false);
+  const [isRunningEvals, setIsRunningEvals] = useState(false);
   const agentContext = useAgentContext();
   const dbContext = useContext(DatabaseContext);
   const keyContext = useKeyContext();
@@ -30,6 +34,7 @@ export default function EvalsPage() {
     if (!agentContext.current?.prompt || !agentContext.current?.id) return;
 
     try {
+      setIsGeneratingTests(true);
       const client = new AgentApiClient(
         process.env.NEXT_PUBLIC_API_URL || '',
         dbContext,
@@ -46,6 +51,8 @@ export default function EvalsPage() {
       }
     } catch (error) {
       console.error('Failed to generate test cases:', error);
+    } finally {
+      setIsGeneratingTests(false);
     }
   };
 
@@ -54,6 +61,7 @@ export default function EvalsPage() {
 
     let keyData: string | undefined;
     try {
+      setIsRunningEvals(true);
       keyData = await keyContext.addApiKey();
       const client = new AgentApiClient(
         process.env.NEXT_PUBLIC_API_URL || '',
@@ -69,6 +77,7 @@ export default function EvalsPage() {
       if (keyData) {
         keyContext.removeKeyByName(keyData);
       }
+      setIsRunningEvals(false);
     }
   };
 
@@ -115,45 +124,66 @@ export default function EvalsPage() {
   };
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Agent Evaluations</h1>
-        <div className="space-x-4">
-          <Button onClick={generateTestCases}>Generate Test Cases</Button>
-          <Button onClick={runEvals} disabled={testCases.length === 0}>
-            <Play className="mr-2 h-4 w-4" />
-            Run Evals
-          </Button>
-        </div>
+    <div className="space-y-6">
+      <div className="flex space-x-4">
+        <Button size="sm" variant="outline" onClick={generateTestCases} disabled={isGeneratingTests}>
+          {isGeneratingTests ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {t('Generating...')}
+            </>
+          ) : (
+            <>
+              <Wand2 className="mr-2 h-4 w-4" />
+              {t('Generate Test Cases')}
+            </>
+          )}
+        </Button>
+        <Button size="sm" variant="outline" onClick={runEvals} disabled={testCases.length === 0 || isRunningEvals}>
+          {isRunningEvals ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {t('Running...')}
+            </>
+          ) : (
+            <>
+              <Play className="mr-2 h-4 w-4" />
+              {t('Run Evals')}
+            </>
+          )}
+        </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Test Cases</CardTitle>
+          <CardTitle>{t('Test Cases')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Expected Result</TableHead>
-                <TableHead>Actual Result</TableHead>
-                <TableHead>Evaluation</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>{t('ID')}</TableHead>
+                <TableHead>{t('Status')}</TableHead>
+                <TableHead>{t('Expected Result')}</TableHead>
+                <TableHead>{t('Actual Result')}</TableHead>
+                <TableHead>{t('Evaluation')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {testCases.map((testCase) => (
                 <React.Fragment key={testCase.id}>
-                  <TableRow>
+                  <TableRow 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => toggleExpand(testCase.id)}
+                  >
                     <TableCell>{testCase.id}</TableCell>
-                    <TableCell>{testCase.status || 'pending'}</TableCell>
+                    <TableCell>{testCase.status || t('pending')}</TableCell>
                     <TableCell>
                       <Textarea
                         value={testCase.expectedResult}
                         onChange={(e) => updateExpectedResult(testCase.id, e.target.value)}
-                        placeholder="Expected result..."
+                        placeholder={t('Expected result...')}
+                        onClick={(e) => e.stopPropagation()}
                       />
                     </TableCell>
                     <TableCell>{testCase.actualResult}</TableCell>
@@ -172,23 +202,10 @@ export default function EvalsPage() {
                         </div>
                       )}
                     </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleExpand(testCase.id)}
-                      >
-                        {expandedCases.has(testCase.id) ? (
-                          <ChevronUp className="h-4 w-4" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </TableCell>
                   </TableRow>
                   {expandedCases.has(testCase.id) && (
                     <TableRow>
-                      <TableCell colSpan={6}>
+                      <TableCell colSpan={5}>
                         <div className="space-y-4 p-4">
                           {testCase.messages.map((message, index) => (
                             <div key={index} className="space-y-2">
@@ -196,15 +213,15 @@ export default function EvalsPage() {
                               <Textarea
                                 value={message.content}
                                 onChange={(e) => updateMessage(testCase.id, index, e.target.value)}
-                                placeholder={`${message.role} message...`}
+                                placeholder={`${message.role} ${t('message...')}`}
                               />
                               {message.toolCalls && (
                                 <div className="pl-4">
-                                  <div className="font-semibold">Tool Calls:</div>
+                                  <div className="font-semibold">{t('Tool Calls:')}</div>
                                   {message.toolCalls.map((tool, toolIndex) => (
                                     <div key={toolIndex} className="pl-4">
-                                      <div>Name: {tool.name}</div>
-                                      <div>Arguments: {JSON.stringify(tool.arguments)}</div>
+                                      <div>{t('Name:')} {tool.name}</div>
+                                      <div>{t('Arguments:')} {JSON.stringify(tool.arguments)}</div>
                                     </div>
                                   ))}
                                 </div>
@@ -214,10 +231,13 @@ export default function EvalsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => addMessage(testCase.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addMessage(testCase.id);
+                            }}
                           >
                             <Plus className="mr-2 h-4 w-4" />
-                            Add Message
+                            {t('Add Message')}
                           </Button>
                         </div>
                       </TableCell>
