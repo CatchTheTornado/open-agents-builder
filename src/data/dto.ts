@@ -217,6 +217,7 @@ const evaluationSchema = z.object({
   score: z.number().min(0).max(1)
 });
 
+// TODO: move to separate file
 const conversationFlowSchema = z.object({
   messages: z.array(z.object({
     role: z.enum(['user', 'assistant']),
@@ -231,6 +232,7 @@ const conversationFlowSchema = z.object({
     arguments: z.record(z.unknown())
   })).optional()
 });
+export type ConversationFlowDTO = z.infer<typeof conversationFlowSchema>;
 
 const testCaseSchema = z.object({
   id: z.string(),
@@ -250,6 +252,8 @@ const testCaseSchema = z.object({
   evaluation: evaluationSchema.optional(),
   conversationFlow: conversationFlowSchema.optional()
 });
+
+export type TestCaseDTO = z.infer<typeof testCaseSchema>;
 
 export const agentDTOSchema = z.object({
   id: z.string().optional(),

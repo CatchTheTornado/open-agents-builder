@@ -1,6 +1,6 @@
 import { AdminApiClient, ApiEncryptionConfig } from "./admin-api-client";
 import { SaaSContextType } from "@/contexts/saas-context";
-import { AgentDTO, AgentDTOEncSettings, PaginatedQuery, PaginatedResult, ResultDTO, SessionDTO } from "../dto";
+import { AgentDTO, AgentDTOEncSettings, PaginatedQuery, PaginatedResult, ResultDTO, SessionDTO, TestCaseDTO } from "../dto";
 import { DatabaseContextType } from "@/contexts/db-context";
 import { urlParamsForQuery } from "./base-api-client";
 import axios from "axios";
@@ -32,33 +32,17 @@ export type PutAgentResponseError = {
 
 export type PutAgentResponse = PutAgentResponseSuccess | PutAgentResponseError;
 
-export interface TestCase {
-  id: string;
-  messages: {
-    role: 'user' | 'assistant';
-    content: string;
-    toolCalls?: {
-      name: string;
-      arguments: Record<string, unknown>;
-    }[];
-  }[];
-  expectedResult: string;
-  actualResult?: string;
-  status?: 'pending' | 'running' | 'completed' | 'failed' | 'TX' | 'RX';
-  statusColor?: string;
-  statusSpinner?: boolean;
-}
 
 export interface GenerateTestCasesResponse {
-  testCases: TestCase[];
+  testCases: TestCaseDTO[];
 }
 
 export interface RunEvalsResponse {
-  testCases: TestCase[];
+  testCases: TestCaseDTO[];
 }
 
 export interface AdjustTestCaseResponse {
-  testCase: TestCase;
+  testCase: TestCaseDTO;
 }
 
 export class AgentApiClient extends AdminApiClient {
@@ -163,7 +147,7 @@ export class AgentApiClient extends AdminApiClient {
     ) as Promise<GenerateTestCasesResponse>;
   }
 
-  async runEvals(agentId: string, testCases: TestCase[], apiKey: string): Promise<RunEvalsResponse> {
+  async runEvals(agentId: string, testCases: TestCaseDTO[], apiKey: string): Promise<RunEvalsResponse> {
     return this.request<RunEvalsResponse>(
       `/api/agent/${agentId}/evals/run`,
       'POST',
@@ -174,7 +158,7 @@ export class AgentApiClient extends AdminApiClient {
 
   async *runEvalsStream(
     agentId: string,
-    testCases: TestCase[]
+    testCases: TestCaseDTO[]
   ): AsyncGenerator<any, void, unknown> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json'
