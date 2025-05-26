@@ -264,6 +264,7 @@ export class Agent {
     flows?: AgentFlow[] | null;
     defaultFlow?: string | null;
     agents?: AgentDefinition[] | null;
+    evals?: 
 
 
     constructor(agentDTO: AgentDTO | Agent) {

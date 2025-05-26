@@ -233,7 +233,8 @@ export const agentDTOSchema = z.object({
   flows: z.string().optional().nullable(),
   agents: z.string().optional().nullable(),
   icon: z.string().optional().nullable(),
-  extra: z.string().optional().nullable()
+  extra: z.string().optional().nullable(),
+  evals: z.string().optional().nullable()
 });
 export type AgentDTO = z.infer<typeof agentDTOSchema>;
 export const AgentDTOEncSettings: DTOEncryptionSettings = { encryptedFields: [] };
