@@ -65,7 +65,7 @@ export default function AgentEvalsPage() {
   const agentContext = useAgentContext();
   const dbContext = useContext(DatabaseContext);
   const keyContext = useKeyContext();
-  const [initialLoadDone, setInitialLoadDone] = useState(false);
+  const [testCasesChanged, setTestCasesChanged] = useState<number | null>(null);
   const [adjustingCaseId, setAdjustingCaseId] = useState<string | null>(null);
   const [runningCaseId, setRunningCaseId] = useState<string | null>(null);
 
@@ -85,17 +85,17 @@ export default function AgentEvalsPage() {
 
 
   useEffect(() => {
-    if (testCases && initialLoadDone) {
+    if (testCases && testCasesChanged) {    
       setValue('evals', testCases)
     }
-  }, [testCases, initialLoadDone]);
+  }, [testCases, testCasesChanged]);
 
   useEffect(() => {
-    if (agentEvals && agentEvals.length > 0 &&  !initialLoadDone) {
+    if (agentEvals && agentEvals.length > 0) {
       setTestCases(agentEvals)
-      setInitialLoadDone(true);
+      setTestCasesChanged(null);
     }
-  }, [agentEvals, initialLoadDone]);
+  }, [agentEvals]);
 
   const generateTestCases = async () => {
     if (!agentContext.current?.prompt || !agentContext.current?.id) return;
@@ -115,6 +115,7 @@ export default function AgentEvalsPage() {
 
       if (result.testCases) {
         setTestCases(result.testCases);
+        setTestCasesChanged(new Date().getTime()); 
       }
     } catch (error) {
       console.error('Failed to generate test cases:', error);
@@ -141,6 +142,7 @@ export default function AgentEvalsPage() {
                 tc.id === data.data.id ? { ...tc, ...data.data } : tc
               )
             );
+            setTestCasesChanged(new Date().getTime()); 
             break;
           case 'test_case_error':
             setTestCases(prev => 
@@ -148,6 +150,7 @@ export default function AgentEvalsPage() {
                 tc.id === data.data.id ? { ...tc, ...data.data } : tc
               )
             );
+            setTestCasesChanged(new Date().getTime()); 
             break;
           case 'error':
             throw new Error(data.error);
@@ -169,6 +172,7 @@ export default function AgentEvalsPage() {
       delete newSet[testCaseId];
       return newSet;
     });
+    setTestCasesChanged(new Date().getTime()); 
     if (selectedCase === testCaseId) {
       setSelectedCase(null);
     }
@@ -193,6 +197,7 @@ export default function AgentEvalsPage() {
       });
       return newCases;
     });
+    setTestCasesChanged(new Date().getTime()); 
   };
 
   const updateMessage = (testCaseId: string, messageIndex: number, content: string) => {
@@ -202,6 +207,7 @@ export default function AgentEvalsPage() {
       newCases[index].messages[messageIndex].content = content;
       return newCases;
     });
+    setTestCasesChanged(new Date().getTime()); 
   };
 
   const removeMessage = (testCaseId: string, messageIndex: number) => {
@@ -211,6 +217,7 @@ export default function AgentEvalsPage() {
       newCases[index].messages = newCases[index].messages.filter((_, i) => i !== messageIndex);
       return newCases;
     });
+    setTestCasesChanged(new Date().getTime()); 
   };
 
   const updateMessageRole = (testCaseId: string, messageIndex: number, role: 'user' | 'assistant') => {
@@ -220,6 +227,7 @@ export default function AgentEvalsPage() {
       newCases[index].messages[messageIndex].role = role;
       return newCases;
     });
+    setTestCasesChanged(new Date().getTime()); 
   };
 
   const adjustCaseToResult = async (testCase: ExtendedTestCase) => {
@@ -241,6 +249,7 @@ export default function AgentEvalsPage() {
             tc.id === testCase.id ? { ...tc, ...result.testCase } : tc
           )
         );
+        setTestCasesChanged(new Date().getTime()); 
       }
     } catch (error) {
       console.error('Failed to adjust test case:', error);
@@ -286,6 +295,7 @@ export default function AgentEvalsPage() {
                 tc.id === data.data.id ? { ...tc, ...data.data } : tc
               )
             );
+            setTestCasesChanged(new Date().getTime()); 
             break;
           case 'test_case_error':
             setTestCases(prev =>
@@ -293,6 +303,7 @@ export default function AgentEvalsPage() {
                 tc.id === data.data.id ? { ...tc, ...data.data } : tc
               )
             );
+            setTestCasesChanged(new Date().getTime()); 
             break;
           case 'error':
             throw new Error(data.error);
@@ -327,6 +338,7 @@ export default function AgentEvalsPage() {
         const content = e.target?.result as string;
         const importedCases = JSON.parse(content);
         setTestCases(importedCases);
+        setTestCasesChanged(new Date().getTime()); 
       } catch (error) {
         console.error('Failed to import test cases:', error);
       }
@@ -438,6 +450,7 @@ export default function AgentEvalsPage() {
                             newCases[index].expectedResult = e.target.value;
                             return newCases;
                           });
+                          setTestCasesChanged(new Date().getTime()); 
                         }}
                         placeholder={t('Expected result...')}
                         onClick={e => e.stopPropagation()}
