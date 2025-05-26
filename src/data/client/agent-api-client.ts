@@ -168,8 +168,7 @@ export class AgentApiClient extends AdminApiClient {
 
   async *runEvalsStream(
     agentId: string,
-    testCases: TestCase[],
-    apiKey: string
+    testCases: TestCase[]
   ): AsyncGenerator<any, void, unknown> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json'
@@ -179,7 +178,7 @@ export class AgentApiClient extends AdminApiClient {
     const response = await fetch(`/api/agent/${agentId}/evals/run`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ testCases, apiKey })
+      body: JSON.stringify({ testCases })
     });
 
     if (!response.ok) {

@@ -4,6 +4,8 @@ import { generateObject } from 'ai';
 import { z } from 'zod';
 import { llmProviderSetup } from '@/lib/llm-provider';
 import { nanoid } from 'nanoid';
+import { authorizeRequestContext } from '@/lib/authorization-api';
+import { precheckAPIRequest } from '@/lib/middleware-precheck-api';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -27,7 +29,7 @@ async function evaluateResult(actualResult: string, expectedResult: string): Pro
 }> {
   const result = await generateObject({
     model: llmProviderSetup(),
-    maxTokens: 500,
+    maxTokens: 1000,
     temperature: 0.2,
     schema: evaluationSchema,
     prompt: `Evaluate if the actual result matches the expected result. Consider:
@@ -38,7 +40,9 @@ async function evaluateResult(actualResult: string, expectedResult: string): Pro
     Expected Result: ${expectedResult}
     Actual Result: ${actualResult}
 
-    Provide a score from 0 to 1 and explain your reasoning.`
+    The most important factor is expected result. If the actual result is not as expected, the score should be 0.
+
+    Provide a score from 0 to 1 and explain your reasoning - include the score and expected result in the response.`
   });
 
   return result.object;
@@ -46,23 +50,20 @@ async function evaluateResult(actualResult: string, expectedResult: string): Pro
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
+  response: NextResponse
 ) {
   try {
-    const { testCases, apiKey } = await request.json();
+    const requestContext = await authorizeRequestContext(request, response);
+    const { jwtToken } = await precheckAPIRequest(request as NextRequest);
+
+    const { testCases } = await request.json();
     const agentId = params.id;
 
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'API key is required' },
-        { status: 400 }
-      );
-    }
-
     const client = new OpenAgentsBuilderClient({
-      baseUrl: process.env.NEXT_PUBLIC_API_URL,
-      databaseIdHash: process.env.DATABASE_ID_HASH || '',
-      apiKey
+      baseUrl: process.env.NEXT_PUBLIC_APP_URL,
+      databaseIdHash: requestContext.databaseIdHash,
+      apiKey: jwtToken
     });
 
     // Generate a single sessionId for all test cases

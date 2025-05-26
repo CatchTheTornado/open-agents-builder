@@ -62,14 +62,12 @@ export default function EvalsPage() {
     let keyData: string | undefined;
     try {
       setIsRunningEvals(true);
-      keyData = await keyContext.addApiKey();
       const client = new AgentApiClient(
         process.env.NEXT_PUBLIC_API_URL || '',
-        dbContext,
-        null
+        dbContext
       );
 
-      for await (const data of client.runEvalsStream(agentContext.current.id, testCases, keyData)) {
+      for await (const data of client.runEvalsStream(agentContext.current.id, testCases)) {
         switch (data.type) {
           case 'test_case_update':
             setTestCases(prev => 
