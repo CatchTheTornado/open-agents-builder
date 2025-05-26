@@ -327,14 +327,14 @@ export default function EvalsPage() {
                         disabled={testCase.status === 'running'}
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="max-w-[300px]">
                       {testCase.actualResult && (
                         <ChatMessageMarkdown>
                           {testCase.actualResult}
                         </ChatMessageMarkdown>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="max-w-[300px]">
                       {testCase.evaluation && (
                         <div className="space-y-2">
                           <div className="flex items-center space-x-2">

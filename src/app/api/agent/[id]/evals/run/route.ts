@@ -75,6 +75,19 @@ export async function POST(
         try {
           for (const testCase of testCases) {
             try {
+              // Send initial status update
+              controller.enqueue(
+                new TextEncoder().encode(
+                  JSON.stringify({
+                    type: 'test_case_update',
+                    data: {
+                      ...testCase,
+                      status: 'running'
+                    }
+                  }) + '\n'
+                )
+              );
+
               let messages = [...testCase.messages];
               let response: { messages: ChatMessage[]; sessionId?: string } | undefined;
               let error: string | undefined;
