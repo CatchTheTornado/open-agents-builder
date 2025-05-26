@@ -157,6 +157,73 @@ It can literally replace dozen other SaaS tools like:
 
 Please go to [Documentation Page](https://docs.openagentsbuilder.com/) for reading more on technical concepts, architecture and API reference.
 
+
+## Tutorials
+
+<table>
+  <tr>
+    <td>
+      <a href="https://docs.openagentsbuilder.com/tutorials/50-shopify-product-descriptor/">
+        <img width="150" src="https://img.youtube.com/vi/bYA-BXEvyrA/hqdefault.jpg" alt="Creating Shopify Product Descriptor agent" />
+      </a>
+    </td>
+    <td>
+      <strong>Creating Shopify Product Descriptor agent</strong><br/>
+      Tutorial video and guide for building an AI agent that writes product descriptions for Shopify.
+    </td>
+  </tr>
+
+  <tr>
+    <td>
+      <a href="https://docs.openagentsbuilder.com/tutorials/40-knowledge-graph/">
+        <img width="150" src="https://img.youtube.com/vi/GSmuboHuYf8/hqdefault.jpg" alt="Using Memory and Attachments to build company knowledge agent" />
+      </a>
+    </td>
+    <td>
+      <strong>Using Memory and Attachments to build company knowledge agent</strong><br/>
+      Learn how to leverage long-term memory and file attachments to create a company-knowledge agent.
+    </td>
+  </tr>
+
+  <tr>
+    <td>
+      <a href="https://docs.openagentsbuilder.com/tutorials/30-meeting-scheduler/">
+        <img width="150" src="https://img.youtube.com/vi/0QoghfO_y40/hqdefault.jpg" alt="Creating doodle.com copycat as AI agent" />
+      </a>
+    </td>
+    <td>
+      <strong>Creating doodle.com copycat as AI agent</strong><br/>
+      Follow along to build a scheduling agent that mimics Doodle’s meeting-poll workflow.
+    </td>
+  </tr>
+
+  <tr>
+    <td>
+      <a href="https://docs.openagentsbuilder.com/tutorials/10-ecommerce/">
+        <img width="150" src="https://img.youtube.com/vi/FkfTdRx6M9E/hqdefault.jpg" alt="Creating eCommerce AI Agent" />
+      </a>
+    </td>
+    <td>
+      <strong>Creating eCommerce AI Agent</strong><br/>
+      Step-by-step guide for developing an end-to-end AI shopping assistant for e-commerce.
+    </td>
+  </tr>
+
+  <tr>
+    <td>
+      <a href="https://docs.openagentsbuilder.com/tutorials/20-nda-analyzer/">
+        <img width="150" src="https://img.youtube.com/vi/ROADGz4HOGk/hqdefault.jpg" alt="Creating Legal AI Agent" />
+      </a>
+    </td>
+    <td>
+      <strong>Creating Legal AI Agent</strong><br/>
+      Build an agent that reviews and analyzes NDAs and other legal documents.
+    </td>
+  </tr>
+</table>
+
+
+
 ## Join us on Discord
 
 If you have any questions or ideas feel free to join the talk! Join the Community on [Discord Server](https://discord.gg/xUgwAHvTSq).
@@ -332,6 +399,30 @@ OLLAMA_URL=http://localhost:11434/api
 LLM_MODEL=llama3.1
 ```
 Ensure that the `OLLAMA_URL` is set to `<base-url>/api` so that the correct endpoints for Ollama are used.
+
+## Gmail Integration Setup
+
+To enable Gmail functionality in your agents, you need to set up OAuth2 credentials:
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the Gmail API for your project
+4. Go to "Credentials" and create an OAuth 2.0 Client ID
+   - Application type: Web application
+   - Authorized redirect URIs: Add `http://localhost:3000/api/gmail/oauth/callback` (for development)
+   - For production, add your production callback URL
+
+5. Add the following environment variables to your `.env` file:
+```env
+GOOGLE_CLIENT_ID=your_client_id_here
+GOOGLE_CLIENT_SECRET=your_client_secret_here
+GOOGLE_REDIRECT_URI=http://localhost:3000/api/gmail/oauth/callback
+```
+
+Note: For production, make sure to:
+- Update the `GOOGLE_REDIRECT_URI` to your production callback URL
+- Keep your client secret secure and never commit it to version control
+- Consider using environment-specific configuration for development and production
 
 ## License
 

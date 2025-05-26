@@ -211,7 +211,49 @@ export type AggregatedStatsDTO = {
   },
 }
 
+const evaluationSchema = z.object({
+  isCompliant: z.boolean(),
+  explanation: z.string(),
+  score: z.number().min(0).max(1)
+});
 
+// TODO: move to separate file
+const conversationFlowSchema = z.object({
+  messages: z.array(z.object({
+    role: z.enum(['user', 'assistant']),
+    content: z.string(),
+    toolCalls: z.array(z.object({
+      name: z.string(),
+      arguments: z.record(z.unknown())
+    })).optional()
+  })),
+  toolCalls: z.array(z.object({
+    name: z.string(),
+    arguments: z.record(z.unknown())
+  })).optional()
+});
+export type ConversationFlowDTO = z.infer<typeof conversationFlowSchema>;
+
+const testCaseSchema = z.object({
+  id: z.string(),
+  messages: z.array(z.object({
+    role: z.enum(['user', 'assistant']),
+    content: z.string(),
+    toolCalls: z.array(z.object({
+      name: z.string(),
+      arguments: z.record(z.unknown())
+    })).optional()
+  })),
+  expectedResult: z.string(),
+  actualResult: z.string().optional(),
+  status: z.enum(['pending', 'running', 'completed', 'failed', 'TX', 'RX', 'warning']).optional(),
+  statusColor: z.string().optional(),
+  statusSpinner: z.boolean().optional(),
+  evaluation: evaluationSchema.optional(),
+  conversationFlow: conversationFlowSchema.optional()
+});
+
+export type TestCaseDTO = z.infer<typeof testCaseSchema>;
 
 export const agentDTOSchema = z.object({
   id: z.string().optional(),
@@ -233,7 +275,8 @@ export const agentDTOSchema = z.object({
   flows: z.string().optional().nullable(),
   agents: z.string().optional().nullable(),
   icon: z.string().optional().nullable(),
-  extra: z.string().optional().nullable()
+  extra: z.string().optional().nullable(),
+  evals: z.string().optional().nullable()
 });
 export type AgentDTO = z.infer<typeof agentDTOSchema>;
 export const AgentDTOEncSettings: DTOEncryptionSettings = { encryptedFields: [] };

@@ -1,6 +1,6 @@
 {
   "name": "open-agents-builder",
-  "version": "0.4.0",
+  "version": "0.6.0",
   "private": true,
   "workspaces": [
     "src/packages/*"
@@ -85,6 +85,7 @@
     "filenamify": "^6.0.0",
     "flows-ai": "^0.4.0",
     "fs": "^0.0.1-security",
+    "googleapis": "^149.0.0",
     "gpt-tokens": "^1.3.8",
     "i18next": "^24.0.5",
     "i18next-browser-languagedetector": "^8.0.0",
@@ -106,6 +107,7 @@
     "next-themes": "^0.3.0",
     "node-cache": "^5.1.2",
     "ollama-ai-provider": "^1.2.0",
+    "open-agents-builder-client": "^1.5.1",
     "openai": "^4.79.1",
     "password-validator": "^5.3.0",
     "primereact": "^10.9.2",
