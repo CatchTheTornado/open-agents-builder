@@ -4,7 +4,6 @@ import { AgentDTO, AgentDTOEncSettings, PaginatedQuery, PaginatedResult, ResultD
 import { DatabaseContextType } from "@/contexts/db-context";
 import { urlParamsForQuery } from "./base-api-client";
 import axios from "axios";
-import { FlowChunkEvent } from "@/flows/models";
 
 export type GetResultResponse = PaginatedResult<ResultDTO[]>;
 export type GetSessionResponse = PaginatedResult<SessionDTO[]>;
@@ -172,12 +171,14 @@ export class AgentApiClient extends AdminApiClient {
     testCases: TestCase[],
     apiKey: string
   ): AsyncGenerator<any, void, unknown> {
-    const response = await fetch(`${this.baseUrl}/api/agent/${agentId}/evals/run`, {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    };
+    this.setAuthHeader('', headers);
+
+    const response = await fetch(`/api/agent/${agentId}/evals/run`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...this.getHeaders()
-      },
+      headers,
       body: JSON.stringify({ testCases, apiKey })
     });
 
