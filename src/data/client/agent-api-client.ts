@@ -33,6 +33,28 @@ export type PutAgentResponseError = {
 
 export type PutAgentResponse = PutAgentResponseSuccess | PutAgentResponseError;
 
+export interface TestCase {
+  id: string;
+  messages: {
+    role: 'user' | 'assistant';
+    content: string;
+    toolCalls?: {
+      name: string;
+      arguments: Record<string, unknown>;
+    }[];
+  }[];
+  expectedResult: string;
+  actualResult?: string;
+  status?: 'pending' | 'running' | 'completed' | 'failed';
+}
+
+export interface GenerateTestCasesResponse {
+  testCases: TestCase[];
+}
+
+export interface RunEvalsResponse {
+  testCases: TestCase[];
+}
 
 export class AgentApiClient extends AdminApiClient {
   constructor(baseUrl: string, dbContext?: DatabaseContextType | null, saasContext?: SaaSContextType | null, encryptionConfig?: ApiEncryptionConfig) {
@@ -125,5 +147,23 @@ export class AgentApiClient extends AdminApiClient {
         console.error("JSON parse error:", err, "\nLine:", buffer);
       }
     }
+  }
+
+  async generateTestCases(agentId: string, prompt: string): Promise<GenerateTestCasesResponse> {
+    return this.request<GenerateTestCasesResponse>(
+      `/api/agent/${agentId}/evals/generate`,
+      'POST',
+      { encryptedFields: [] },
+      { prompt }
+    ) as Promise<GenerateTestCasesResponse>;
+  }
+
+  async runEvals(agentId: string, testCases: TestCase[]): Promise<RunEvalsResponse> {
+    return this.request<RunEvalsResponse>(
+      `/api/agent/${agentId}/evals/run`,
+      'POST',
+      { encryptedFields: [] },
+      { testCases }
+    ) as Promise<RunEvalsResponse>;
   }
 }

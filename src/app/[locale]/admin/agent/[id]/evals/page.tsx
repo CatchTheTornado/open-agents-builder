@@ -6,95 +6,34 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAgentContext } from '@/contexts/agent-context';
 import { DatabaseContext } from '@/contexts/db-context';
-import { useKeyContext } from '@/contexts/key-context';
-import { OpenAgentsBuilderClient } from 'open-agents-builder-client';
+import { AgentApiClient, TestCase } from '@/data/client/agent-api-client';
 import { useState } from 'react';
-import { generateObject } from 'ai';
 import { ChevronDown, ChevronUp, Plus, Play } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
-import { z } from 'zod';
-import { llmProviderSetup } from '@/lib/llm-provider';
-
-interface TestCase {
-  id: string;
-  messages: {
-    role: 'user' | 'assistant';
-    content: string;
-    toolCalls?: {
-      name: string;
-      arguments: Record<string, unknown>;
-    }[];
-  }[];
-  expectedResult: string;
-  actualResult?: string;
-  status?: 'pending' | 'running' | 'completed' | 'failed';
-}
-
-interface GenerateTestCasesResponse {
-  testCases: TestCase[];
-}
-
-const testCaseSchema = z.object({
-  id: z.string(),
-  messages: z.array(z.object({
-    role: z.enum(['user', 'assistant']),
-    content: z.string(),
-    toolCalls: z.array(z.object({
-      name: z.string(),
-      arguments: z.record(z.unknown())
-    })).optional()
-  })),
-  expectedResult: z.string()
-});
-
-const generateTestCasesSchema = z.object({
-  testCases: z.array(testCaseSchema)
-});
 
 export default function EvalsPage() {
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [expandedCases, setExpandedCases] = useState<Set<string>>(new Set());
   const agentContext = useAgentContext();
   const dbContext = useContext(DatabaseContext);
-  const keyContext = useKeyContext();
 
   const generateTestCases = async () => {
-    if (!agentContext.current?.prompt) return;
+    if (!agentContext.current?.prompt || !agentContext.current?.id) return;
 
     try {
-      const result = await generateObject<GenerateTestCasesResponse>({
-        model: llmProviderSetup(),
-        maxTokens: 2000,
-        temperature: 0.2,
-        topP: 0.95,
-        schema: generateTestCasesSchema,
-        prompt: `Based on the following agent prompt, generate a list of test cases in JSON format. Each test case should have a conversation (messages array) and expected result. The conversation can have multiple messages. Format:
-        {
-          "testCases": [
-            {
-              "id": "unique-id",
-              "messages": [
-                {
-                  "role": "user",
-                  "content": "user message"
-                },
-                {
-                  "role": "assistant",
-                  "content": "assistant message",
-                  "toolCalls": [{"name": "tool_name", "arguments": {}}] // optional
-                }
-              ],
-              "expectedResult": "expected final result"
-            }
-          ]
-        }
+      const client = new AgentApiClient(
+        process.env.NEXT_PUBLIC_API_URL || '',
+        dbContext,
+        null
+      );
 
-        Agent prompt:
-        ${agentContext.current.prompt}`,
-      });
+      const result = await client.generateTestCases(
+        agentContext.current.id,
+        agentContext.current.prompt
+      );
 
-      if (result.object.testCases) {
-        setTestCases(result.object.testCases);
+      if (result.testCases) {
+        setTestCases(result.testCases);
       }
     } catch (error) {
       console.error('Failed to generate test cases:', error);
@@ -104,59 +43,17 @@ export default function EvalsPage() {
   const runEvals = async () => {
     if (!agentContext.current?.id) return;
 
-    const keyData = await keyContext.addApiKey();
-
-    const client = new OpenAgentsBuilderClient({
-      baseUrl: process.env.NEXT_PUBLIC_API_URL,
-      databaseIdHash: dbContext?.databaseIdHash || '',
-      apiKey: keyData
-    });
-
     try {
-      for (const testCase of testCases) {
-        const index = testCases.findIndex(tc => tc.id === testCase.id);
-        setTestCases(prev => {
-          const newCases = [...prev];
-          newCases[index] = { ...testCase, status: 'running' };
-          return newCases;
-        });
+      const client = new AgentApiClient(
+        process.env.NEXT_PUBLIC_API_URL || '',
+        dbContext,
+        null
+      );
 
-        try {
-          let messages = [...testCase.messages];
-          let response: { messages: TestCase['messages']; sessionId?: string } | undefined;
-
-          for (let i = 0; i < messages.length; i++) {
-            if (messages[i].role === 'user') {
-              response = await client.chat.collectMessages(messages.slice(0, i + 1), {
-                agentId: agentContext.current.id,
-                sessionId: response?.sessionId
-              });
-              messages = response.messages;
-            }
-          }
-
-          if (response) {
-            setTestCases(prev => {
-              const newCases = [...prev];
-              newCases[index] = {
-                ...testCase,
-                status: 'completed',
-                actualResult: response.messages[response.messages.length - 1].content
-              };
-              return newCases;
-            });
-          }
-        } catch (error) {
-          console.error(`Failed to run test case ${testCase.id}:`, error);
-          setTestCases(prev => {
-            const newCases = [...prev];
-            newCases[index] = { ...testCase, status: 'failed' };
-            return newCases;
-          });
-        }
-      }
-    } finally {
-      keyContext.removeKeyByName(keyData);
+      const result = await client.runEvals(agentContext.current.id, testCases);
+      setTestCases(result.testCases);
+    } catch (error) {
+      console.error('Failed to run evaluations:', error);
     }
   };
 
