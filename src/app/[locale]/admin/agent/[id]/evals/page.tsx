@@ -267,7 +267,8 @@ export default function AgentEvalsPage() {
                 <TableHead>First Message</TableHead>
                 <TableHead>Expected Result</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Score</TableHead>
+                <TableHead>Actual Result</TableHead>
+                <TableHead>Evaluation</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
@@ -297,28 +298,54 @@ export default function AgentEvalsPage() {
                     <TableCell className="max-w-md truncate">
                       {testCase.messages[0]?.content || ''}
                     </TableCell>
+                    <TableCell className="max-w-md">
+                      <Textarea
+                        value={testCase.expectedResult}
+                        onChange={e => {
+                          setTestCases(prev => {
+                            const newCases = [...prev];
+                            const index = newCases.findIndex(tc => tc.id === testCase.id);
+                            newCases[index].expectedResult = e.target.value;
+                            return newCases;
+                          });
+                        }}
+                        placeholder={t('Expected result...')}
+                        onClick={e => e.stopPropagation()}
+                        disabled={testCase.status === 'running'}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {testCase.status === 'running' ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Badge
+                          variant={
+                            testCase.status === 'completed'
+                              ? testCase.evaluation?.isCompliant
+                                ? 'default'
+                                : 'destructive'
+                              : testCase.status === 'failed'
+                              ? 'destructive'
+                              : 'secondary'
+                          }
+                        >
+                          {testCase.status}
+                        </Badge>
+                      )}
+                    </TableCell>
                     <TableCell className="max-w-md truncate">
-                      {testCase.expectedResult}
+                      {testCase.actualResult ? (
+                        <ChatMessageMarkdown>{testCase.actualResult}</ChatMessageMarkdown>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
                     </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          testCase.status === 'completed'
-                            ? testCase.evaluation?.isCompliant
-                              ? 'default'
-                              : 'destructive'
-                            : testCase.status === 'running'
-                            ? 'secondary'
-                            : 'secondary'
-                        }
-                      >
-                        {testCase.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {testCase.evaluation?.score !== undefined
-                        ? `${Math.round(testCase.evaluation.score * 100)}%`
-                        : '-'}
+                    <TableCell className="max-w-md truncate">
+                      {testCase.evaluation?.explanation ? (
+                        <ChatMessageMarkdown>{testCase.evaluation.explanation}</ChatMessageMarkdown>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Button
@@ -428,7 +455,7 @@ export default function AgentEvalsPage() {
       </div>
 
       <Dialog open={!!selectedConversation} onOpenChange={() => setSelectedConversation(null)}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
           <DialogHeader>
             <DialogTitle>Conversation Flow</DialogTitle>
           </DialogHeader>
