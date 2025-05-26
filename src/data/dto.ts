@@ -246,7 +246,7 @@ const testCaseSchema = z.object({
   })),
   expectedResult: z.string(),
   actualResult: z.string().optional(),
-  status: z.enum(['pending', 'running', 'completed', 'failed', 'TX', 'RX']).optional(),
+  status: z.enum(['pending', 'running', 'completed', 'failed', 'TX', 'RX', 'warning']).optional(),
   statusColor: z.string().optional(),
   statusSpinner: z.boolean().optional(),
   evaluation: evaluationSchema.optional(),
