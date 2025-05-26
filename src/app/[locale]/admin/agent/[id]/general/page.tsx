@@ -25,6 +25,7 @@ import { AttachmentUploader } from '@/components/attachment-uploader';
 import { DatabaseContext } from '@/contexts/db-context';
 import { SaaSContext } from '@/contexts/saas-context';
 import ZoomableImage from '@/components/zoomable-image';
+import { LLMConfigSelect } from '@/components/llm-config-select';
 
 export function onAgentSubmit(agent: Agent | null, watch: UseFormWatch<Record<string, any>>, setValue: UseFormSetValue<Record<string, any>>, getValues: UseFormGetValues<Record<string, any>>, updateAgent: (agent: Agent, setAsCurrent: boolean) => Promise<Agent>, t: TFunction<"translation", undefined>, router: any, editors: Record<string, React.RefObject<MDXEditorMethods>>) {
   // eslint-disable-next-line
@@ -248,6 +249,7 @@ export default function GeneralPage() {
             </label>
             <AgentTypeSelect fieldName='agentType' register={register} />
           </div>
+          <LLMConfigSelect />
           <div>
             <label htmlFor="welcomeInfo" className="block text-sm font-medium">
               {t(agentDescriptor?.supportsUserFacingUI ? 'Welcome Message' : 'Description')}
