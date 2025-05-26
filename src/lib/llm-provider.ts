@@ -24,8 +24,8 @@ const llmConfigurations: Record<LLMProviderType, LLMConfiguration> = {
   },
 };
 
-export function llmProviderSetup() {
-  const providerType = process.env.LLM_PROVIDER as LLMProviderType;
+export function llmProviderSetup(selectedProvider?: string, selectedModel?: string) {
+  const providerType = (selectedProvider || process.env.LLM_PROVIDER) as LLMProviderType;
   const configuration = llmConfigurations[providerType || "openai"];
 
   if (!configuration) {
@@ -35,7 +35,23 @@ export function llmProviderSetup() {
     );
   }
 
-  const { provider, model, settings } = configuration;
+  const { provider, settings } = configuration;
+  const model = selectedModel || configuration.model;
 
   return provider(model, settings);
+}
+
+export function getAvailableProviders(): string[] {
+  return Object.values(LLMProviderType);
+}
+
+export function getDefaultModels(provider: string): string[] {
+  switch (provider) {
+    case LLMProviderType.OPENAI:
+      return ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"];
+    case LLMProviderType.OLLAMA:
+      return ["llama3.1", "gemma", "mistral"];
+    default:
+      return [];
+  }
 }
