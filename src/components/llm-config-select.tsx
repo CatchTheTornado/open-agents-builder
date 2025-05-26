@@ -1,15 +1,59 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useFormContext, useController } from 'react-hook-form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getAvailableProviders, getDefaultModels } from '@/lib/llm-provider';
+import React from "react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useFormContext, useController } from "react-hook-form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { getAvailableProviders } from "@/lib/llm-provider";
+
+// Direct call to Ollama (local, no auth needed)
+const fetchOllamaModels = async (): Promise<string[]> => {
+  try {
+    const ollamaUrl =
+      process.env.NEXT_PUBLIC_OLLAMA_URL || "http://localhost:11434";
+    const response = await fetch(`${ollamaUrl}/api/tags`);
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.models.map((model: any) => model.name);
+    }
+  } catch (error) {
+    console.error("Error fetching Ollama models:", error);
+  }
+
+  // Fallback to default models
+  return ["llama3.1", "gemma", "mistral"];
+};
+
+// For OpenAI, we need a minimal API route for security (API key can't be exposed to client)
+const fetchOpenAIModels = async (): Promise<string[]> => {
+  try {
+    const response = await fetch("/api/llm/openai-models");
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.models || [];
+    }
+  } catch (error) {
+    console.error("Error fetching OpenAI models:", error);
+  }
+
+  // Fallback to default models
+  return ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"];
+};
 
 export function LLMConfigSelect() {
   const { t } = useTranslation();
   const { control } = useFormContext();
   const [models, setModels] = useState<string[]>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
 
   // Get static providers directly
   const providers = getAvailableProviders();
@@ -19,7 +63,7 @@ export function LLMConfigSelect() {
     field: { onChange: onProviderChange, value: providerValue },
     fieldState: { error: providerError },
   } = useController({
-    name: 'llmProvider',
+    name: "llmProvider",
     control,
   });
 
@@ -27,28 +71,50 @@ export function LLMConfigSelect() {
     field: { onChange: onModelChange, value: modelValue },
     fieldState: { error: modelError },
   } = useController({
-    name: 'llmModel',
+    name: "llmModel",
     control,
   });
 
-  // Update models when provider changes
+  // Fetch models when provider changes
   useEffect(() => {
-    if (providerValue) {
-      const availableModels = getDefaultModels(providerValue);
-      setModels(availableModels);
-      // Clear model selection if current model is not available for new provider
-      if (modelValue && !availableModels.includes(modelValue)) {
-        onModelChange('');
+    async function fetchModels(provider: string) {
+      if (!provider) {
+        setModels([]);
+        return;
       }
+
+      setLoadingModels(true);
+      try {
+        console.log("Fetching models for provider:", provider);
+
+        let fetchedModels: string[] = [];
+        if (provider === "openai") {
+          fetchedModels = await fetchOpenAIModels();
+        } else if (provider === "ollama") {
+          fetchedModels = await fetchOllamaModels();
+        }
+
+        console.log("Models fetched:", fetchedModels);
+        setModels(fetchedModels);
+      } catch (error) {
+        console.error("Error fetching models:", error);
+        setModels([]);
+      } finally {
+        setLoadingModels(false);
+      }
+    }
+
+    if (providerValue) {
+      fetchModels(providerValue);
+      // Clear model selection when provider changes
+      onModelChange("");
     } else {
       setModels([]);
     }
-  }, [providerValue, modelValue, onModelChange]);
+  }, [providerValue, onModelChange]);
 
   const handleProviderChange = (provider: string) => {
     onProviderChange(provider);
-    // Clear model selection when provider changes
-    onModelChange('');
   };
 
   const handleModelChange = (model: string) => {
@@ -59,14 +125,14 @@ export function LLMConfigSelect() {
     <div className="space-y-4">
       <div>
         <label htmlFor="llmProvider" className="block text-sm font-medium">
-          {t('LLM Provider')}
+          {t("LLM Provider")}
         </label>
-        <Select 
-          value={providerValue || ''} 
+        <Select
+          value={providerValue || ""}
           onValueChange={handleProviderChange}
         >
           <SelectTrigger className="mt-1">
-            <SelectValue placeholder={t('Select a provider')} />
+            <SelectValue placeholder={t("Select a provider")} />
           </SelectTrigger>
           <SelectContent>
             {providers.map((provider) => (
@@ -83,28 +149,42 @@ export function LLMConfigSelect() {
 
       <div>
         <label htmlFor="llmModel" className="block text-sm font-medium">
-          {t('LLM Model')}
+          {t("LLM Model")}
         </label>
-        <Select 
-          value={modelValue || ''} 
+        <Select
+          value={modelValue || ""}
           onValueChange={handleModelChange}
-          disabled={!providerValue}
+          disabled={!providerValue || loadingModels}
         >
           <SelectTrigger className="mt-1">
-            <SelectValue 
+            <SelectValue
               placeholder={
-                !providerValue 
-                  ? t('Select a provider first') 
-                  : t('Select a model')
-              } 
+                !providerValue
+                  ? t("Select a provider first")
+                  : loadingModels
+                    ? t("Loading models...")
+                    : models.length === 0
+                      ? "No models available"
+                      : t("Select a model")
+              }
             />
           </SelectTrigger>
           <SelectContent>
-            {models.map((model) => (
-              <SelectItem key={model} value={model}>
-                {model}
+            {loadingModels ? (
+              <SelectItem value="asdf" disabled>
+                {t("Loading models...")}
               </SelectItem>
-            ))}
+            ) : models.length === 0 ? (
+              <SelectItem value="asdf" disabled>
+                No models available
+              </SelectItem>
+            ) : (
+              models.map((model) => (
+                <SelectItem key={model} value={model}>
+                  {model}
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
         {modelError && (
