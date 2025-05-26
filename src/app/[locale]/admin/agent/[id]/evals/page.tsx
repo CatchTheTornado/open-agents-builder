@@ -13,6 +13,9 @@ import { Plus, Play, Loader2, Wand2, Trash2, RefreshCw } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { useTranslation } from 'react-i18next';
+import { ChatMessageMarkdown } from '@/components/chat-message-markdown';
+import { nanoid } from 'nanoid';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Evaluation {
   isCompliant: boolean;
@@ -24,6 +27,7 @@ export default function EvalsPage() {
   const { t } = useTranslation();
   const [testCases, setTestCases] = useState<(TestCase & { evaluation?: Evaluation })[]>([]);
   const [expandedCases, setExpandedCases] = useState<Set<string>>(new Set());
+  const [selectedCase, setSelectedCase] = useState<string | null>(null);
   const [isGeneratingTests, setIsGeneratingTests] = useState(false);
   const [isRunningEvals, setIsRunningEvals] = useState(false);
   const agentContext = useAgentContext();
@@ -97,7 +101,20 @@ export default function EvalsPage() {
     }
   };
 
+  const removeTestCase = (testCaseId: string) => {
+    setTestCases(prev => prev.filter(tc => tc.id !== testCaseId));
+    setExpandedCases(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(testCaseId);
+      return newSet;
+    });
+    if (selectedCase === testCaseId) {
+      setSelectedCase(null);
+    }
+  };
+
   const toggleExpand = (id: string) => {
+    setSelectedCase(id);
     setExpandedCases(prev => {
       const newSet = new Set(prev);
       if (newSet.has(id)) {
@@ -148,6 +165,15 @@ export default function EvalsPage() {
     });
   };
 
+  const updateMessageRole = (testCaseId: string, messageIndex: number, role: 'user' | 'assistant') => {
+    setTestCases(prev => {
+      const newCases = [...prev];
+      const index = newCases.findIndex(tc => tc.id === testCaseId);
+      newCases[index].messages[messageIndex].role = role;
+      return newCases;
+    });
+  };
+
   const adjustCaseToResult = async (testCase: TestCase) => {
     if (!agentContext.current?.id || !testCase.actualResult) return;
 
@@ -175,6 +201,27 @@ export default function EvalsPage() {
     }
   };
 
+  const addTestCase = () => {
+    const newTestCase: TestCase = {
+      id: nanoid(),
+      messages: [
+        {
+          role: 'user',
+          content: ''
+        }
+      ],
+      expectedResult: '',
+      status: 'pending'
+    };
+    setTestCases(prev => [...prev, newTestCase]);
+    setSelectedCase(newTestCase.id);
+    setExpandedCases(prev => {
+      const newSet = new Set(prev);
+      newSet.add(newTestCase.id);
+      return newSet;
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex space-x-4">
@@ -190,6 +237,10 @@ export default function EvalsPage() {
               {t('Generate Test Cases')}
             </>
           )}
+        </Button>
+        <Button size="sm" variant="outline" onClick={addTestCase}>
+          <Plus className="mr-2 h-4 w-4" />
+          {t('Add Test Case')}
         </Button>
         <Button size="sm" variant="outline" onClick={runEvals} disabled={testCases.length === 0 || isRunningEvals}>
           {isRunningEvals ? (
@@ -220,13 +271,14 @@ export default function EvalsPage() {
                 <TableHead>{t('Expected Result')}</TableHead>
                 <TableHead>{t('Actual Result')}</TableHead>
                 <TableHead>{t('Evaluation')}</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {testCases.map((testCase) => (
                 <React.Fragment key={testCase.id}>
                   <TableRow 
-                    className="cursor-pointer hover:bg-muted/50"
+                    className={`cursor-pointer hover:bg-muted/50 ${selectedCase === testCase.id ? 'bg-muted' : ''}`}
                     onClick={() => toggleExpand(testCase.id)}
                   >
                     <TableCell>{testCase.id}</TableCell>
@@ -242,7 +294,13 @@ export default function EvalsPage() {
                         onClick={(e) => e.stopPropagation()}
                       />
                     </TableCell>
-                    <TableCell>{testCase.actualResult}</TableCell>
+                    <TableCell>
+                      {testCase.actualResult && (
+                        <ChatMessageMarkdown>
+                          {testCase.actualResult}
+                        </ChatMessageMarkdown>
+                      )}
+                    </TableCell>
                     <TableCell>
                       {testCase.evaluation && (
                         <div className="space-y-2">
@@ -252,9 +310,9 @@ export default function EvalsPage() {
                               {Math.round(testCase.evaluation.score * 100)}%
                             </span>
                           </div>
-                          <div className="text-sm text-muted-foreground">
+                          <ChatMessageMarkdown>
                             {testCase.evaluation.explanation}
-                          </div>
+                          </ChatMessageMarkdown>
                           {testCase.actualResult && (
                             <Button
                               variant="outline"
@@ -272,15 +330,42 @@ export default function EvalsPage() {
                         </div>
                       )}
                     </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeTestCase(testCase.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                   {expandedCases.has(testCase.id) && (
                     <TableRow>
-                      <TableCell colSpan={6}>
+                      <TableCell colSpan={7}>
                         <div className="space-y-4 p-4">
                           {testCase.messages.map((message, index) => (
                             <div key={index} className="space-y-2">
                               <div className="flex justify-between items-center">
-                                <div className="font-semibold">{message.role}</div>
+                                <div className="flex items-center space-x-2">
+                                  <Select
+                                    value={message.role}
+                                    onValueChange={(value: 'user' | 'assistant') => 
+                                      updateMessageRole(testCase.id, index, value)
+                                    }
+                                  >
+                                    <SelectTrigger className="w-[120px]">
+                                      <SelectValue placeholder={t('Select role')} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="user">{t('User')}</SelectItem>
+                                      <SelectItem value="assistant">{t('Assistant')}</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
                                 <Button
                                   variant="ghost"
                                   size="sm"
