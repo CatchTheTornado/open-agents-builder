@@ -65,6 +65,7 @@ export default function AgentEvalsPage() {
   const dbContext = useContext(DatabaseContext);
   const keyContext = useKeyContext();
   const [initialLoadDone, setInitialLoadDone] = useState(false);
+  const [adjustingCaseId, setAdjustingCaseId] = useState<string | null>(null);
 
   const { current: agent, dirtyAgent, status, updateAgent } = useAgentContext();
   const router = useRouter(); 
@@ -221,19 +222,17 @@ export default function AgentEvalsPage() {
 
   const adjustCaseToResult = async (testCase: ExtendedTestCase) => {
     if (!agentContext.current?.id || !testCase.actualResult) return;
-
+    setAdjustingCaseId(testCase.id);
     try {
       const client = new AgentApiClient(
         process.env.NEXT_PUBLIC_API_URL || '',
         dbContext
       );
-
       const result = await client.adjustTestCase(
         agentContext.current.id,
         testCase.id,
         testCase.actualResult
       );
-
       if (result.testCase) {
         setTestCases(prev => 
           prev.map(tc => 
@@ -243,6 +242,8 @@ export default function AgentEvalsPage() {
       }
     } catch (error) {
       console.error('Failed to adjust test case:', error);
+    } finally {
+      setAdjustingCaseId(null);
     }
   };
 
@@ -456,8 +457,13 @@ export default function AgentEvalsPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => adjustCaseToResult(testCase)}
+                                disabled={adjustingCaseId === testCase.id}
                               >
-                                <RefreshCw className="h-4 w-4 mr-2" />
+                                {adjustingCaseId === testCase.id ? (
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                  <RefreshCw className="h-4 w-4 mr-2" />
+                                )}
                                 Adjust Case to Result
                               </Button>
                             </div>
@@ -552,9 +558,9 @@ export default function AgentEvalsPage() {
                       <div className="text-sm text-muted-foreground mb-1">{t('Tool Calls')}:</div>
                       {message.toolCalls.map((toolCall, toolIndex) => (
                         <div key={toolIndex} className="text-sm">
-                          <span className="font-mono">{toolCall.name}</span>
+                          <span className="font-mono">{toolCall.toolName}</span>
                           <pre className="mt-1 p-2 bg-muted rounded text-xs overflow-x-auto">
-                            {JSON.stringify(toolCall.arguments, null, 2)}
+                            {JSON.stringify(toolCall.args, null, 2)}
                           </pre>
                         </div>
                       ))}

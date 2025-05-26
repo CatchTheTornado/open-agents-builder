@@ -35,6 +35,7 @@ async function evaluateResult(actualResult: string, expectedResult: string, conv
   explanation: string;
   score: number;
 }> {
+    console.log(conversationFlow.toolCalls)
   const result = await generateObject({
     model: llmProviderSetup(),
     maxTokens: 1000,
@@ -51,6 +52,7 @@ async function evaluateResult(actualResult: string, expectedResult: string, conv
 
     Expected Result: ${expectedResult}
     Actual Result: ${actualResult}
+    Tool Calls: ${JSON.stringify(conversationFlow.toolCalls, null, 2)}
 
     The most important factor is expected result. If the actual result is not as expected, the score should be 0.
 
@@ -173,7 +175,11 @@ export async function POST(
                             );
                           },
                           onToolCall: (toolCall) => {
+                            console.log(toolCall)
                             toolCalls.push(toolCall);
+                          },
+                          onToolResult: (toolCallResult) => {
+                            console.log(toolCallResult)
                           },
                           onError: (err) => {
                             error = err;
