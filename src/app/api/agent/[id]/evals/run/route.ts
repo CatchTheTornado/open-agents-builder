@@ -40,7 +40,6 @@ async function evaluateResult(actualResult: string, expectedResult: string, conv
   score: number;
 }> {
     
-    console.log(conversationFlow.toolCalls)
   const result = await generateObject({
     model: llmProviderSetup(),
     maxTokens: 1000,
@@ -51,6 +50,7 @@ async function evaluateResult(actualResult: string, expectedResult: string, conv
     2. Completeness of the response
     3. Format and structure (if relevant)
     4. The entire conversation flow and context
+    5. If the required (in expected result) tool calls are present
 
     Conversation Flow:
     ${conversationFlow.messages.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
@@ -116,8 +116,7 @@ export async function POST(
                 try {
                   let collectedContent = '';
                   // Store tool calls and results in a single array
-                  const toolCalls: { toolCallId: string; toolName: string; args: Record<string, unknown>, result: any}[] = [];
-                  const toolCallResults: { toolCallId: string; result: any }[] = [];
+                  const mergedToolCalls: { toolCallId: string; toolName: string; args: Record<string, unknown>; result: any }[] = [];
                   
 
                   // Send TX status for user message
@@ -155,7 +154,6 @@ export async function POST(
                           sessionId,
                           onText: (text) => {
                             collectedContent += text;
-                            // Send RX status with intermediate updates
                             controller.enqueue(
                               new TextEncoder().encode(
                                 JSON.stringify({
@@ -171,10 +169,10 @@ export async function POST(
                                         {
                                           role: 'assistant',
                                           content: collectedContent,
-                                          toolCallResults: toolCallResults,
-                                          toolCalls: toolCalls.length > 0 ? toolCalls : undefined
+                                          toolCalls: mergedToolCalls.length > 0 ? mergedToolCalls : undefined
                                         }
-                                      ]
+                                      ],
+                                      toolCalls: mergedToolCalls.length > 0 ? mergedToolCalls : undefined
                                     },
                                     sessionId
                                   }
@@ -183,10 +181,20 @@ export async function POST(
                             );
                           },
                           onToolCall: (toolCall) => {
-                            toolCalls.push(toolCall);
+                            mergedToolCalls.push({ ...toolCall, result: undefined });
                           },
                           onToolResult: (toolCallResult) => {
-                            toolCallResults.push(toolCallResult);
+                            const idx = mergedToolCalls.findIndex(tc => tc.toolCallId === toolCallResult.toolCallId);
+                            if (idx !== -1) {
+                              mergedToolCalls[idx].result = toolCallResult.result;
+                            } else {
+                              mergedToolCalls.push({
+                                toolCallId: toolCallResult.toolCallId,
+                                toolName: '',
+                                args: {},
+                                result: toolCallResult.result
+                              });
+                            }
                           },
                           onError: (err) => {
                             error = err;
@@ -203,9 +211,9 @@ export async function POST(
                     conversationFlow.messages.push({
                       role: 'assistant',
                       content: collectedContent,
-                      toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
-                      toolCallResults: toolCallResults.length > 0 ? toolCallResults : undefined
+                      toolCalls: mergedToolCalls.length > 0 ? mergedToolCalls : undefined
                     });
+                    conversationFlow.toolCalls = mergedToolCalls.length > 0 ? mergedToolCalls : undefined;
                   }
 
                   // Update the messages array with the latest response
