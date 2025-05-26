@@ -166,4 +166,55 @@ export class AgentApiClient extends AdminApiClient {
       { testCases, apiKey }
     ) as Promise<RunEvalsResponse>;
   }
+
+  async *runEvalsStream(
+    agentId: string,
+    testCases: TestCase[],
+    apiKey: string
+  ): AsyncGenerator<any, void, unknown> {
+    const response = await fetch(`${this.baseUrl}/api/agent/${agentId}/evals/run`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.getHeaders()
+      },
+      body: JSON.stringify({ testCases, apiKey })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to run evaluations');
+    }
+
+    if (!response.body) {
+      throw new Error('No response body');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split(/\r?\n/);
+      buffer = lines.pop()!;
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          yield JSON.parse(line);
+        } catch (err) {
+          console.error('JSON parse error:', err, '\nLine:', line);
+        }
+      }
+    }
+
+    if (buffer.trim()) {
+      try {
+        yield JSON.parse(buffer);
+      } catch (err) {
+        console.error('JSON parse error:', err, '\nLine:', buffer);
+      }
+    }
+  }
 }

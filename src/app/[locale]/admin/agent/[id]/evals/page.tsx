@@ -69,8 +69,26 @@ export default function EvalsPage() {
         null
       );
 
-      const result = await client.runEvals(agentContext.current.id, testCases, keyData);
-      setTestCases(result.testCases);
+      for await (const data of client.runEvalsStream(agentContext.current.id, testCases, keyData)) {
+        switch (data.type) {
+          case 'test_case_update':
+            setTestCases(prev => 
+              prev.map(tc => 
+                tc.id === data.data.id ? { ...tc, ...data.data } : tc
+              )
+            );
+            break;
+          case 'test_case_error':
+            setTestCases(prev => 
+              prev.map(tc => 
+                tc.id === data.data.id ? { ...tc, ...data.data } : tc
+              )
+            );
+            break;
+          case 'error':
+            throw new Error(data.error);
+        }
+      }
     } catch (error) {
       console.error('Failed to run evaluations:', error);
     } finally {
