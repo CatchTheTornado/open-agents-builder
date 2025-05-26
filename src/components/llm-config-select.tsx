@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useFormContext, useController } from "react-hook-form";
 import {
@@ -12,6 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getAvailableProviders } from "@/lib/llm-provider";
+import { DatabaseContext } from "@/contexts/db-context";
+import { SaaSContext } from "@/contexts/saas-context";
 
 // Direct call to Ollama (local, no auth needed)
 const fetchOllamaModels = async (): Promise<string[]> => {
@@ -21,8 +23,8 @@ const fetchOllamaModels = async (): Promise<string[]> => {
     const response = await fetch(`${ollamaUrl}/api/tags`);
 
     if (response.ok) {
-      const data = await response.json();
-      return data.models.map((model: any) => model.name);
+      const data = (await response.json()) as { models: { name: string }[] };
+      return data.models.map((model) => model.name);
     }
   } catch (error) {
     console.error("Error fetching Ollama models:", error);
@@ -32,14 +34,39 @@ const fetchOllamaModels = async (): Promise<string[]> => {
   return ["llama3.1", "gemma", "mistral"];
 };
 
-// For OpenAI, we need a minimal API route for security (API key can't be exposed to client)
-const fetchOpenAIModels = async (): Promise<string[]> => {
+// Authenticated call to OpenAI models API
+const fetchOpenAIModels = async (
+  dbContext: any,
+  saasContext: any
+): Promise<string[]> => {
   try {
-    const response = await fetch("/api/llm/openai-models");
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    // Add authentication headers (following AdminApiClient pattern)
+    if (dbContext?.accessToken) {
+      headers["Authorization"] = `Bearer ${dbContext.accessToken}`;
+    }
+
+    if (dbContext?.databaseIdHash) {
+      headers["Database-Id-Hash"] = dbContext.databaseIdHash;
+    }
+
+    if (saasContext?.saasToken) {
+      headers["SaaS-Token"] = saasContext.saasToken;
+    }
+
+    const response = await fetch("/api/llm/openai-models", {
+      method: "GET",
+      headers,
+    });
 
     if (response.ok) {
       const data = await response.json();
       return data.models || [];
+    } else {
+      console.error("Failed to fetch OpenAI models:", response.status);
     }
   } catch (error) {
     console.error("Error fetching OpenAI models:", error);
@@ -54,6 +81,10 @@ export function LLMConfigSelect() {
   const { control } = useFormContext();
   const [models, setModels] = useState<string[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
+
+  // Get authentication contexts
+  const dbContext = useContext(DatabaseContext);
+  const saasContext = useContext(SaaSContext);
 
   // Get static providers directly
   const providers = getAvailableProviders();
@@ -89,7 +120,7 @@ export function LLMConfigSelect() {
 
         let fetchedModels: string[] = [];
         if (provider === "openai") {
-          fetchedModels = await fetchOpenAIModels();
+          fetchedModels = await fetchOpenAIModels(dbContext, saasContext);
         } else if (provider === "ollama") {
           fetchedModels = await fetchOllamaModels();
         }
@@ -111,7 +142,7 @@ export function LLMConfigSelect() {
     } else {
       setModels([]);
     }
-  }, [providerValue, onModelChange]);
+  }, [providerValue, onModelChange, dbContext, saasContext]);
 
   const handleProviderChange = (provider: string) => {
     onProviderChange(provider);
@@ -171,11 +202,11 @@ export function LLMConfigSelect() {
           </SelectTrigger>
           <SelectContent>
             {loadingModels ? (
-              <SelectItem value="asdf" disabled>
+              <SelectItem value="Loading models..." disabled>
                 {t("Loading models...")}
               </SelectItem>
             ) : models.length === 0 ? (
-              <SelectItem value="asdf" disabled>
+              <SelectItem value="No models available" disabled>
                 No models available
               </SelectItem>
             ) : (

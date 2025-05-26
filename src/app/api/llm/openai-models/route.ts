@@ -1,8 +1,14 @@
+import { authorizeRequestContext } from "@/lib/authorization-api";
+import { getErrorMessage } from "@/lib/utils";
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest, res: NextResponse) {
   try {
     console.log('Fetching OpenAI models...');
+    
+    // Authorize the request (following the exact pattern from other API routes)
+    const requestContext = await authorizeRequestContext(req, res);
+    console.log("OpenAI models API - Authorization successful:", requestContext?.databaseIdHash ? 'OK' : 'No database');
     
     if (!process.env.OPENAI_API_KEY) {
       console.warn('OPENAI_API_KEY not set, returning default models');
@@ -36,9 +42,10 @@ export async function GET(req: NextRequest) {
     }
   } catch (error) {
     console.error('Error fetching OpenAI models:', error);
-    // Return default models on error
+    // Return error following the same pattern as other API routes
     return Response.json({ 
-      models: ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"]
-    });
+      message: getErrorMessage(error), 
+      status: 499 
+    }, { status: 499 });
   }
 }
