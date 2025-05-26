@@ -394,11 +394,11 @@ export default function AgentEvalsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12"></TableHead>
-                <TableHead className="max-w-[200px]">First Message</TableHead>
-                <TableHead className="max-w-[200px]">Expected Result</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="max-w-[200px]">Actual Result</TableHead>
-                <TableHead className="max-w-[200px]">Evaluation</TableHead>
+                <TableHead className="max-w-[200px]">{t('First Message')}</TableHead>
+                <TableHead className="max-w-[200px]">{t('Expected Result')}</TableHead>
+                <TableHead>{t('Status')}</TableHead>
+                <TableHead className="max-w-[200px]">{t('Actual Result')}</TableHead>
+                <TableHead className="max-w-[200px]">{t('Evaluation')}</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
@@ -540,7 +540,7 @@ export default function AgentEvalsPage() {
                       <TableCell colSpan={8} className="p-4">
                         <div className="space-y-4">
                           <div className="flex justify-between items-center">
-                            <h3 className="text-lg font-semibold">Messages</h3>
+                            <h3 className="text-lg font-semibold">{t('Messages')}</h3>
                             <div className="flex gap-2">
                               {testCase.conversationFlow && (
                                 <Button
@@ -553,22 +553,29 @@ export default function AgentEvalsPage() {
                                   }}
                                 >
                                   <MessageSquare className="h-4 w-4 mr-2" />
-                                  View Conversation
+                                  {t('View Conversation')}
                                 </Button>
                               )}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => adjustCaseToResult(testCase)}
-                                disabled={adjustingCaseId === testCase.id}
-                              >
-                                {adjustingCaseId === testCase.id ? (
-                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                ) : (
-                                  <RefreshCw className="h-4 w-4 mr-2" />
-                                )}
-                                Adjust Case to Result
-                              </Button>
+                              {testCase.status === 'failed' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => adjustCaseToResult(testCase)}
+                                  disabled={adjustingCaseId === testCase.id}
+                                >
+                                  {adjustingCaseId === testCase.id ? (
+                                    <>
+                                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                      {t('Adjusting...')}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <RefreshCw className="h-4 w-4 mr-2" />
+                                      {t('Adjust Case to Result')}
+                                    </>
+                                  )}
+                                </Button>
+                              )}
                             </div>
                           </div>
                           {testCase.messages.map((message, index) => (

@@ -905,5 +905,12 @@
   "Refresh Token": "Odśwież token",
   "content-type": "content-type",
   "list": "list",
-  "Evals": "Testy"
+  "Evals": "Testy",
+  "First Message": "Pierwsza wiadomość",
+  "Expected Result": "Oczekiwany wynik",
+  "Actual Result": "Rzeczywisty wynik",
+  "Evaluation": "Ocena",
+  "View Conversation": "Pokaż rozmowę",
+  "Adjusting...": "Dostosowywanie...",
+  "Adjust Case to Result": "Dostosuj przypadek do wyniku"
 }
