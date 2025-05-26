@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
 
 interface Evaluation {
   isCompliant: boolean;
@@ -319,19 +320,34 @@ export default function AgentEvalsPage() {
                       {testCase.status === 'running' ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        <Badge
-                          variant={
-                            testCase.status === 'completed'
-                              ? testCase.evaluation?.isCompliant
-                                ? 'default'
-                                : 'destructive'
-                              : testCase.status === 'failed'
-                              ? 'destructive'
-                              : 'secondary'
-                          }
-                        >
-                          {testCase.status}
-                        </Badge>
+                        <div className="space-y-2">
+                          <Badge
+                            variant={
+                              testCase.status === 'completed'
+                                ? testCase.evaluation?.isCompliant
+                                  ? 'default'
+                                  : 'destructive'
+                                : testCase.status === 'failed'
+                                ? 'destructive'
+                                : 'secondary'
+                            }
+                            className={
+                              testCase.status === 'completed' && testCase.evaluation?.isCompliant
+                                ? 'bg-green-500 hover:bg-green-600'
+                                : ''
+                            }
+                          >
+                            {testCase.status}
+                          </Badge>
+                          {testCase.evaluation?.score !== undefined && (
+                            <div className="w-full">
+                              <Progress value={testCase.evaluation.score * 100} className="h-2" />
+                              <div className="text-xs text-muted-foreground mt-1">
+                                Score: {Math.round(testCase.evaluation.score * 100)}%
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       )}
                     </TableCell>
                     <TableCell className="max-w-[200px] break-words">
@@ -456,41 +472,43 @@ export default function AgentEvalsPage() {
       </div>
 
       <Dialog open={!!selectedConversation} onOpenChange={() => setSelectedConversation(null)}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+        <DialogContent className="max-w-3xl h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Conversation Flow</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            {selectedConversation?.messages.map((message, index) => (
-              <div
-                key={index}
-                className={`p-4 rounded-lg ${
-                  message.role === 'user' ? 'bg-muted' : 'bg-background'
-                }`}
-              >
-                <div className="flex items-start gap-2">
-                  <div className="flex-1">
-                    <div className="font-semibold mb-2">
-                      {message.role === 'user' ? 'User' : 'Assistant'}
-                    </div>
-                    <ChatMessageMarkdown>{message.content}</ChatMessageMarkdown>
-                  </div>
-                </div>
-                {message.toolCalls && message.toolCalls.length > 0 && (
-                  <div className="mt-2 pl-4 border-l-2 border-muted">
-                    <div className="text-sm text-muted-foreground mb-1">Tool Calls:</div>
-                    {message.toolCalls.map((toolCall, toolIndex) => (
-                      <div key={toolIndex} className="text-sm">
-                        <span className="font-mono">{toolCall.name}</span>
-                        <pre className="mt-1 p-2 bg-muted rounded text-xs overflow-x-auto">
-                          {JSON.stringify(toolCall.arguments, null, 2)}
-                        </pre>
+          <div className="flex-1 overflow-y-auto pr-4">
+            <div className="space-y-4">
+              {selectedConversation?.messages.map((message, index) => (
+                <div
+                  key={index}
+                  className={`p-4 rounded-lg ${
+                    message.role === 'user' ? 'bg-muted' : 'bg-background'
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1">
+                      <div className="font-semibold mb-2">
+                        {message.role === 'user' ? 'User' : 'Assistant'}
                       </div>
-                    ))}
+                      <ChatMessageMarkdown>{message.content}</ChatMessageMarkdown>
+                    </div>
                   </div>
-                )}
-              </div>
-            ))}
+                  {message.toolCalls && message.toolCalls.length > 0 && (
+                    <div className="mt-2 pl-4 border-l-2 border-muted">
+                      <div className="text-sm text-muted-foreground mb-1">Tool Calls:</div>
+                      {message.toolCalls.map((toolCall, toolIndex) => (
+                        <div key={toolIndex} className="text-sm">
+                          <span className="font-mono">{toolCall.name}</span>
+                          <pre className="mt-1 p-2 bg-muted rounded text-xs overflow-x-auto">
+                            {JSON.stringify(toolCall.arguments, null, 2)}
+                          </pre>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
