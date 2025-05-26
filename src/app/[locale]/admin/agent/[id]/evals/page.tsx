@@ -47,6 +47,9 @@ interface ConversationFlow {
 interface ExtendedTestCase extends TestCase {
   evaluation?: Evaluation;
   conversationFlow?: ConversationFlow;
+  status?: 'pending' | 'running' | 'completed' | 'failed' | 'TX' | 'RX';
+  statusColor?: string;
+  statusSpinner?: boolean;
 }
 
 export default function AgentEvalsPage() {
@@ -329,15 +332,26 @@ export default function AgentEvalsPage() {
                                   : 'destructive'
                                 : testCase.status === 'failed'
                                 ? 'destructive'
+                                : testCase.status === 'TX'
+                                ? 'outline'
+                                : testCase.status === 'RX'
+                                ? 'outline'
                                 : 'secondary'
                             }
                             className={
                               testCase.status === 'completed' && testCase.evaluation?.isCompliant
                                 ? 'bg-green-500 hover:bg-green-600'
+                                : testCase.status === 'TX'
+                                ? 'bg-amber-700 hover:bg-amber-800 text-white'
+                                : testCase.status === 'RX'
+                                ? 'bg-green-500 hover:bg-green-600 text-white'
                                 : ''
                             }
                           >
                             {testCase.status}
+                            {testCase.statusSpinner && (
+                              <Loader2 className="ml-2 h-3 w-3 animate-spin inline" />
+                            )}
                           </Badge>
                           {testCase.evaluation?.score !== undefined && (
                             <div className="w-full">

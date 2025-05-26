@@ -44,7 +44,9 @@ export interface TestCase {
   }[];
   expectedResult: string;
   actualResult?: string;
-  status?: 'pending' | 'running' | 'completed' | 'failed';
+  status?: 'pending' | 'running' | 'completed' | 'failed' | 'TX' | 'RX';
+  statusColor?: string;
+  statusSpinner?: boolean;
 }
 
 export interface GenerateTestCasesResponse {

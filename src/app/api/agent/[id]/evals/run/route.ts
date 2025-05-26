@@ -100,7 +100,7 @@ export async function POST(
                 )
               );
 
-              let messages = [...testCase.messages];
+              const messages = [...testCase.messages];
               let error: string | undefined;
               const conversationFlow: ConversationFlow = { messages: [] };
 
@@ -125,53 +125,61 @@ export async function POST(
                           data: {
                             ...testCase,
                             status: 'TX',
-                            conversationFlow,
+                            statusColor: 'brown',
+                            statusSpinner: true,
+                            conversationFlow: {
+                              messages: [...conversationFlow.messages]
+                            },
                             sessionId
                           }
                         }) + '\n'
                       )
                     );
 
+                    console.log(conversationFlow.messages)
+
                     // Send the entire conversation history up to this point
                     await client.chat.streamChatWithCallbacks(
-                      conversationFlow.messages,
-                      {
-                        agentId,
-                        sessionId,
-                        onText: (text) => {
-                          collectedContent += text;
-                          // Send RX status with intermediate updates
-                          controller.enqueue(
-                            new TextEncoder().encode(
-                              JSON.stringify({
-                                type: 'test_case_update',
-                                data: {
-                                  ...testCase,
-                                  status: 'RX',
-                                  conversationFlow: {
-                                    ...conversationFlow,
-                                    messages: [
-                                      ...conversationFlow.messages,
-                                      {
-                                        role: 'assistant',
-                                        content: collectedContent,
-                                        toolCalls: toolCalls.length > 0 ? toolCalls : undefined
-                                      }
-                                    ]
-                                  },
-                                  sessionId
-                                }
-                              }) + '\n'
-                            )
-                          );
-                        },
-                        onToolCall: (toolCall) => {
-                          toolCalls.push(toolCall);
-                        },
-                        onError: (err) => {
-                          error = err;
-                        }
-                      }
+                        conversationFlow.messages,
+                        {
+                          agentId,
+                          sessionId,
+                          onText: (text) => {
+                            collectedContent += text;
+                            // Send RX status with intermediate updates
+                            controller.enqueue(
+                              new TextEncoder().encode(
+                                JSON.stringify({
+                                  type: 'test_case_update',
+                                  data: {
+                                    ...testCase,
+                                    status: 'RX',
+                                    statusColor: 'green',
+                                    statusSpinner: true,
+                                    conversationFlow: {
+                                      messages: [
+                                        ...conversationFlow.messages,
+                                        {
+                                          role: 'assistant',
+                                          content: collectedContent,
+                                          toolCalls: toolCalls.length > 0 ? toolCalls : undefined
+                                        }
+                                      ]
+                                    },
+                                    sessionId
+                                  }
+                                }) + '\n'
+                              )
+                            );
+                          },
+                          onToolCall: (toolCall) => {
+                            toolCalls.push(toolCall);
+                          },
+                          onError: (err) => {
+                            error = err;
+                            console.error(err);
+                          }
+                        }                        
                     );
 
                     if (error) {
@@ -187,7 +195,7 @@ export async function POST(
                   }
 
                   // Update the messages array with the latest response
-                  messages = [...conversationFlow.messages];
+//                  messages = [...conversationFlow.messages];
                 } catch (err) {
                   error = err instanceof Error ? err.message : String(err);
                   throw err;
