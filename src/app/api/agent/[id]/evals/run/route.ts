@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OpenAgentsBuilderClient } from 'open-agents-builder-client';
 import { TestCase } from '@/data/client/agent-api-client';
+import { generateObject } from 'ai';
+import { z } from 'zod';
+import { llmProviderSetup } from '@/lib/llm-provider';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -9,6 +12,37 @@ interface ChatMessage {
     name: string;
     arguments: Record<string, unknown>;
   }[];
+}
+
+const evaluationSchema = z.object({
+  isCompliant: z.boolean(),
+  explanation: z.string(),
+  score: z.number().min(0).max(1)
+});
+
+async function evaluateResult(actualResult: string, expectedResult: string): Promise<{
+  isCompliant: boolean;
+  explanation: string;
+  score: number;
+}> {
+  const result = await generateObject({
+    model: llmProviderSetup(),
+    maxTokens: 500,
+    temperature: 0.2,
+    schema: evaluationSchema,
+    prompt: `Evaluate if the actual result matches the expected result. Consider:
+    1. Semantic meaning and intent
+    2. Completeness of the response
+    3. Technical accuracy
+    4. Format and structure (if relevant)
+
+    Expected Result: ${expectedResult}
+    Actual Result: ${actualResult}
+
+    Provide a score from 0 to 1 and explain your reasoning.`
+  });
+
+  return result.object;
 }
 
 export async function POST(
@@ -67,10 +101,14 @@ export async function POST(
             throw new Error('No response received from the agent');
           }
 
+          const actualResult = response.messages[response.messages.length - 1].content;
+          const evaluation = await evaluateResult(actualResult, testCase.expectedResult);
+
           return {
             ...testCase,
             status: 'completed',
-            actualResult: response.messages[response.messages.length - 1].content
+            actualResult,
+            evaluation
           };
         } catch (error) {
           console.error(`Failed to run test case ${testCase.id}:`, error);

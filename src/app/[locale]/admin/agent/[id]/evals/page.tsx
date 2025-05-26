@@ -11,9 +11,16 @@ import { AgentApiClient, TestCase } from '@/data/client/agent-api-client';
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, Plus, Play } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
+
+interface Evaluation {
+  isCompliant: boolean;
+  explanation: string;
+  score: number;
+}
 
 export default function EvalsPage() {
-  const [testCases, setTestCases] = useState<TestCase[]>([]);
+  const [testCases, setTestCases] = useState<(TestCase & { evaluation?: Evaluation })[]>([]);
   const [expandedCases, setExpandedCases] = useState<Set<string>>(new Set());
   const agentContext = useAgentContext();
   const dbContext = useContext(DatabaseContext);
@@ -45,8 +52,9 @@ export default function EvalsPage() {
   const runEvals = async () => {
     if (!agentContext.current?.id) return;
 
+    let keyData: string | undefined;
     try {
-      const keyData = await keyContext.addApiKey();
+      keyData = await keyContext.addApiKey();
       const client = new AgentApiClient(
         process.env.NEXT_PUBLIC_API_URL || '',
         dbContext,
@@ -58,7 +66,9 @@ export default function EvalsPage() {
     } catch (error) {
       console.error('Failed to run evaluations:', error);
     } finally {
-      keyContext.removeKeyByName(keyData);
+      if (keyData) {
+        keyContext.removeKeyByName(keyData);
+      }
     }
   };
 
@@ -129,6 +139,7 @@ export default function EvalsPage() {
                 <TableHead>Status</TableHead>
                 <TableHead>Expected Result</TableHead>
                 <TableHead>Actual Result</TableHead>
+                <TableHead>Evaluation</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -147,6 +158,21 @@ export default function EvalsPage() {
                     </TableCell>
                     <TableCell>{testCase.actualResult}</TableCell>
                     <TableCell>
+                      {testCase.evaluation && (
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Progress value={testCase.evaluation.score * 100} />
+                            <span className="text-sm font-medium">
+                              {Math.round(testCase.evaluation.score * 100)}%
+                            </span>
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {testCase.evaluation.explanation}
+                          </div>
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -162,7 +188,7 @@ export default function EvalsPage() {
                   </TableRow>
                   {expandedCases.has(testCase.id) && (
                     <TableRow>
-                      <TableCell colSpan={5}>
+                      <TableCell colSpan={6}>
                         <div className="space-y-4 p-4">
                           {testCase.messages.map((message, index) => (
                             <div key={index} className="space-y-2">
