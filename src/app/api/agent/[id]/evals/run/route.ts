@@ -101,19 +101,26 @@ export async function POST(
               );
 
               let messages = [...testCase.messages];
-              let response: { messages: ChatMessage[]; sessionId?: string } | undefined;
               let error: string | undefined;
               const conversationFlow: ConversationFlow = { messages: [] };
 
+              // Process each message in sequence
               for (let i = 0; i < messages.length; i++) {
-                if (messages[i].role === 'user') {
-                  try {
-                    // Use streamChatWithCallbacks instead of collectMessages
-                    let collectedContent = '';
-                    const toolCalls: { name: string; arguments: Record<string, unknown> }[] = [];
-                    
+                try {
+                  let collectedContent = '';
+                  const toolCalls: { name: string; arguments: Record<string, unknown> }[] = [];
+                  
+                  // Add the current message to the conversation flow
+                  conversationFlow.messages.push({
+                    role: messages[i].role,
+                    content: messages[i].content
+                  });
+
+                  // If this is a user message, get the assistant's response
+                  if (messages[i].role === 'user') {
+                    // Send the entire conversation history up to this point
                     await client.chat.streamChatWithCallbacks(
-                      messages.slice(0, i + 1),
+                      conversationFlow.messages,
                       {
                         agentId,
                         sessionId,
@@ -133,42 +140,27 @@ export async function POST(
                       throw new Error(error);
                     }
 
-                    // Add the message to the conversation flow
-                    conversationFlow.messages.push({
-                      role: 'user',
-                      content: messages[i].content
-                    });
-
                     // Add the assistant's response to the conversation flow
                     conversationFlow.messages.push({
                       role: 'assistant',
                       content: collectedContent,
                       toolCalls: toolCalls.length > 0 ? toolCalls : undefined
                     });
-
-                    // Convert the response to our expected format
-                    const convertedMessages = [
-                      ...messages.slice(0, i),
-                      { role: 'assistant', content: collectedContent, toolCalls }
-                    ];
-
-                    response = {
-                      messages: convertedMessages,
-                      sessionId
-                    };
-                    messages = convertedMessages;
-                  } catch (err) {
-                    error = err instanceof Error ? err.message : String(err);
-                    throw err;
                   }
+
+                  // Update the messages array with the latest response
+                  messages = [...conversationFlow.messages];
+                } catch (err) {
+                  error = err instanceof Error ? err.message : String(err);
+                  throw err;
                 }
               }
 
-              if (!response || !response.messages.length) {
+              if (!conversationFlow.messages.length) {
                 throw new Error('No response received from the agent');
               }
 
-              const actualResult = response.messages[response.messages.length - 1].content;
+              const actualResult = conversationFlow.messages[conversationFlow.messages.length - 1].content;
               const evaluation = await evaluateResult(actualResult, testCase.expectedResult, conversationFlow);
 
               // Send the updated test case through the stream
@@ -178,7 +170,8 @@ export async function POST(
                     type: 'test_case_update',
                     data: {
                       ...testCase,
-                      status: 'completed',
+                      status: evaluation.score >= 0.75 ? 'completed' : 
+                             evaluation.score >= 0.5 ? 'warning' : 'failed',
                       actualResult,
                       evaluation,
                       conversationFlow,
