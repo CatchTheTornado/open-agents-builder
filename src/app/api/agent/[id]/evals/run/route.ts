@@ -11,14 +11,17 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   toolCalls?: {
-    name: string;
-    arguments: Record<string, unknown>;
+    toolCallId: string;
+    toolName: string;
+    args: Record<string, unknown>;
+    result: any;
   }[];
 }
 
 interface ConversationFlow {
   messages: ChatMessage[];
   toolCalls?: {
+    toolCallId: string;
     toolName: string;
     args: Record<string, unknown>;
     result: any;
@@ -36,6 +39,7 @@ async function evaluateResult(actualResult: string, expectedResult: string, conv
   explanation: string;
   score: number;
 }> {
+    
     console.log(conversationFlow.toolCalls)
   const result = await generateObject({
     model: llmProviderSetup(),
@@ -111,7 +115,9 @@ export async function POST(
               for (let i = 0; i < messages.length; i++) {
                 try {
                   let collectedContent = '';
+                  // Store tool calls and results in a single array
                   const toolCalls: { toolCallId: string; toolName: string; args: Record<string, unknown>, result: any}[] = [];
+                  const toolCallResults: { toolCallId: string; result: any }[] = [];
                   
 
                   // Send TX status for user message
@@ -165,6 +171,7 @@ export async function POST(
                                         {
                                           role: 'assistant',
                                           content: collectedContent,
+                                          toolCallResults: toolCallResults,
                                           toolCalls: toolCalls.length > 0 ? toolCalls : undefined
                                         }
                                       ]
@@ -176,13 +183,10 @@ export async function POST(
                             );
                           },
                           onToolCall: (toolCall) => {
-                            console.log(toolCall)
                             toolCalls.push(toolCall);
                           },
                           onToolResult: (toolCallResult) => {
-                            const tc = toolCalls.find(toolCall => toolCall.toolCallId === toolCallResult.toolCallId);
-                            tc.result = toolCallResult.result;
-
+                            toolCallResults.push(toolCallResult);
                           },
                           onError: (err) => {
                             error = err;
@@ -199,7 +203,8 @@ export async function POST(
                     conversationFlow.messages.push({
                       role: 'assistant',
                       content: collectedContent,
-                      toolCalls: toolCalls.length > 0 ? toolCalls : undefined
+                      toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+                      toolCallResults: toolCallResults.length > 0 ? toolCallResults : undefined
                     });
                   }
 

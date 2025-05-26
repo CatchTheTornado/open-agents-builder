@@ -74,7 +74,10 @@ export function prepareAgentTools({
       );
       nonDefaultParameters = nonDefaultParameters.omit(omitKeys);
     }
-    mappedTools[toolKey] = tool({
+    // Create a safe tool key by replacing non-alphanumeric characters with underscores and converting to lowercase
+    const newToolKey = `${toolDescriptor.displayName}-${toolKey}`.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase();
+    console.log(newToolKey);
+    mappedTools[newToolKey] = tool({
       description: `${toolConfig.description ? toolConfig.description + ' - ' : ''}${toolDescriptor.tool.description}`,
       parameters: nonDefaultParameters,
       execute: async (params, options) => {
