@@ -26,6 +26,8 @@ export const agents = sqliteTable('agents', {
     status: text('status'),
     locale: text('locale'),
     agentType: text('agentType'),
+    llmProvider: text('llmProvider'),
+    llmModel: text('llmModel'),
     createdAt: text('createdAt').notNull().default(sql`CURRENT_TIMESTAMP`),
     updatedAt: text('updatedAt').notNull().default(sql`CURRENT_TIMESTAMP`),
     icon: text('icon'),

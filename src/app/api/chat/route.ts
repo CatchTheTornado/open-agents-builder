@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
     });
 
     const result = await streamText({
-      model: llmProviderSetup(),
+      model: llmProviderSetup(agent.llmProvider || undefined, agent.llmModel || undefined),
       maxSteps: 10,
       onError: (error) => {
         console.error('Error in streaming:', error);

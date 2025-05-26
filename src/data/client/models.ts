@@ -256,6 +256,8 @@ export class Agent {
     tools?: Record<string, ToolConfiguration>;
     locale: string;
     agentType?: string | null;
+    llmProvider?: string | null;
+    llmModel?: string | null;
     status: AgentStatus;
     createdAt: string;
     updatedAt: string;
@@ -284,6 +286,8 @@ export class Agent {
 
         this.locale = agentDTO.locale || 'en';
         this.agentType = agentDTO.agentType;
+        this.llmProvider = agentDTO.llmProvider;
+        this.llmModel = agentDTO.llmModel;
         this.status = agentDTO.status === 'deleted' ? AgentStatus.Deleted : AgentStatus.Active;
 
         this.icon = agentDTO.icon;
@@ -311,6 +315,8 @@ export class Agent {
             tools: JSON.stringify(this.tools),
             locale: this.locale,
             agentType: this.agentType,
+            llmProvider: this.llmProvider,
+            llmModel: this.llmModel,
             status: this.status,
             createdAt: this.createdAt,
             updatedAt: this.updatedAt,
@@ -338,6 +344,8 @@ export class Agent {
             resultEmail: this?.options?.resultEmail || '',
             collectUserInfo: this?.options?.collectUserEmail,
             agentType: this?.agentType,
+            llmProvider: this?.llmProvider,
+            llmModel: this?.llmModel,
             status: this?.status || AgentStatus.Active,
             locale: this?.locale || 'en',
             events: this?.events || {},
@@ -369,6 +377,8 @@ export class Agent {
             updatedAt: getCurrentTS(),
             locale: data.locale ?? agent?.locale,
             agentType: data.agentType ?? agent?.agentType,
+            llmProvider: data.llmProvider ?? agent?.llmProvider,
+            llmModel: data.llmModel ?? agent?.llmModel,
             status: data.status ?? agent?.status,
             events: data.events ?? agent?.events,
             agents: data.agents ?? agent?.agents,
