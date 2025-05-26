@@ -38,8 +38,9 @@ interface ConversationFlow {
     role: 'user' | 'assistant';
     content: string;
     toolCalls?: {
-      name: string;
-      arguments: Record<string, unknown>;
+      toolName: string;
+      args: Record<string, unknown>;
+      result: any;
     }[];
   }[];
   toolCalls?: {
@@ -66,8 +67,9 @@ export default function AgentEvalsPage() {
   const keyContext = useKeyContext();
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [adjustingCaseId, setAdjustingCaseId] = useState<string | null>(null);
+  const [runningCaseId, setRunningCaseId] = useState<string | null>(null);
 
-  const { current: agent, dirtyAgent, status, updateAgent } = useAgentContext();
+  const { current: agent, dirtyAgent, status, updateAgent } = useAgentContext(); // 'dirtyAgent' is unused, but keep for future use
   const router = useRouter(); 
   const { register, handleSubmit, setValue, getValues, watch, formState: { errors }, setError } = useForm({
     defaultValues: agent ? agent.toForm(null) : {},
@@ -268,6 +270,41 @@ export default function AgentEvalsPage() {
     });
   };
 
+  const runSingleEval = async (testCase: ExtendedTestCase) => {
+    if (!agentContext.current?.id) return;
+    setRunningCaseId(testCase.id);
+    try {
+      const client = new AgentApiClient(
+        process.env.NEXT_PUBLIC_API_URL || '',
+        dbContext
+      );
+      for await (const data of client.runEvalsStream(agentContext.current.id, [testCase])) {
+        switch (data.type) {
+          case 'test_case_update':
+            setTestCases(prev =>
+              prev.map(tc =>
+                tc.id === data.data.id ? { ...tc, ...data.data } : tc
+              )
+            );
+            break;
+          case 'test_case_error':
+            setTestCases(prev =>
+              prev.map(tc =>
+                tc.id === data.data.id ? { ...tc, ...data.data } : tc
+              )
+            );
+            break;
+          case 'error':
+            throw new Error(data.error);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to run evaluation:', error);
+    } finally {
+      setRunningCaseId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {isDirty ? (
@@ -421,6 +458,24 @@ export default function AgentEvalsPage() {
                     </TableCell>
                     <TableCell>
                       <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={e => {
+                          e.stopPropagation();
+                          runSingleEval(testCase);
+                        }}
+                        disabled={runningCaseId === testCase.id || testCase.status === 'running'}
+                        aria-label="Run this test case"
+                      >
+                        {runningCaseId === testCase.id || testCase.status === 'running' ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Play className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </TableCell>
+                    <TableCell>
+                      <Button
                         variant="ghost"
                         size="icon"
                         onClick={(e) => {
@@ -434,7 +489,7 @@ export default function AgentEvalsPage() {
                   </TableRow>
                   {expandedCases[testCase.id] && (
                     <TableRow>
-                      <TableCell colSpan={6} className="p-4">
+                      <TableCell colSpan={8} className="p-4">
                         <div className="space-y-4">
                           <div className="flex justify-between items-center">
                             <h3 className="text-lg font-semibold">Messages</h3>
@@ -561,6 +616,9 @@ export default function AgentEvalsPage() {
                           <span className="font-mono">{toolCall.toolName}</span>
                           <pre className="mt-1 p-2 bg-muted rounded text-xs overflow-x-auto">
                             {JSON.stringify(toolCall.args, null, 2)}
+                          </pre>
+                          <pre className="mt-1 p-2 bg-muted rounded text-xs overflow-x-auto">
+                            {JSON.stringify(toolCall.result, null, 2)}
                           </pre>
                         </div>
                       ))}

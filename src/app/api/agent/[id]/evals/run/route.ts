@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OpenAgentsBuilderClient } from 'open-agents-builder-client';
-import { generateObject } from 'ai';
+import { generateObject, tool } from 'ai';
 import { z } from 'zod';
 import { llmProviderSetup } from '@/lib/llm-provider';
 import { nanoid } from 'nanoid';
@@ -19,8 +19,9 @@ interface ChatMessage {
 interface ConversationFlow {
   messages: ChatMessage[];
   toolCalls?: {
-    name: string;
-    arguments: Record<string, unknown>;
+    toolName: string;
+    args: Record<string, unknown>;
+    result: any;
   }[];
 }
 
@@ -52,7 +53,7 @@ async function evaluateResult(actualResult: string, expectedResult: string, conv
 
     Expected Result: ${expectedResult}
     Actual Result: ${actualResult}
-    Tool Calls: ${JSON.stringify(conversationFlow.toolCalls, null, 2)}
+    Tool calls with results: ${JSON.stringify(conversationFlow.toolCalls, null, 2)}
 
     The most important factor is expected result. If the actual result is not as expected, the score should be 0.
 
@@ -110,7 +111,7 @@ export async function POST(
               for (let i = 0; i < messages.length; i++) {
                 try {
                   let collectedContent = '';
-                  const toolCalls: { name: string; arguments: Record<string, unknown> }[] = [];
+                  const toolCalls: { toolCallId: string; toolName: string; args: Record<string, unknown>, result: any}[] = [];
                   
 
                   // Send TX status for user message
@@ -179,7 +180,9 @@ export async function POST(
                             toolCalls.push(toolCall);
                           },
                           onToolResult: (toolCallResult) => {
-                            console.log(toolCallResult)
+                            const tc = toolCalls.find(toolCall => toolCall.toolCallId === toolCallResult.toolCallId);
+                            tc.result = toolCallResult.result;
+
                           },
                           onError: (err) => {
                             error = err;
