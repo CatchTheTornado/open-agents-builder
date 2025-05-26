@@ -179,15 +179,45 @@ export class AgentApiClient extends AdminApiClient {
     };
     this.setAuthHeader('', headers);
 
-    const response = await fetch(`/api/agent/${agentId}/evals/run`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ testCases })
-    });
+    const makeRequest = async (repeatedRequestAccessToken: string = '') => {
+      if (repeatedRequestAccessToken) {
+        headers['Authorization'] = `Bearer ${repeatedRequestAccessToken}`;
+      }
 
-    if (!response.ok) {
-      throw new Error('Failed to run evaluations');
-    }
+      const response = await fetch(`/api/agent/${agentId}/evals/run`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ testCases })
+      });
+
+      if (response.status === 401) {
+        console.error('Unauthorized, first and only refresh attempt');
+        // Refresh token
+        if (!repeatedRequestAccessToken) {
+          const refreshResult = await this.dbContext?.refresh({
+            refreshToken: this.dbContext.refreshToken
+          });
+          if (refreshResult?.success) {
+            console.log('Refresh token success', this.dbContext?.accessToken);
+            return makeRequest(refreshResult.accessToken);
+          } else {
+            this.dbContext?.logout();
+            throw new Error('Request failed. Refresh token failed. Try log-in again.');
+          }
+        } else {
+          this.dbContext?.logout();
+          throw new Error('Request failed. Refresh token failed. Try log-in again.');
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to run evaluations');
+      }
+
+      return response;
+    };
+
+    const response = await makeRequest();
 
     if (!response.body) {
       throw new Error('No response body');
