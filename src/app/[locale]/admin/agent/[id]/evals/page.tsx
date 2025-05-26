@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAgentContext } from '@/contexts/agent-context';
@@ -22,6 +22,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
+import { onAgentSubmit } from '../general/page';
+import { useForm } from 'react-hook-form';
+import { useRouter } from 'next/navigation';
+import { AgentStatus } from '@/components/layout/agent-status';
 
 interface Evaluation {
   isCompliant: boolean;
@@ -54,14 +58,41 @@ interface ExtendedTestCase extends TestCase {
 
 export default function AgentEvalsPage() {
   const { t } = useTranslation();
-  const [testCases, setTestCases] = useState<ExtendedTestCase[]>([]);
   const [isGeneratingTests, setIsGeneratingTests] = useState(false);
   const [expandedCases, setExpandedCases] = useState<Record<string, boolean>>({});
   const [selectedCase, setSelectedCase] = useState<string | null>(null);
   const agentContext = useAgentContext();
   const dbContext = useContext(DatabaseContext);
   const keyContext = useKeyContext();
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
+
+  const { current: agent, dirtyAgent, status, updateAgent } = useAgentContext();
+  const router = useRouter(); 
+  const { register, handleSubmit, setValue, getValues, watch, formState: { errors }, setError } = useForm({
+    defaultValues: agent ? agent.toForm(null) : {},
+  });
+
+  const { onSubmit, isDirty } = onAgentSubmit(agent, watch, setValue, getValues, updateAgent, t, router, {});
+  const agentEvals = watch('evals') as TestCase[];
+  const [testCases, setTestCases] = useState<ExtendedTestCase[]>(agentEvals || []);
+
+
+  register('evals');
   const [selectedConversation, setSelectedConversation] = useState<ConversationFlow | null>(null);
+
+
+  useEffect(() => {
+    if (testCases && initialLoadDone) {
+      setValue('evals', testCases)
+    }
+  }, [testCases, initialLoadDone]);
+
+  useEffect(() => {
+    if (agentEvals && agentEvals.length > 0 &&  !initialLoadDone) {
+      setTestCases(agentEvals)
+      setInitialLoadDone(true);
+    }
+  }, [agentEvals, initialLoadDone]);
 
   const generateTestCases = async () => {
     if (!agentContext.current?.prompt || !agentContext.current?.id) return;
@@ -237,8 +268,17 @@ export default function AgentEvalsPage() {
   };
 
   return (
-    <div>
-      <div className="flex space-x-4">
+    <div className="space-y-6">
+      {isDirty ? (
+        <AgentStatus status={{ id: 'dirty', message: t('You have unsaved changes'), type: 'warning' }} />
+      ) : (
+        <AgentStatus status={status} />
+      )}
+
+      <div className="flex space-x-4 ">
+            <div className="flex space-x-2">
+
+              
         <Button size="sm" variant="outline" onClick={generateTestCases} disabled={isGeneratingTests}>
           {isGeneratingTests ? (
             <>
@@ -261,7 +301,7 @@ export default function AgentEvalsPage() {
           {t('Run Evals')}
         </Button>
       </div>
-
+</div>
       <div className="mt-6">
         <div className="border rounded-lg overflow-hidden">
           <Table>
@@ -509,7 +549,7 @@ export default function AgentEvalsPage() {
                   </div>
                   {message.toolCalls && message.toolCalls.length > 0 && (
                     <div className="mt-2 pl-4 border-l-2 border-muted">
-                      <div className="text-sm text-muted-foreground mb-1">Tool Calls:</div>
+                      <div className="text-sm text-muted-foreground mb-1">{t('Tool Calls')}:</div>
                       {message.toolCalls.map((toolCall, toolIndex) => (
                         <div key={toolIndex} className="text-sm">
                           <span className="font-mono">{toolCall.name}</span>
@@ -526,6 +566,15 @@ export default function AgentEvalsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+<div className='mt-6'>
+      <Button onClick={handleSubmit(onSubmit)}
+        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+      >
+        {t('Save')}
+      </Button>      
+      
+</div>
     </div>
   );
 } 
