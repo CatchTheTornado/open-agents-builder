@@ -55,6 +55,10 @@ export interface RunEvalsResponse {
   testCases: TestCase[];
 }
 
+export interface AdjustTestCaseResponse {
+  testCase: TestCase;
+}
+
 export class AgentApiClient extends AdminApiClient {
   constructor(baseUrl: string, dbContext?: DatabaseContextType | null, saasContext?: SaaSContextType | null, encryptionConfig?: ApiEncryptionConfig) {
     super(baseUrl, dbContext, saasContext, encryptionConfig);
@@ -216,5 +220,18 @@ export class AgentApiClient extends AdminApiClient {
         console.error('JSON parse error:', err, '\nLine:', buffer);
       }
     }
+  }
+
+  async adjustTestCase(
+    agentId: string,
+    testCaseId: string,
+    actualResult: string
+  ): Promise<AdjustTestCaseResponse> {
+    return this.request<AdjustTestCaseResponse>(
+      `/api/agent/${agentId}/evals/adjust`,
+      'POST',
+      { encryptedFields: [] },
+      { testCaseId, actualResult }
+    ) as Promise<AdjustTestCaseResponse>;
   }
 }

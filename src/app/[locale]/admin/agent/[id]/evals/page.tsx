@@ -9,7 +9,7 @@ import { DatabaseContext } from '@/contexts/db-context';
 import { useKeyContext } from '@/contexts/key-context';
 import { AgentApiClient, TestCase } from '@/data/client/agent-api-client';
 import { useState } from 'react';
-import { Plus, Play, Loader2, Wand2 } from 'lucide-react';
+import { Plus, Play, Loader2, Wand2, Trash2, RefreshCw } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { useTranslation } from 'react-i18next';
@@ -139,6 +139,42 @@ export default function EvalsPage() {
     });
   };
 
+  const removeMessage = (testCaseId: string, messageIndex: number) => {
+    setTestCases(prev => {
+      const newCases = [...prev];
+      const index = newCases.findIndex(tc => tc.id === testCaseId);
+      newCases[index].messages = newCases[index].messages.filter((_, i) => i !== messageIndex);
+      return newCases;
+    });
+  };
+
+  const adjustCaseToResult = async (testCase: TestCase) => {
+    if (!agentContext.current?.id || !testCase.actualResult) return;
+
+    try {
+      const client = new AgentApiClient(
+        process.env.NEXT_PUBLIC_API_URL || '',
+        dbContext
+      );
+
+      const result = await client.adjustTestCase(
+        agentContext.current.id,
+        testCase.id,
+        testCase.actualResult
+      );
+
+      if (result.testCase) {
+        setTestCases(prev => 
+          prev.map(tc => 
+            tc.id === testCase.id ? { ...tc, ...result.testCase } : tc
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Failed to adjust test case:', error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex space-x-4">
@@ -180,6 +216,7 @@ export default function EvalsPage() {
               <TableRow>
                 <TableHead>{t('ID')}</TableHead>
                 <TableHead>{t('Status')}</TableHead>
+                <TableHead>{t('First Message')}</TableHead>
                 <TableHead>{t('Expected Result')}</TableHead>
                 <TableHead>{t('Actual Result')}</TableHead>
                 <TableHead>{t('Evaluation')}</TableHead>
@@ -194,6 +231,9 @@ export default function EvalsPage() {
                   >
                     <TableCell>{testCase.id}</TableCell>
                     <TableCell>{testCase.status || t('pending')}</TableCell>
+                    <TableCell className="max-w-[200px] truncate">
+                      {testCase.messages[0]?.content || ''}
+                    </TableCell>
                     <TableCell>
                       <Textarea
                         value={testCase.expectedResult}
@@ -215,33 +255,48 @@ export default function EvalsPage() {
                           <div className="text-sm text-muted-foreground">
                             {testCase.evaluation.explanation}
                           </div>
+                          {testCase.actualResult && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                adjustCaseToResult(testCase);
+                              }}
+                              className="mt-2"
+                            >
+                              <RefreshCw className="mr-2 h-4 w-4" />
+                              {t('Adjust case to this result')}
+                            </Button>
+                          )}
                         </div>
                       )}
                     </TableCell>
                   </TableRow>
                   {expandedCases.has(testCase.id) && (
                     <TableRow>
-                      <TableCell colSpan={5}>
+                      <TableCell colSpan={6}>
                         <div className="space-y-4 p-4">
                           {testCase.messages.map((message, index) => (
                             <div key={index} className="space-y-2">
-                              <div className="font-semibold">{message.role}</div>
+                              <div className="flex justify-between items-center">
+                                <div className="font-semibold">{message.role}</div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeMessage(testCase.id, index);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                               <Textarea
                                 value={message.content}
                                 onChange={(e) => updateMessage(testCase.id, index, e.target.value)}
                                 placeholder={`${message.role} ${t('message...')}`}
                               />
-                              {message.toolCalls && (
-                                <div className="pl-4">
-                                  <div className="font-semibold">{t('Tool Calls:')}</div>
-                                  {message.toolCalls.map((tool, toolIndex) => (
-                                    <div key={toolIndex} className="pl-4">
-                                      <div>{t('Name:')} {tool.name}</div>
-                                      <div>{t('Arguments:')} {JSON.stringify(tool.arguments)}</div>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
                             </div>
                           ))}
                           <Button
