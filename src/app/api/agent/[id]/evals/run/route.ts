@@ -16,13 +16,21 @@ interface ChatMessage {
   }[];
 }
 
+interface ConversationFlow {
+  messages: ChatMessage[];
+  toolCalls?: {
+    name: string;
+    arguments: Record<string, unknown>;
+  }[];
+}
+
 const evaluationSchema = z.object({
   isCompliant: z.boolean(),
   explanation: z.string(),
   score: z.number().min(0).max(1)
 });
 
-async function evaluateResult(actualResult: string, expectedResult: string): Promise<{
+async function evaluateResult(actualResult: string, expectedResult: string, conversationFlow: ConversationFlow): Promise<{
   isCompliant: boolean;
   explanation: string;
   score: number;
@@ -32,10 +40,14 @@ async function evaluateResult(actualResult: string, expectedResult: string): Pro
     maxTokens: 1000,
     temperature: 0.2,
     schema: evaluationSchema,
-    prompt: `Evaluate if the actual result matches the expected result. Consider:
+    prompt: `Evaluate if the conversation flow and final result matches the expected result. Consider:
     1. Semantic meaning and intent
     2. Completeness of the response
     3. Format and structure (if relevant)
+    4. The entire conversation flow and context
+
+    Conversation Flow:
+    ${conversationFlow.messages.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
 
     Expected Result: ${expectedResult}
     Actual Result: ${actualResult}
@@ -91,19 +103,25 @@ export async function POST(
               let messages = [...testCase.messages];
               let response: { messages: ChatMessage[]; sessionId?: string } | undefined;
               let error: string | undefined;
+              const conversationFlow: ConversationFlow = { messages: [] };
 
               for (let i = 0; i < messages.length; i++) {
                 if (messages[i].role === 'user') {
                   try {
                     // Use streamChatWithCallbacks instead of collectMessages
                     let collectedContent = '';
+                    const toolCalls: { name: string; arguments: Record<string, unknown> }[] = [];
+                    
                     await client.chat.streamChatWithCallbacks(
                       messages.slice(0, i + 1),
                       {
                         agentId,
-                        sessionId, // Reuse the same sessionId
+                        sessionId,
                         onText: (text) => {
                           collectedContent += text;
+                        },
+                        onToolCall: (toolCall) => {
+                          toolCalls.push(toolCall);
                         },
                         onError: (err) => {
                           error = err;
@@ -115,15 +133,28 @@ export async function POST(
                       throw new Error(error);
                     }
 
+                    // Add the message to the conversation flow
+                    conversationFlow.messages.push({
+                      role: 'user',
+                      content: messages[i].content
+                    });
+
+                    // Add the assistant's response to the conversation flow
+                    conversationFlow.messages.push({
+                      role: 'assistant',
+                      content: collectedContent,
+                      toolCalls: toolCalls.length > 0 ? toolCalls : undefined
+                    });
+
                     // Convert the response to our expected format
                     const convertedMessages = [
                       ...messages.slice(0, i),
-                      { role: 'assistant', content: collectedContent }
+                      { role: 'assistant', content: collectedContent, toolCalls }
                     ];
 
                     response = {
                       messages: convertedMessages,
-                      sessionId // Include the sessionId in the response
+                      sessionId
                     };
                     messages = convertedMessages;
                   } catch (err) {
@@ -138,7 +169,7 @@ export async function POST(
               }
 
               const actualResult = response.messages[response.messages.length - 1].content;
-              const evaluation = await evaluateResult(actualResult, testCase.expectedResult);
+              const evaluation = await evaluateResult(actualResult, testCase.expectedResult, conversationFlow);
 
               // Send the updated test case through the stream
               controller.enqueue(
@@ -150,7 +181,8 @@ export async function POST(
                       status: 'completed',
                       actualResult,
                       evaluation,
-                      sessionId // Include the sessionId in the response
+                      conversationFlow,
+                      sessionId
                     }
                   }) + '\n'
                 )
@@ -165,7 +197,7 @@ export async function POST(
                       ...testCase,
                       status: 'failed',
                       error: error instanceof Error ? error.message : String(error),
-                      sessionId // Include the sessionId even in error cases
+                      sessionId
                     }
                   }) + '\n'
                 )
