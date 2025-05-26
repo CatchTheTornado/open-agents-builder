@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAgentContext } from '@/contexts/agent-context';
 import { DatabaseContext } from '@/contexts/db-context';
+import { useKeyContext } from '@/contexts/key-context';
 import { AgentApiClient, TestCase } from '@/data/client/agent-api-client';
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, Plus, Play } from 'lucide-react';
@@ -16,6 +17,7 @@ export default function EvalsPage() {
   const [expandedCases, setExpandedCases] = useState<Set<string>>(new Set());
   const agentContext = useAgentContext();
   const dbContext = useContext(DatabaseContext);
+  const keyContext = useKeyContext();
 
   const generateTestCases = async () => {
     if (!agentContext.current?.prompt || !agentContext.current?.id) return;
@@ -44,16 +46,19 @@ export default function EvalsPage() {
     if (!agentContext.current?.id) return;
 
     try {
+      const keyData = await keyContext.addApiKey();
       const client = new AgentApiClient(
         process.env.NEXT_PUBLIC_API_URL || '',
         dbContext,
         null
       );
 
-      const result = await client.runEvals(agentContext.current.id, testCases);
+      const result = await client.runEvals(agentContext.current.id, testCases, keyData);
       setTestCases(result.testCases);
     } catch (error) {
       console.error('Failed to run evaluations:', error);
+    } finally {
+      keyContext.removeKeyByName(keyData);
     }
   };
 

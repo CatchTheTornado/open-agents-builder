@@ -158,12 +158,12 @@ export class AgentApiClient extends AdminApiClient {
     ) as Promise<GenerateTestCasesResponse>;
   }
 
-  async runEvals(agentId: string, testCases: TestCase[]): Promise<RunEvalsResponse> {
+  async runEvals(agentId: string, testCases: TestCase[], apiKey: string): Promise<RunEvalsResponse> {
     return this.request<RunEvalsResponse>(
       `/api/agent/${agentId}/evals/run`,
       'POST',
       { encryptedFields: [] },
-      { testCases }
+      { testCases, apiKey }
     ) as Promise<RunEvalsResponse>;
   }
 }
