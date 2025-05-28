@@ -3,6 +3,7 @@ import { generateObject } from 'ai';
 import { z } from 'zod';
 import { llmProviderSetup } from '@/lib/llm-provider';
 import { authorizeRequestContext } from '@/lib/authorization-api';
+import { renderPrompt, getLocale } from '@/lib/templates';
 
 const testCaseSchema = z.object({
   id: z.string(),
@@ -23,12 +24,16 @@ const generateTestCasesSchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  _params: { params: { id: string } },
    response: NextResponse
 ) {
   try {
     const { prompt } = await request.json();
-    const requestContext = await authorizeRequestContext(request, response);
+    await authorizeRequestContext(request, response);
+    const locale = getLocale(request);
+
+    // Get the prompt using renderPrompt
+    const fullPrompt = await renderPrompt(locale, 'eval-generate', { prompt });
 
     const result = await generateObject({
       model: llmProviderSetup(),
@@ -36,29 +41,7 @@ export async function POST(
       temperature: 0.2,
       topP: 0.95,
       schema: generateTestCasesSchema,
-      prompt: `Based on the following agent prompt, generate a list of test cases in JSON format. Each test case should have a conversation (messages array) and expected result. The conversation can have multiple messages. Format:
-      {
-        "testCases": [
-          {
-            "id": "unique-id",
-            "messages": [
-              {
-                "role": "user",
-                "content": "user message"
-              },
-              {
-                "role": "assistant",
-                "content": "assistant message",
-                "toolCalls": [{"name": "tool_name", "arguments": {}}] // optional
-              }
-            ],
-            "expectedResult": "expected final result"
-          }
-        ]
-      }
-
-      Agent prompt:
-      ${prompt}`,
+      prompt: fullPrompt
     });
 
     return NextResponse.json(result.object);

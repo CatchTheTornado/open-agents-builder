@@ -23,8 +23,9 @@ export class AdminApiClient {
   protected saasContext?: SaaSContextType | null = null;
   protected saasToken: string | null = null;
   protected databaseIdHash: string | null = null;
+  protected locale: string = 'en';
 
-  constructor(baseUrl?: string, databaseContext?: DatabaseContextType | null, saasContext?: SaaSContextType | null, encryptionConfig?: ApiEncryptionConfig) {
+  constructor(baseUrl?: string, databaseContext?: DatabaseContextType | null, saasContext?: SaaSContextType | null, encryptionConfig?: ApiEncryptionConfig, locale?: string) {
     this.baseUrl = baseUrl || '';
     this.dbContext = databaseContext;
     this.saasContext = saasContext;
@@ -35,6 +36,7 @@ export class AdminApiClient {
     }
     this.encryptionUtils = new EncryptionUtils(encryptionConfig?.secretKey as string);
     this.encryptionConfig = encryptionConfig;
+    if (locale) this.locale = locale;
   }
 
   public setSaasToken(token: string) {
@@ -43,6 +45,10 @@ export class AdminApiClient {
 
   public setDatabaseIdHash(databaseIdHash: string) {
     this.databaseIdHash = databaseIdHash;
+  }
+
+  public setLocale(locale: string) {
+    this.locale = locale;
   }
 
   public async getArrayBuffer(
@@ -204,5 +210,7 @@ export class AdminApiClient {
     if (this.saasToken) {
       headers['SaaS-Token'] = this.saasToken;
     }
+
+    headers['Agent-Locale'] = this.locale;
   }
 }

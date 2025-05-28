@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OpenAgentsBuilderClient } from 'open-agents-builder-client';
-import { generateObject, tool } from 'ai';
+import { generateObject } from 'ai';
 import { z } from 'zod';
 import { llmProviderSetup } from '@/lib/llm-provider';
 import { nanoid } from 'nanoid';
 import { authorizeRequestContext } from '@/lib/authorization-api';
 import { precheckAPIRequest } from '@/lib/middleware-precheck-api';
+import { renderPrompt, getLocale } from '@/lib/templates';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -14,7 +15,7 @@ interface ChatMessage {
     toolCallId: string;
     toolName: string;
     args: Record<string, unknown>;
-    result: any;
+    result: unknown;
   }[];
 }
 
@@ -24,7 +25,7 @@ interface ConversationFlow {
     toolCallId: string;
     toolName: string;
     args: Record<string, unknown>;
-    result: any;
+    result: unknown;
   }[];
 }
 
@@ -34,34 +35,35 @@ const evaluationSchema = z.object({
   score: z.number().min(0).max(1)
 });
 
-async function evaluateResult(actualResult: string, expectedResult: string, conversationFlow: ConversationFlow): Promise<{
+async function evaluateResult(actualResult: string, expectedResult: string, conversationFlow: ConversationFlow, request: Request): Promise<{
   isCompliant: boolean;
   explanation: string;
   score: number;
 }> {
+  const locale = getLocale(request);
+  
+  // Pre-process data for the template
+  const conversationFlowText = conversationFlow.messages
+    .map(msg => `${msg.role}: ${msg.content}`)
+    .join('\n');
+  
+  const toolCallsText = conversationFlow.toolCalls 
+    ? JSON.stringify(conversationFlow.toolCalls, null, 2)
+    : '';
+
+  const prompt = await renderPrompt(locale, 'eval-run', {
+    conversationFlowText,
+    expectedResult,
+    actualResult,
+    toolCallsText
+  });
     
   const result = await generateObject({
     model: llmProviderSetup(),
     maxTokens: 1000,
     temperature: 0.2,
     schema: evaluationSchema,
-    prompt: `Evaluate if the conversation flow and final result matches the expected result. Consider:
-    1. Semantic meaning and intent
-    2. Completeness of the response
-    3. Format and structure (if relevant)
-    4. The entire conversation flow and context
-    5. If the required (in expected result) tool calls are present
-
-    Conversation Flow:
-    ${conversationFlow.messages.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
-
-    Expected Result: ${expectedResult}
-    Actual Result: ${actualResult}
-    Tool calls with results: ${JSON.stringify(conversationFlow.toolCalls, null, 2)}
-
-    The most important factor is expected result. If the actual result is not as expected, the score should be 0.
-
-    Provide a score from 0 to 1 and explain your reasoning - include the score and expected result in the response.`
+    prompt
   });
 
   return result.object;
@@ -116,7 +118,7 @@ export async function POST(
                 try {
                   let collectedContent = '';
                   // Store tool calls and results in a single array
-                  const mergedToolCalls: { toolCallId: string; toolName: string; args: Record<string, unknown>; result: any }[] = [];
+                  const mergedToolCalls: { toolCallId: string; toolName: string; args: Record<string, unknown>; result: unknown }[] = [];
                   
 
                   // Send TX status for user message
@@ -229,7 +231,7 @@ export async function POST(
               }
 
               const actualResult = conversationFlow.messages[conversationFlow.messages.length - 1].content;
-              const evaluation = await evaluateResult(actualResult, testCase.expectedResult, conversationFlow);
+              const evaluation = await evaluateResult(actualResult, testCase.expectedResult, conversationFlow, request);
 
               // Send the final test case update through the stream
               controller.enqueue(

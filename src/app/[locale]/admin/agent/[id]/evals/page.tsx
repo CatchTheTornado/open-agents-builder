@@ -58,7 +58,7 @@ interface ExtendedTestCase extends TestCase {
 }
 
 export default function AgentEvalsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [isGeneratingTests, setIsGeneratingTests] = useState(false);
   const [expandedCases, setExpandedCases] = useState<Record<string, boolean>>({});
   const [selectedCase, setSelectedCase] = useState<string | null>(null);
@@ -103,9 +103,11 @@ export default function AgentEvalsPage() {
     try {
       setIsGeneratingTests(true);
       const client = new AgentApiClient(
-        process.env.NEXT_PUBLIC_API_URL || '',
+        process.env.NEXT_PUBLIC_APP_URL || '',
         dbContext,
-        null
+        null,
+        undefined,
+        i18n.language
       );
 
       const result = await client.generateTestCases(
@@ -130,8 +132,11 @@ export default function AgentEvalsPage() {
     let keyData: string | undefined;
     try {
       const client = new AgentApiClient(
-        process.env.NEXT_PUBLIC_API_URL || '',
-        dbContext
+        process.env.NEXT_PUBLIC_APP_URL || '',
+        dbContext,
+        null,
+        undefined,
+        i18n.language
       );
 
       for await (const data of client.runEvalsStream(agentContext.current.id, testCases)) {
@@ -235,8 +240,11 @@ export default function AgentEvalsPage() {
     setAdjustingCaseId(testCase.id);
     try {
       const client = new AgentApiClient(
-        process.env.NEXT_PUBLIC_API_URL || '',
-        dbContext
+        process.env.NEXT_PUBLIC_APP_URL || '',
+        dbContext,
+        null,
+        undefined,
+        i18n.language
       );
       const result = await client.adjustTestCase(
         agentContext.current.id,
@@ -284,8 +292,11 @@ export default function AgentEvalsPage() {
     setRunningCaseId(testCase.id);
     try {
       const client = new AgentApiClient(
-        process.env.NEXT_PUBLIC_API_URL || '',
-        dbContext
+        process.env.NEXT_PUBLIC_APP_URL || '',
+        dbContext,
+        null,
+        undefined,
+        i18n.language
       );
       for await (const data of client.runEvalsStream(agentContext.current.id, [testCase])) {
         switch (data.type) {
