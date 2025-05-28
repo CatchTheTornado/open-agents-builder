@@ -193,7 +193,7 @@ Please go to [Documentation Page](https://docs.openagentsbuilder.com/) for readi
     </td>
     <td>
       <strong>Creating doodle.com copycat as AI agent</strong><br/>
-      Follow along to build a scheduling agent that mimics Doodle’s meeting-poll workflow.
+      Follow along to build a scheduling agent that mimics Doodle's meeting-poll workflow.
     </td>
   </tr>
 
@@ -253,6 +253,39 @@ client.agent.listAgents().then((response) => {
     console.log(response);
 });
 ```
+
+## Eval Driven Development
+
+Open Agents Builder introduces a powerful approach to agent development through Eval Driven Development (EDD), similar to Test Driven Development in traditional software engineering. This methodology ensures your agents maintain consistent behavior and quality through automated evaluation.
+
+### Key Features
+
+- 🤖 **AI as a Judge**: Each evaluation is performed by an AI judge that assesses:
+  - Semantic meaning and intent
+  - Completeness of responses
+  - Format and structure
+  - Conversation flow and context
+  - Required tool calls execution
+
+- 🧪 **Automated Test Cases**: 
+  - Generate test cases automatically from your agent's prompt
+  - Add custom test cases manually
+  - Export and import test suites
+  - Run individual or batch evaluations
+
+- 🔄 **Continuous Improvement**:
+  - Adjust test cases based on actual results
+  - Maintain a living documentation of expected behaviors
+  - Ensure consistent quality across agent updates
+
+### Benefits
+
+- 🛡️ **Regression Prevention**: Catch unintended changes in agent behavior
+- 🚀 **Faster Iteration**: Quickly verify changes without manual testing
+- 📝 **Living Documentation**: Test cases serve as behavioral specifications
+- 🔍 **Quality Assurance**: Automated evaluation of agent responses
+
+Learn more about implementing Eval Driven Development in your projects in our [comprehensive guide](https://docs.openagentsbuilder.com/tutorials/70-evals/).
 
 ## Video Demo
 
