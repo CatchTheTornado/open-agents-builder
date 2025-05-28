@@ -57,10 +57,6 @@ async function evaluateResult(actualResult: string, expectedResult: string, conv
     actualResult,
     toolCallsText
   });
-
-  console.log(toolCallsText);  
-  console.log(prompt);  
-
     
   const result = await generateObject({
     model: llmProviderSetup(),
