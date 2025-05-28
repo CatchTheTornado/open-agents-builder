@@ -30,6 +30,7 @@ export const agents = sqliteTable('agents', {
     updatedAt: text('updatedAt').notNull().default(sql`CURRENT_TIMESTAMP`),
     icon: text('icon'),
     extra: text('extra', { mode: 'json' }),
+    evals: text('evals', { mode: 'json' })
 }); 
 
 export const sessions = sqliteTable('sessions', {

@@ -1,3 +1,5 @@
+'use client';
+
 import { DataLoadingStatus, Key, KeyExtra, KeyType } from '@/data/client/models';
 import { EncryptionUtils, generatePassword, sha256 } from '@/lib/crypto';
 import React, { createContext, PropsWithChildren, useContext, useState } from 'react';
@@ -8,7 +10,7 @@ import { KeyApiClient, PutKeyResponse, PutKeyResponseError } from '@/data/client
 import { ConfigContextType } from '@/contexts/config-context';
 import { getCurrentTS } from '@/lib/utils';
 import assert from 'assert';
-import { SaaSContext, SaaSContextType } from './saas-context';
+import {  SaaSContextType } from './saas-context';
 import { useTranslation } from 'react-i18next';
 import { SignJWT } from 'jose';
 const argon2 = require("argon2-browser");
@@ -24,6 +26,7 @@ interface KeyContextProps {
     addKey: (email: string, displayName: string, sharedKey: string, expDate: Date | null, acl: KeyACLDTO, extra: KeyExtra) => Promise<PutKeyResponse>;
     addApiKey: () => Promise<string>;
     removeKey: (keyLocatorHash: string) => Promise<PutKeyResponse>;
+    removeKeyByName: (displayName: string) => Promise<PutKeyResponse | null>;
 
     setCurrentKey: (key: Key | null) => void;
     setSharedKeysDialogOpen: (value: boolean) => void;
@@ -41,6 +44,7 @@ export const KeyContext = createContext<KeyContextProps>({
     addKey: (email: string, displayName: string, sharedKey: string, expDate: Date | null, acl: KeyACLDTO) => Promise.resolve({} as PutKeyResponse),
     addApiKey: () => Promise.resolve(''),
     removeKey: (keyLocatorHash: string) => Promise.resolve({} as PutKeyResponse),
+    removeKeyByName: (displayName: string) => Promise.resolve(null),
 
     setCurrentKey: (key: Key | null)  => {},
     setSharedKeysDialogOpen: () => {},
@@ -55,7 +59,6 @@ export const KeyContextProvider: React.FC<PropsWithChildren> = ({ children }) =>
     const [currentKey, setCurrentKey] = useState<Key | null>(null);
     const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
     const dbContext = useContext(DatabaseContext);
-    const saasContext = useContext(SaaSContext);
     const { t } = useTranslation();
 
     const setupApiClient = async (config: ConfigContextType | null, saasContext?: SaaSContextType | null) => {
@@ -151,6 +154,16 @@ export const KeyContextProvider: React.FC<PropsWithChildren> = ({ children }) =>
 
     };
 
+    const removeKeyByName = async (displayName: string) => {
+        const key = keys.find((key) => key.displayName === displayName);
+        if (key) {
+            setKeys((prevKeys) => prevKeys.filter((key) => key.displayName !== displayName));
+            const apiClient = await setupApiClient(null);
+            return apiClient.delete(key.keyLocatorHash);
+        }
+        return null;
+    };    
+
     const removeKey = async (keyLocatorHash: string) => {
         setKeys((prevKeys) => prevKeys.filter((key) => key.keyLocatorHash !== keyLocatorHash));
         const apiClient = await setupApiClient(null);
@@ -164,8 +177,16 @@ export const KeyContextProvider: React.FC<PropsWithChildren> = ({ children }) =>
     }
 
     return (
-        <KeyContext.Provider value={{ keys, loaderStatus, currentKey, changePasswordDialogOpen, sharedKeysDialogOpen, addKey, removeKey, loadKeys, setSharedKeysDialogOpen, setChangePasswordDialogOpen, setCurrentKey, addApiKey }}>
+        <KeyContext.Provider value={{ keys, loaderStatus, currentKey, changePasswordDialogOpen, sharedKeysDialogOpen, addKey, removeKey, loadKeys, setSharedKeysDialogOpen, setChangePasswordDialogOpen, setCurrentKey, addApiKey, removeKeyByName }}>
             {children}
         </KeyContext.Provider>
     );
-};
+}
+
+export function useKeyContext() {
+    const context = useContext(KeyContext);
+    if (!context) {
+        throw new Error('useKeyContext must be used within a KeyProvider');
+    }
+    return context;
+}

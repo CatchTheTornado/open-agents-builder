@@ -1,10 +1,9 @@
 import { AdminApiClient, ApiEncryptionConfig } from "./admin-api-client";
 import { SaaSContextType } from "@/contexts/saas-context";
-import { AgentDTO, AgentDTOEncSettings, PaginatedQuery, PaginatedResult, ResultDTO, SessionDTO } from "../dto";
+import { AgentDTO, AgentDTOEncSettings, PaginatedQuery, PaginatedResult, ResultDTO, SessionDTO, TestCaseDTO } from "../dto";
 import { DatabaseContextType } from "@/contexts/db-context";
 import { urlParamsForQuery } from "./base-api-client";
 import axios from "axios";
-import { FlowChunkEvent } from "@/flows/models";
 
 export type GetResultResponse = PaginatedResult<ResultDTO[]>;
 export type GetSessionResponse = PaginatedResult<SessionDTO[]>;
@@ -33,6 +32,18 @@ export type PutAgentResponseError = {
 
 export type PutAgentResponse = PutAgentResponseSuccess | PutAgentResponseError;
 
+
+export interface GenerateTestCasesResponse {
+  testCases: TestCaseDTO[];
+}
+
+export interface RunEvalsResponse {
+  testCases: TestCaseDTO[];
+}
+
+export interface AdjustTestCaseResponse {
+  testCase: TestCaseDTO;
+}
 
 export class AgentApiClient extends AdminApiClient {
   constructor(baseUrl: string, dbContext?: DatabaseContextType | null, saasContext?: SaaSContextType | null, encryptionConfig?: ApiEncryptionConfig) {
@@ -125,5 +136,118 @@ export class AgentApiClient extends AdminApiClient {
         console.error("JSON parse error:", err, "\nLine:", buffer);
       }
     }
+  }
+
+  async generateTestCases(agentId: string, prompt: string): Promise<GenerateTestCasesResponse> {
+    return this.request<GenerateTestCasesResponse>(
+      `/api/agent/${agentId}/evals/generate`,
+      'POST',
+      { encryptedFields: [] },
+      { prompt }
+    ) as Promise<GenerateTestCasesResponse>;
+  }
+
+  async runEvals(agentId: string, testCases: TestCaseDTO[], apiKey: string): Promise<RunEvalsResponse> {
+    return this.request<RunEvalsResponse>(
+      `/api/agent/${agentId}/evals/run`,
+      'POST',
+      { encryptedFields: [] },
+      { testCases, apiKey }
+    ) as Promise<RunEvalsResponse>;
+  }
+
+  async *runEvalsStream(
+    agentId: string,
+    testCases: TestCaseDTO[]
+  ): AsyncGenerator<any, void, unknown> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    };
+    this.setAuthHeader('', headers);
+
+    const makeRequest = async (repeatedRequestAccessToken: string = '') => {
+      if (repeatedRequestAccessToken) {
+        headers['Authorization'] = `Bearer ${repeatedRequestAccessToken}`;
+      }
+
+      const response = await fetch(`/api/agent/${agentId}/evals/run`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ testCases })
+      });
+
+      if (response.status === 401) {
+        console.error('Unauthorized, first and only refresh attempt');
+        // Refresh token
+        if (!repeatedRequestAccessToken) {
+          const refreshResult = await this.dbContext?.refresh({
+            refreshToken: this.dbContext.refreshToken
+          });
+          if (refreshResult?.success) {
+            console.log('Refresh token success', this.dbContext?.accessToken);
+            return makeRequest(refreshResult.accessToken);
+          } else {
+            this.dbContext?.logout();
+            throw new Error('Request failed. Refresh token failed. Try log-in again.');
+          }
+        } else {
+          this.dbContext?.logout();
+          throw new Error('Request failed. Refresh token failed. Try log-in again.');
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to run evaluations');
+      }
+
+      return response;
+    };
+
+    const response = await makeRequest();
+
+    if (!response.body) {
+      throw new Error('No response body');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split(/\r?\n/);
+      buffer = lines.pop()!;
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          yield JSON.parse(line);
+        } catch (err) {
+          console.error('JSON parse error:', err, '\nLine:', line);
+        }
+      }
+    }
+
+    if (buffer.trim()) {
+      try {
+        yield JSON.parse(buffer);
+      } catch (err) {
+        console.error('JSON parse error:', err, '\nLine:', buffer);
+      }
+    }
+  }
+
+  async adjustTestCase(
+    agentId: string,
+    testCaseId: string,
+    actualResult: string
+  ): Promise<AdjustTestCaseResponse> {
+    return this.request<AdjustTestCaseResponse>(
+      `/api/agent/${agentId}/evals/adjust`,
+      'POST',
+      { encryptedFields: [] },
+      { testCaseId, actualResult }
+    ) as Promise<AdjustTestCaseResponse>;
   }
 }

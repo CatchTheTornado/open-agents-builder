@@ -5,6 +5,7 @@ import { createPrice, getCurrentTS, safeJsonParse } from "@/lib/utils";
 import { Message } from "ai";
 import moment from "moment";
 import { AgentDefinition, FlowInputVariable, EditorStep } from "@/flows/models";
+import { TestCase } from "./agent-api-client";
 
 
 export enum DataLoadingStatus {
@@ -264,6 +265,7 @@ export class Agent {
     flows?: AgentFlow[] | null;
     defaultFlow?: string | null;
     agents?: AgentDefinition[] | null;
+    evals?: TestCase[] | null;
 
 
     constructor(agentDTO: AgentDTO | Agent) {
@@ -292,6 +294,7 @@ export class Agent {
         this.agents = typeof agentDTO.agents === 'string' ? JSON.parse(agentDTO.agents as string) : agentDTO.agents;
         this.flows = typeof agentDTO.flows === 'string' ? JSON.parse(agentDTO.flows as string) : agentDTO.flows;
         this.defaultFlow = agentDTO.defaultFlow;
+        this.evals = typeof agentDTO.evals === 'string' ? JSON.parse(agentDTO.evals as string) : agentDTO.evals;
     }
 
     static fromDTO(agentDTO: AgentDTO): Agent {
@@ -317,7 +320,8 @@ export class Agent {
             icon: this.icon,
             extra: JSON.stringify(this.extra),
             flows: JSON.stringify(this.flows),
-            agents: JSON.stringify(this.agents)
+            agents: JSON.stringify(this.agents),
+            evals: JSON.stringify(this.evals)
         };
     }
 
@@ -346,6 +350,7 @@ export class Agent {
             flows: this?.flows || [],
             defaultFlow: this?.defaultFlow || '',
             icon: this?.icon || '',
+            evals: this?.evals || []
         };
         if (setValue !== null) {
             Object.keys(map).forEach((key) => {
@@ -376,6 +381,7 @@ export class Agent {
             defaultFlow: data.defaultFlow ?? agent?.defaultFlow,
             tools: data.tools ?? agent?.tools,
             icon: data.icon ?? agent?.icon,
+            evals: data.evals ?? agent?.evals,
             options: {
                 ...agent?.options,
                 ogDescription: data.ogDescription ?? agent?.options?.ogDescription,

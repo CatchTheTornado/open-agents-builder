@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Settings2, FileText, Shield, BarChart, BookTemplateIcon, BookIcon, CogIcon, FunctionSquareIcon, MessageCircleMore, CalendarIcon, BoxesIcon, ListOrderedIcon, WebhookIcon, WorkflowIcon, NetworkIcon, VariableIcon, LucideProps, ZapIcon, FolderIcon, MemoryStick } from 'lucide-react';
+import { Settings2, FileText, Shield, BarChart, BookTemplateIcon, BookIcon, CogIcon, FunctionSquareIcon, MessageCircleMore, CalendarIcon, BoxesIcon, ListOrderedIcon, WebhookIcon, WorkflowIcon, NetworkIcon, VariableIcon, LucideProps, ZapIcon, FolderIcon, MemoryStick, TestTubeIcon, TestTubesIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -150,6 +150,14 @@ const availableItems : {
     pattern: '/admin/agent/[id]/api',
     activeOnlyOnSavedAgent: false
   },  
+  { 
+    icon: TestTubesIcon,
+    label: 'Evals',
+    href: '/admin/agent/[id]/evals',
+    pattern: '/admin/agent/[id]/evals',
+    activeOnlyOnSavedAgent: true,
+    agentTypes: ['smart-assistant', 'survey-agent', 'commerce-agent']
+  },
 ];
 
 export function AgentSidebar() {

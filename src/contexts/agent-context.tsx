@@ -135,7 +135,8 @@ export const AgentProvider = ({ children }: { children: ReactNode }) => {
                 status: AgentStatus.Active,
                 locale: i18n.language,
                 expectedResult: template.expectedResult,
-                safetyRules: template.safetyRules
+                safetyRules: template.safetyRules,
+                evals: template.evals
             } as Agent
         )
 
