@@ -21,14 +21,20 @@ export function urlParamsForQuery({ query, limit, offset, orderBy }: PaginatedQu
 export class BaseApiClient {
   private baseUrl: string;
   private databaseIdHash: string | null = null;
+  private locale: string = 'en';
 
-  constructor(baseUrl?: string, databaseIdHash?: string) {
+  constructor(baseUrl?: string, databaseIdHash?: string, locale?: string) {
     this.baseUrl = baseUrl || '';
     this.databaseIdHash = databaseIdHash || '';
+    this.locale = locale || 'en';
   }
 
   public setDatabaseIdHash(databaseIdHash: string) {
     this.databaseIdHash = databaseIdHash;
+  }
+
+  public setLocale(locale: string) {
+    this.locale = locale;
   }
 
   public async request<T>(
@@ -44,6 +50,10 @@ export class BaseApiClient {
 
     if (this.databaseIdHash && !headers['Database-Id-Hash']) {
       headers['Database-Id-Hash'] = this.databaseIdHash;
+    }
+
+    if (!headers['Agent-Locale']) {
+      headers['Agent-Locale'] = this.locale;
     }
 
     const config: AxiosRequestConfig = {
@@ -72,6 +82,10 @@ export class BaseApiClient {
 
     if (this.databaseIdHash && !headers['Database-Id-Hash']) {
       headers['Database-Id-Hash'] = this.databaseIdHash;
+    }
+
+    if (!headers['Agent-Locale']) {
+      headers['Agent-Locale'] = this.locale;
     }
 
     const config: AxiosRequestConfig = {

@@ -46,8 +46,8 @@ export interface AdjustTestCaseResponse {
 }
 
 export class AgentApiClient extends AdminApiClient {
-  constructor(baseUrl: string, dbContext?: DatabaseContextType | null, saasContext?: SaaSContextType | null, encryptionConfig?: ApiEncryptionConfig) {
-    super(baseUrl, dbContext, saasContext, encryptionConfig);
+  constructor(baseUrl?: string, databaseContext?: DatabaseContextType | null, saasContext?: SaaSContextType | null, encryptionConfig?: ApiEncryptionConfig, locale?: string) {
+    super(baseUrl, databaseContext, saasContext, encryptionConfig, locale);
   }
 
   async get(agentId?: string): Promise<GetAgentsResponse> {

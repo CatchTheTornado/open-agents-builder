@@ -283,3 +283,10 @@ export async function renderPrompt(
   const template = await fs.readFile(filePath, 'utf8');
   return renderTemplate(template, context, customFilters);
 }
+
+/**
+ * Get the locale from the Agent-Locale header
+ */
+export function getLocale(request: Request): string {
+  return request.headers.get('Agent-Locale') || 'en';
+}
