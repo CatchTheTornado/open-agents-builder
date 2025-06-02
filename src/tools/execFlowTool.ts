@@ -367,7 +367,7 @@ export function createExecFlowTool(context: ExecFlowToolContext): ToolDescriptor
 
               let msg = '';
               result.toolCalls.forEach((tc) => {  
-                const toolName = toolNames[tc.toolName];
+                const toolName = toolNames[tc.toolName] ?? tc.toolName;
                 msg += `**${toolName}** (\`${JSON.stringify(tc.args)}\`): ${tc.toolCallId}\r\n`;
               }
               );
