@@ -37,7 +37,7 @@ async function makeHttpRequest({
 }
 
 export const httpTool = {
-  displayName: 'Makes HTTP requests to specified URLs with configurable method, headers, and body.',
+  displayName: 'Makes HTTP requests',
   tool: tool({
     description: 'Makes HTTP requests to specified URLs with configurable method, headers, and body.',
     parameters: z.object({
