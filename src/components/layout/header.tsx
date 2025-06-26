@@ -64,7 +64,10 @@ export function Header() {
             {!dbContext?.acl || dbContext.acl.role === 'owner' ? (<DropdownMenuItem onSelect={() => { keysContext.setSharedKeysDialogOpen(true); } }>{t('Team & Sharing')}</DropdownMenuItem>) : (null)}
             <DropdownMenuSeparator />
             {!dbContext?.acl || dbContext.acl.role === 'owner' ? (<DropdownMenuItem onSelect={() => router.push('/admin/settings')}>{t('Agent templates')}</DropdownMenuItem>) : (null)}
-            <DropdownMenuItem onClick={(e) => statsContext.setStatsPopupOpen(true)}>{t('Stats and token usage')}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+                router.push("/admin/settings/stats");
+                // statsContext.setStatsPopupOpen(true)
+              }} > {t('Stats and token usage')} </DropdownMenuItem>
             <DropdownMenuItem onSelect={(e) => window.open('mailto:info@catchthetornado.com?subject=' + encodeURIComponent('Support reuest for ' + dbContext?.databaseIdHash))}>{t('Contact Support')}</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={(e) => {
