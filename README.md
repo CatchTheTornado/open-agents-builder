@@ -85,46 +85,6 @@ Create a customer facing agent, get a unique link, send it to the users or call 
 </table>
 
 
-## Cloud version / live demo
-
-<a href="https://openagentsbuilder.com">
-    <img src=".readme-assets/create-account.png" />
-</a>
-
-You can run OAB on your local machine/server or You can try out Open Agents builder for free in the cloud:  
-
-<a href="https://openagentsbuilder.com">Start creating your own Agent within minutes!</a>
-
-## Agent templates - apps made with Open Agents Builder
-
-Here are some online examples of agents built with OAB. You can start modifying them right now for your use case once <a href="https://openagentsbuilder.com">registered for a free demo</a>.
-
-
-<table>
-    <tr>
-        <td>
-            <a href="https://app.openagentsbuilder.com/exec/35f5c5b139a6b569d4649b788c1851831eb44d8e32b716b8411ec6431af8121d/a-HP_6t3HBDb5r3uNMNYU?flow=analyzeGithubProject">
-                <img  width="150" src="/public/img/template-assets/github.webp" alt="Screenshot" />
-            </a>
-        </td>
-        <td><strong>Github Project analyzer</strong> 
-        This is a simple "Flow" type agent built to analyze health and condition of your Github project. It's available 
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <a href="https://app.openagentsbuilder.com/chat/35f5c5b139a6b569d4649b788c1851831eb44d8e32b716b8411ec6431af8121d/NsGimXVM2n3BcT4MR0PbG">
-                <img width="150" src="/public/img/onboarding-icons/instashop.webp" alt="Screenshot" />
-            </a>
-        </td>
-        <td>
-        <strong>Instashop</strong>
-            Chat with products catalog, add products to shopping cart and place an order! This is a demo of "Chat" type agent.
-        </td>
-    </tr>
-</table>
-
-
 ## Build AI Agents for Business: Bookings, Intake forms, Orders, Support, Integrations ....
 
 Open Agents Builder let you create custom AI agents for Business. You can create the **customer facing** agents or **complex business workflows** that:
