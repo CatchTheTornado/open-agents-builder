@@ -371,7 +371,7 @@ Install required dependencies: `poppler` and `markitdown`:
 pip install markitdown
 pip install poppler-utils
 ```
-or - install `pipx` using `brew install pipx` (on Mac) or `apt-get install pipx` (on Debian) for managing your defualt Python 3 env automatically, and run:
+or - install `pipx` using `brew install pipx` (on Mac) or `apt-get install pipx` (on Debian) for managing your default Python 3 env automatically, and run:
 
 ```bash
 pipx install markitdown

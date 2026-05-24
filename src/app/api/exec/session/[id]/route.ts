@@ -5,7 +5,7 @@ import { getErrorMessage } from "@/lib/utils";
 import { NextRequest } from "next/server";
 
 
-// create new session or return the existing one - do not allow to override the session inital data if created
+// create new session or return the existing one - do not allow to override the session initial data if created
 export async function POST(request: NextRequest, { params }: { params: { id: string }} ) {
     try {
         const databaseIdHash = request.headers.get('Database-Id-Hash') || '';
